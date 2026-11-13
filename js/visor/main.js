@@ -7,7 +7,11 @@ import * as THREE from '../../vendor/three/three.module.js';
 import { iniciarBotonXR } from './xr-sesion.js';
 import { activarVistaPrevia } from '../vista-previa/control-mouse.js';
 import { crearPanelSubtitulos } from './paneles/panel-subtitulos.js';
+import { crearPantallaReconocimiento } from './paneles/pantalla-reconocimiento.js';
+import { crearPantallaBienvenida } from './paneles/pantalla-bienvenida.js';
+import { habilitarNavegacionDev } from './navegacion-dev.js';
 import { establecerCamaraVistaPrevia, habilitarArrastre } from './interaccion.js';
+import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
 
 const canvas = document.getElementById('escena');
 const indicadorVistaPrevia = document.getElementById('indicador-vista-previa');
@@ -54,6 +58,34 @@ const limitesPanelSubtitulos = {
   z: [-2, -0.3],
 };
 habilitarArrastre(renderizador, panelSubtitulos, limitesPanelSubtitulos);
+
+// Pantallas estáticas (reconocimiento, bienvenida): se agregan las dos a
+// la escena desde el inicio y se alterna la visibilidad según
+// `estadoActual.pantalla`, en vez de crear/destruir objetos en cada
+// cambio. `navegacion-dev.js` es un placeholder TEMPORAL (teclas '1'-'9')
+// hasta que exista el panel real del observador, controlado por Firebase
+// (Etapa 4): ese módulo sólo traduce la tecla a un nombre de pantalla, la
+// aplicación del estado (`aplicarComando`, de estado.js) pasa siempre por
+// acá, igual que pasará después con los comandos de Firebase.
+let estadoActual = estadoPorDefecto();
+
+const pantallasPorNombre = {
+  reconocimiento: crearPantallaReconocimiento(),
+  bienvenida: crearPantallaBienvenida(),
+};
+Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
+
+function actualizarPantallaVisible() {
+  Object.entries(pantallasPorNombre).forEach(([nombre, objeto]) => {
+    objeto.visible = nombre === estadoActual.pantalla;
+  });
+}
+actualizarPantallaVisible();
+
+habilitarNavegacionDev((pantalla) => {
+  estadoActual = aplicarComando(estadoActual, { pantalla });
+  actualizarPantallaVisible();
+});
 
 function alRedimensionar() {
   camara.aspect = window.innerWidth / window.innerHeight;
