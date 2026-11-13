@@ -136,14 +136,16 @@ git commit -m "feat: logica de clamp de posicion para paneles arrastrables"
 **Interfaces:**
 - Consumes: `limitarPosicion` de `js/common/arrastre.js` (Task 3).
 - Produces (`js/visor/paneles/panel-subtitulos.js`): `function crearPanelSubtitulos(texto: string): THREE.Object3D` — un plano con una `CanvasTexture` del texto, ubicado por defecto fuera del centro del campo visual.
-- Produces (`js/visor/interaccion.js`): `function habilitarArrastre(renderer, objeto, limites)` — engancha los eventos `selectstart`/`selectend`/`move` de la XRSession (o del mouse en vista previa) para mover `objeto`, pasando siempre la nueva posición por `limitarPosicion`.
+- Produces (`js/visor/interaccion.js`): `function enEventoSeleccion(renderer, callback: (origen: {x,y,z}, direccion: {x,y,z}) => void): () => void` — primitiva de bajo nivel: registra `callback` para cada evento de "selección" (mano/pellizco, control/gatillo, o click de mouse en vista previa), le pasa el origen/dirección del rayo, y devuelve una función para des-registrarlo. Es la única fuente de eventos de selección de todo el proyecto (la reutilizan Task 7 para los botones del menú y Task 9 para los botones de escala de imágenes).
+- Produces (`js/visor/interaccion.js`): `function habilitarArrastre(renderer, objeto, limites)` — construido sobre `enEventoSeleccion`: mientras el objeto está "agarrado" (seleccionado y mantenido), lo mueve con el rayo y pasa siempre la nueva posición por `limitarPosicion`.
 
 - [ ] **Step 1: Implementar `crearPanelSubtitulos`** con un texto de ejemplo fijo ("Texto de ejemplo") dibujado en un canvas 2D, usado como `CanvasTexture` sobre un `PlaneGeometry`.
-- [ ] **Step 2: Implementar `habilitarArrastre`**: un único listener de "selección" que sirve tanto para el evento `select` de WebXR (mano/control) como para `mousedown`+`mousemove` en el modo de vista previa, moviendo el objeto mientras está activo y aplicando `limitarPosicion` en cada frame.
-- [ ] **Step 3: Conectar en `js/visor/main.js`**: crear el panel de subtítulos y habilitar su arrastre.
-- [ ] **Step 4: Verificar manualmente en la vista previa de escritorio**: hacer click y arrastrar el panel, confirmar que se mueve y que no puede salir de los límites definidos.
-- [ ] **Step 5: Avisar al dueño del proyecto para probar en el Quest**: con la mano (pellizco) y con el control (gatillo), agarrar y mover el panel de subtítulos.
-- [ ] **Step 6: Commit**
+- [ ] **Step 2: Implementar `enEventoSeleccion`**: un único punto de entrada para los eventos `select`/`selectstart`/`selectend` de la XRSession (mano o control) y para `mousedown`/`mouseup` en el modo de vista previa, normalizados a un mismo callback con origen/dirección del rayo.
+- [ ] **Step 3: Implementar `habilitarArrastre`** sobre `enEventoSeleccion`: mientras el objeto está agarrado, lo mueve siguiendo el rayo (o el mouse) y aplica `limitarPosicion` en cada frame.
+- [ ] **Step 4: Conectar en `js/visor/main.js`**: crear el panel de subtítulos y habilitar su arrastre.
+- [ ] **Step 5: Verificar manualmente en la vista previa de escritorio**: hacer click y arrastrar el panel, confirmar que se mueve y que no puede salir de los límites definidos.
+- [ ] **Step 6: Avisar al dueño del proyecto para probar en el Quest**: con la mano (pellizco) y con el control (gatillo), agarrar y mover el panel de subtítulos.
+- [ ] **Step 7: Commit**
 
 ```bash
 git add js/visor/paneles/panel-subtitulos.js js/visor/interaccion.js js/visor/main.js
@@ -162,7 +164,7 @@ git commit -m "feat: panel de subtitulos arrastrable en RA y en vista previa"
 
 **Interfaces:**
 - Produces: `const PANTALLAS = ['reconocimiento','bienvenida','menu','subtitulos','imagenes','mapa','aviso','pausa','vuelta','resumen']`
-- Produces: `function estadoPorDefecto(): {pantalla, avisoActivo, pausaActiva, tiempoVueltaMin, temasGuardados, resetId}`
+- Produces: `function estadoPorDefecto(): {pantalla, tiempoVueltaMin, resetId}` — el aviso y la pausa no son flags aparte: son simplemente `pantalla === 'aviso'` / `pantalla === 'pausa'`, ya cubiertos por `PANTALLAS`.
 - Produces: `function aplicarComando(estadoActual, comando): nuevoEstado` — valida `comando` (campos conocidos, `pantalla` dentro de `PANTALLAS`, tipos esperados); si `comando` es inválido o desconocido, devuelve `estadoActual` sin cambios.
 
 - [ ] **Step 1: Escribir los tests que fallan**
@@ -241,10 +243,10 @@ git commit -m "feat: pantallas de reconocimiento y bienvenida con navegacion de 
 - Modify: `js/visor/main.js`
 
 **Interfaces:**
-- Consumes: `habilitarArrastre`/mecanismo de selección de `js/visor/interaccion.js` (reutilizar solo la detección de "selección", no el arrastre) para detectar el click/pellizco/gatillo sobre cada opción.
+- Consumes: `enEventoSeleccion` de `js/visor/interaccion.js` (Task 4) para detectar el click/pellizco/gatillo sobre cada opción.
 - Produces: `function crearPantallaMenu(onSeleccionar: (opcion: 'subtitulos'|'imagenes'|'mapa') => void): THREE.Object3D` — tres botones (subtítulos, imágenes, mapa conceptual); al seleccionar uno, llama a `onSeleccionar`.
 
-- [ ] **Step 1: Implementar `crearPantallaMenu`** con tres paneles de texto clickeables ("Subtítulos", "Imágenes", "Mapa conceptual"), usando raycasting desde el puntero de selección (mano/control/mouse) para detectar cuál fue tocado.
+- [ ] **Step 1: Implementar `crearPantallaMenu`** con tres paneles de texto clickeables ("Subtítulos", "Imágenes", "Mapa conceptual"); suscribirse con `enEventoSeleccion` y hacer raycasting del rayo recibido contra los tres paneles para detectar cuál fue tocado.
 - [ ] **Step 2: Conectar en `js/visor/main.js`**: al seleccionar una opción del menú, `estadoActual = aplicarComando(estadoActual, { pantalla: opcion })`.
 - [ ] **Step 3: Verificar manualmente en la vista previa**: navegar a "menu" con la tecla de dev, hacer click en cada opción, confirmar que cambia a la pantalla correspondiente.
 - [ ] **Step 4: Commit**
@@ -333,9 +335,9 @@ git commit -m "feat: pantalla de subtitulos con contenido real y tamano persiste
 - Modify: `js/visor/main.js`
 
 **Interfaces:**
-- Consumes: `limitarPosicion` (Task 3), mecanismo de selección/arrastre (Task 4).
+- Consumes: `limitarPosicion` (Task 3), `habilitarArrastre` y `enEventoSeleccion` de `js/visor/interaccion.js` (Task 4).
 - Modifies: agrega a `js/common/persistencia.js` las funciones `function guardarPosicionImagen(estado, idImagen, posicion): nuevoEstado` y `function guardarEscalaImagen(estado, idImagen, escala): nuevoEstado` (escala clampada entre `TAMANO_MIN` y `TAMANO_MAX`).
-- Produces (`js/visor/paneles/pantalla-imagenes.js`): `function crearPantallaImagenes(rutasImagenes: string[], persistencia, onMoverImagen, onEscalarImagen, onVerMas): THREE.Object3D` — crea un plano con textura por cada imagen visible, restaura su posición/escala desde `persistencia.imagenes`, y expone un botón "Ver más imágenes".
+- Produces (`js/visor/paneles/pantalla-imagenes.js`): `function crearPantallaImagenes(rutasImagenes: string[], persistencia, onMoverImagen, onEscalarImagen, onVerMas): THREE.Object3D` — crea un plano con textura por cada imagen visible, restaura su posición/escala desde `persistencia.imagenes`, la hace arrastrable con `habilitarArrastre` (Task 4) para moverla, agrega botones "+"/"-" junto a la imagen (mismo patrón que el ajuste de tamaño de subtítulos de la Task 8, **no** un gesto de pellizco de dos manos) para escalarla vía `onEscalarImagen`, y expone un botón "Ver más imágenes".
 
 - [ ] **Step 1: Buscar y descargar a `assets/imagenes/` entre 6 y 10 imágenes de dominio público o Creative Commons de Wikimedia Commons sobre la caída del Imperio romano** (mapas, pinturas, ilustraciones históricas).
 - [ ] **Step 2: Escribir `CREDITS.md`** con autor, fuente (URL de Wikimedia Commons) y licencia exacta de cada imagen descargada.
@@ -360,7 +362,7 @@ test('guardarEscalaImagen no supera el maximo', () => {
 - [ ] **Step 4: Correr `node --test test/persistencia.imagenes.test.mjs` y confirmar que falla.**
 - [ ] **Step 5: Implementar `guardarPosicionImagen` y `guardarEscalaImagen` en `persistencia.js`.**
 - [ ] **Step 6: Correr el test y confirmar que pasa.**
-- [ ] **Step 7: Implementar `crearPantallaImagenes`**, reutilizando el mecanismo de arrastre de `interaccion.js` para mover/escalar cada imagen, llamando a `onMoverImagen`/`onEscalarImagen` en cada cambio; mostrar inicialmente 3-4 imágenes y el resto al tocar "Ver más imágenes".
+- [ ] **Step 7: Implementar `crearPantallaImagenes`**: cada imagen se mueve con `habilitarArrastre` (llamando a `onMoverImagen` en cada cambio) y se escala con sus botones "+"/"-" (llamando a `onEscalarImagen`); mostrar inicialmente 3-4 imágenes y el resto al tocar "Ver más imágenes".
 - [ ] **Step 8: Conectar en `js/visor/main.js`.**
 - [ ] **Step 9: Verificar manualmente en la vista previa**: mover y agrandar una imagen, cambiar a otra pantalla y volver a imágenes, confirmar que la posición/tamaño se mantuvo.
 - [ ] **Step 10: Commit**
@@ -498,7 +500,7 @@ git commit -m "feat: pantalla de pausa activa con contador en vivo"
 - Produces: `function crearPantallaVuelta(minutos: number, temas: number, onSeguirClase: ()=>void, onVerResumen: ()=>void): THREE.Object3D` — muestra `formatearTextoVuelta(minutos, temas)` y los dos botones literales `"Seguir con la clase"` / `"Ver un resumen rápido"`.
 
 - [ ] **Step 1: Implementar `crearPantallaVuelta`.**
-- [ ] **Step 2: Conectar en `js/visor/main.js`**: al salir de `pausa` (por ahora con una tecla de dev que simula "terminar pausa"), calcular minutos con `minutosTranscurridos(inicioMs, Date.now())`, usar `temasGuardados` del `estadoActual` (por ahora un valor fijo de ejemplo, p. ej. 2, hasta que el panel real lo controle en la Etapa 4), y mostrar la pantalla `vuelta`.
+- [ ] **Step 2: Conectar en `js/visor/main.js`**: al salir de `pausa` (por ahora con una tecla de dev que simula "terminar pausa"), calcular minutos con `minutosTranscurridos(inicioMs, Date.now())`, usar una constante fija `TEMAS_PENDIENTES_EJEMPLO = 2` definida en este mismo módulo (el spec solo pide que el observador pueda ajustar el tiempo mostrado, nunca la cantidad de temas), y mostrar la pantalla `vuelta`.
 - [ ] **Step 3: Conectar los botones**: `onSeguirClase` vuelve a la pantalla donde estaba antes de pausar; `onVerResumen` va a `resumen`.
 - [ ] **Step 4: Verificar manualmente en la vista previa**: terminar una pausa de unos segundos, confirmar que el texto de minutos/temas es correcto y que ambos botones navegan bien.
 - [ ] **Step 5: Commit**
@@ -542,7 +544,7 @@ git commit -m "feat: pantalla de resumen rapido y verificacion de persistencia e
 - Test: `test/firebase-mensajes.test.mjs`
 
 **Interfaces:**
-- Produces: `function construirComandoPantalla(pantalla: string): object`, `function construirComandoAviso(activo: boolean): object`, `function construirComandoPausa(activa: boolean): object`, `function construirComandoTiempoVuelta(minutos: number): object` (sanea valores no numéricos/negativos a `0` antes de construir el comando), `function construirComandoReset(): object` (incluye un `resetId` incremental), `function nodoRaizFirebase(): string` (devuelve `'estado'`, el único nodo usado).
+- Produces: `function construirComandoPantalla(pantalla: string): object`, `function construirComandoTiempoVuelta(minutos: number): object` (sanea valores no numéricos/negativos a `0` antes de construir el comando), `function construirComandoReset(): object` (incluye un `resetId` incremental), `function nodoRaizFirebase(): string` (devuelve `'estado'`, el único nodo usado). No hace falta un comando aparte para "aviso" o "pausa": ambos son, simplemente, `construirComandoPantalla('aviso')` / `construirComandoPantalla('pausa')` (ver Task 5).
 
 - [ ] **Step 1: Escribir los tests que fallan**
 
@@ -586,12 +588,12 @@ git commit -m "feat: modulo de mensajes de firebase con saneamiento defensivo"
 - Modify: `.gitignore` (ignorar `js/config/firebase-config.js`, el archivo real con credenciales)
 
 **Interfaces:**
-- Consumes: `aplicarComando` (Task 5), `firebaseConfig` desde `js/config/firebase-config.js` (no versionado).
-- Produces: `function escucharEstadoFirebase(onNuevoComando: (comando: object) => void): void` — importa el SDK modular de Firebase desde el CDN, conecta a Realtime Database, y llama a `onNuevoComando` con el valor crudo del nodo `'estado'` en cada cambio (la validación/aplicación segura queda en `aplicarComando`, Task 5 — así se reutiliza la defensa contra comandos corruptos).
+- Consumes: `aplicarComando` (Task 5), `nodoRaizFirebase` (Task 15), `firebaseConfig` desde `js/config/firebase-config.js` (no versionado).
+- Produces: `function escucharEstadoFirebase(onNuevoComando: (comando: object) => void): void` — importa el SDK modular de Firebase desde el CDN, conecta a Realtime Database, y llama a `onNuevoComando` con el valor crudo del nodo que nombra `nodoRaizFirebase()` en cada cambio (la validación/aplicación segura queda en `aplicarComando`, Task 5 — así se reutiliza la defensa contra comandos corruptos).
 
 - [ ] **Step 1: Crear `js/config/firebase-config.ejemplo.js`** con la forma esperada de `firebaseConfig` (valores de ejemplo, comentario explicando que hay que copiarlo a `firebase-config.js` con los valores reales).
 - [ ] **Step 2: Agregar `js/config/firebase-config.js` a `.gitignore`.**
-- [ ] **Step 3: Implementar `escucharEstadoFirebase`** importando `firebase-app.js` y `firebase-database.js` desde `https://www.gstatic.com/firebasejs/` (SDK modular v10), usando `onValue` sobre la referencia del nodo `'estado'`.
+- [ ] **Step 3: Implementar `escucharEstadoFirebase`** importando `firebase-app.js` y `firebase-database.js` desde `https://www.gstatic.com/firebasejs/` (SDK modular v10), usando `onValue` sobre la referencia del nodo que nombra `nodoRaizFirebase()`.
 - [ ] **Step 4: Reemplazar en `js/visor/main.js`** el uso de `navegacion-dev.js` por `escucharEstadoFirebase`: cada comando recibido pasa por `aplicarComando(estadoActual, comando)` antes de actualizar la UI (esto es lo que protege contra comandos corruptos o con campos inesperados — Review Focus).
 - [ ] **Step 5: Verificar manualmente**: pegar el `firebaseConfig` real del dueño del proyecto en `js/config/firebase-config.js`, escribir manualmente un valor de prueba en la consola de Firebase, confirmar en la vista previa que el visor reacciona.
 - [ ] **Step 6: Commit**
@@ -609,11 +611,11 @@ git commit -m "feat: integracion de firebase realtime database en el visor"
 - Create: `css/panel.css`
 
 **Interfaces:**
-- Consumes: `construirComandoPantalla`, `construirComandoAviso`, `construirComandoPausa`, `construirComandoTiempoVuelta`, `construirComandoReset`, `nodoRaizFirebase` (Task 15); mismo `firebaseConfig` que el visor (Task 16).
-- Produces: interfaz web con un botón por cada valor de `PANTALLAS` (Task 5), un botón "Disparar aviso", botones "Iniciar pausa"/"Terminar pausa", un input numérico para "tiempo mostrado en la vuelta" con botón "Aplicar", y un botón "Reiniciar todo".
+- Consumes: `construirComandoPantalla`, `construirComandoTiempoVuelta`, `construirComandoReset`, `nodoRaizFirebase` (Task 15); mismo `firebaseConfig` que el visor (Task 16).
+- Produces: interfaz web con un botón por cada valor de `PANTALLAS` (Task 5) — entre ellos, "Disparar aviso" es simplemente el botón de la pantalla `aviso`, e "Iniciar pausa"/"Terminar pausa" son los botones de las pantallas `pausa`/`vuelta` —, más un input numérico para "tiempo mostrado en la vuelta" con botón "Aplicar", y un botón "Reiniciar todo".
 
 - [ ] **Step 1: Crear `panel.html`** con los controles de arriba, enlazando `js/panel/main.js` como módulo.
-- [ ] **Step 2: Implementar `js/panel/main.js`**: conecta a Firebase con el mismo `firebaseConfig`; cada botón arma su comando con la función correspondiente de `firebase-mensajes.js` y lo escribe (`set`) en el nodo `'estado'`, combinando con el valor previo (no pisar campos que no cambiaron).
+- [ ] **Step 2: Implementar `js/panel/main.js`**: conecta a Firebase con el mismo `firebaseConfig`; cada botón de pantalla llama a `construirComandoPantalla(pantalla)`, "Aplicar" tiempo llama a `construirComandoTiempoVuelta(minutos)`, y "Reiniciar todo" llama a `construirComandoReset()`; cada comando se escribe (`set`) en el nodo `'estado'`, combinado con el valor previo (no pisar campos que no cambiaron).
 - [ ] **Step 3: Aplicar el estilo cálido/ámbar básico de `css/panel.css`** (puede ser simple en esta etapa; el pulido fino es la Etapa 5).
 - [ ] **Step 4: Verificar manualmente**: abrir `panel.html` en el celular y `index.html` en la vista previa de la compu (o en el Quest) al mismo tiempo, confirmar que cada botón del panel mueve al visor a la pantalla/estado correcto.
 - [ ] **Step 5: Commit**
