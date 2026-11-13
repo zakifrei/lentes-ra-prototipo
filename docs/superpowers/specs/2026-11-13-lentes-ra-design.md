@@ -111,6 +111,31 @@ Importante: al volver de la pausa, el tamaño de subtítulo y la
 disposición de las imágenes que el usuario dejó antes de pausar se
 mantienen igual.
 
+### Persistencia de la configuración del usuario (decisión del builder)
+
+La página del visor no se recarga en ningún momento del recorrido: es
+una sola sesión WebXR corriendo de punta a punta mientras dura el test.
+Por eso el tamaño de subtítulo y la posición de las imágenes se
+guardan simplemente en memoria (variables de la app), no hace falta
+sincronizarlos por Firebase ni usar `localStorage`. El botón "reiniciar
+todo" del panel limpia esa memoria para que el próximo participante
+empiece de cero (el guion original dice "[Duplicar antes de usar]",
+o sea que se espera repetir el test con varias personas).
+
+### Contador de la pausa (decisión del builder)
+
+Son dos cosas distintas:
+
+- Durante la **pausa activa** (pantalla 7), un contador en vivo cuenta
+  los minutos transcurridos desde que arrancó la pausa.
+- En la **vuelta de la pausa** (pantalla 8), el texto "Estuviste X min
+  en pausa" se precarga con ese valor real, pero el observador puede
+  **sobreescribirlo** desde el panel antes de confirmar la vuelta (tal
+  como pedía la consigna original: "ajustar el tiempo que se muestra en
+  la vuelta"). Esto le da margen al observador para igualar el ejemplo
+  del guion ("Estuviste 6 min") sin depender de cronometrar la pausa al
+  segundo exacto.
+
 ## Interacción
 
 - Un único mecanismo de "selección" cubre mano (pellizco, `select` /
@@ -141,6 +166,16 @@ mantienen igual.
   para un test controlado. Las reglas de Firebase se configuran para
   permitir lectura/escritura simple en ese nodo (no datos sensibles
   reales de ninguna persona).
+- Proyecto de Firebase: lo crea el dueño del proyecto siguiendo una
+  guía paso a paso (cuenta de Google, Realtime Database en modo de
+  prueba); el builder recibe el `firebaseConfig` una vez creado.
+- Reconexión ante corte: si se cae la sesión WebXR o la conexión a
+  Firebase durante el test, **no se implementa reconexión automática**
+  (fuera de alcance para el plazo). El camino simple es que el
+  observador reinicie con el botón "reiniciar todo" y el usuario
+  vuelva a entrar a la sesión WebXR. Decisión del builder, priorizando
+  tiempo de desarrollo sobre robustez ante fallos de red poco
+  probables en una sala de test.
 
 ## Contenido de la clase (caída del Imperio romano)
 
