@@ -25,8 +25,13 @@ const ALTO_PANEL_POR_DEFECTO = 0.4;
 
 // Posición por defecto: más abajo que la altura típica de los ojos
 // (~1.6 m) y adelante, fuera del centro exacto del campo visual (mismo
-// criterio que `panel-subtitulos.js`).
-const POSICION_POR_DEFECTO = { x: 0, y: 1.35, z: -1.2 };
+// criterio que `panel-subtitulos.js`). Con `ALTO_PANEL_POR_DEFECTO = 0.4`,
+// el panel ocupa de y=0.9 a y=1.3: el borde superior queda a ~0.3 m por
+// debajo de la altura de ojos asumida, un margen de seguridad comparable
+// al de `panel-subtitulos.js` (borde superior a ~0.325 m de esa misma
+// altura) -- así alcanza incluso para usuarios con los ojos bastante más
+// bajos que 1.6 m.
+const POSICION_POR_DEFECTO = { x: 0, y: 1.1, z: -1.2 };
 
 const TAMANO_FUENTE_POR_DEFECTO = 48;
 
