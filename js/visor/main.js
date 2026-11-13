@@ -9,6 +9,7 @@ import { activarVistaPrevia } from '../vista-previa/control-mouse.js';
 import { crearPanelSubtitulos } from './paneles/panel-subtitulos.js';
 import { crearPantallaReconocimiento } from './paneles/pantalla-reconocimiento.js';
 import { crearPantallaBienvenida } from './paneles/pantalla-bienvenida.js';
+import { crearPantallaMenu } from './paneles/pantalla-menu.js';
 import { habilitarNavegacionDev } from './navegacion-dev.js';
 import { establecerCamaraVistaPrevia, habilitarArrastre } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
@@ -72,6 +73,14 @@ let estadoActual = estadoPorDefecto();
 const pantallasPorNombre = {
   reconocimiento: crearPantallaReconocimiento(),
   bienvenida: crearPantallaBienvenida(),
+  // Al elegir una opción del menú, el cambio de pantalla pasa siempre por
+  // `aplicarComando` (igual que el resto de los cambios de estado, y como
+  // pasará después con los comandos de Firebase): no se asigna
+  // `estadoActual.pantalla` a mano.
+  menu: crearPantallaMenu(renderizador, (opcion) => {
+    estadoActual = aplicarComando(estadoActual, { pantalla: opcion });
+    actualizarPantallaVisible();
+  }),
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 
