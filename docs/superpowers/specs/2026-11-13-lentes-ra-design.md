@@ -73,9 +73,10 @@ detalle visual.
   sorpresas el día de la prueba (alternativas descartadas: un servicio
   de WebSockets de terceros tipo Ably, y WebRTC peer-to-peer tipo
   PeerJS).
-- Sin acceso al Quest esta semana (el dueño del proyecto no lo tiene a
-  mano): todo el desarrollo se valida primero en el modo de vista previa
-  de escritorio, y se confirma en el visor cuando esté disponible.
+- El dueño del proyecto ya tiene acceso a los Quest y a wifi confiable
+  para probar (la wifi de la facultad). Aun así, cada etapa se valida
+  primero en el modo de vista previa de escritorio para iterar rápido,
+  y se confirma en el visor real antes de pasar a la siguiente etapa.
 - Idioma de interfaz y comentarios de código: español.
 - Los textos de cada pantalla deben salir **tal cual** del guion (ver
   "Textos literales del guion" más abajo).
