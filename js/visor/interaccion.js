@@ -1,16 +1,19 @@
 // Punto único de entrada para los eventos de "selección": el gesto que en
 // RA dispara la mano (pellizco) o el control (gatillo) -- eventos
-// 'selectstart'/'selectend' de la XRSession -- y que en la vista previa de
-// escritorio dispara un click con el mouse sobre el canvas. Todo el
-// proyecto debe detectar ese gesto a través de `enEventoSeleccion`: no debe
-// existir un segundo camino de entrada en paralelo a éste (lo van a
-// reutilizar, por ejemplo, los botones del menú y los botones de escala de
-// imágenes en tareas futuras).
+// 'selectstart'/'select'/'selectend' de la XRSession -- y que en la vista
+// previa de escritorio dispara un click con el mouse sobre el canvas. Todo
+// el proyecto debe detectar ese gesto a través de las funciones de este
+// archivo: no debe existir un segundo camino de entrada en paralelo a éste
+// (lo van a reutilizar, por ejemplo, los botones del menú y los botones de
+// escala de imágenes en tareas futuras).
 //
-// `habilitarArrastre` está construida encima de `enEventoSeleccion`: no
-// agrega un mecanismo de selección nuevo, sólo decide -- con un raycast --
-// si el gesto empezó sobre el objeto que hay que arrastrar, y lo mueve
-// mientras sigue agarrado.
+// Hay dos formas de consumir ese único mecanismo, según lo que necesite
+// quien lo usa, pero las dos están armadas sobre la misma función privada
+// `escucharFuentesDeSeleccion` (mismos listeners de bajo nivel):
+// - `enEventoSeleccion`: gesto completo, dispara una sola vez (para taps
+//   simples, como un botón de menú).
+// - `enArrastreDeSeleccion`: seguimiento de un gesto sostenido (para
+//   arrastrar algo). `habilitarArrastre`, acá abajo, es el ejemplo de uso.
 
 import * as THREE from '../../vendor/three/three.module.js';
 import { limitarPosicion } from '../common/arrastre.js';
@@ -73,57 +76,67 @@ function calcularRayoDeMouse() {
 }
 
 /**
- * Registra `callback` para cada evento de selección del proyecto: pellizco
- * de mano o gatillo de control en una sesión WebXR ('selectstart' /
- * 'selectend', sobre cualquiera de los dos controles/manos), o click con el
- * mouse sobre el canvas en la vista previa de escritorio ('pointerdown' /
- * 'pointerup'). Es la única fuente de eventos de selección del proyecto.
+ * Mecanismo de bajo nivel, privado, compartido por `enEventoSeleccion` y
+ * `enArrastreDeSeleccion`: conecta los mismos eventos nativos (controles /
+ * manos de WebXR, mouse de la vista previa) a los tres momentos posibles
+ * de un gesto de selección.
  *
- * `callback` se invoca como `callback(origen, direccion, fase, contexto)`:
- * - `origen` y `direccion` describen el rayo de selección en el momento
- *   del evento, como objetos planos `{x,y,z}` (no instancias de
- *   `THREE.Vector3`, para no acoplar a quien escucha con Three.js).
- * - `fase` es `'inicio'` (empieza el gesto: selectstart / pointerdown) o
- *   `'fin'` (termina: selectend / pointerup).
- * - `contexto.obtenerRayoActual()` devuelve el rayo *actual* de esa misma
- *   fuente (el mismo control/mano o el mismo mouse) en cualquier momento
- *   posterior, no sólo en el instante del evento. Pensado para usarse en
- *   cada frame mientras el gesto sigue activo, ya que WebXR no tiene un
- *   evento de "select" continuo (`habilitarArrastre`, más abajo, es el
- *   ejemplo de uso).
- * - Si `callback` devuelve `true` en `fase: 'inicio'`, "reclama" el gesto:
- *   para el mouse, evita que el mismo click además dispare el orbit de
- *   `OrbitControls` (ver `js/vista-previa/control-mouse.js`), que escucha
- *   'pointerdown' sobre el mismo elemento.
+ * - `alPresionar(origen, direccion, contexto)` *(opcional)*: empieza el
+ *   gesto -- `selectstart` del control/mano, `pointerdown` del mouse. Si
+ *   devuelve `true`, "reclama" el gesto: para el mouse evita que el mismo
+ *   click además dispare el orbit de `OrbitControls` (que escucha
+ *   `pointerdown` sobre el mismo elemento).
+ * - `alMover(origen, direccion, contexto)` *(opcional)*: el rayo de la
+ *   fuente que está presionada se actualiza. En los controles/manos esto
+ *   llega del evento `'move'` que `WebXRController.update()` despacha en
+ *   *cada cuadro* de la sesión XR en el que esa fuente tiene una pose
+ *   válida (`vendor/three/three.core.js`, línea ~14019) -- no hace falta
+ *   que el usuario mueva la mano para que se dispare, con sostenerla ya
+ *   alcanza. El mouse no tiene un evento por-cuadro equivalente (sólo se
+ *   entera cuando el sistema operativo le avisa que se movió), así que se
+ *   lo simula escuchando `pointermove`.
+ * - `alSoltar(origen, direccion, contexto)` *(obligatorio)*: termina el
+ *   gesto -- `selectend` del control/mano, `pointerup` del mouse (en
+ *   `window`, para terminar igual si soltó fuera del canvas).
  *
- * @param {THREE.WebGLRenderer} renderer
- * @param {(origen:{x:number,y:number,z:number}, direccion:{x:number,y:number,z:number}, fase:('inicio'|'fin'), contexto:{obtenerRayoActual:() => {origen:{x:number,y:number,z:number},direccion:{x:number,y:number,z:number}}}) => (boolean|void)} callback
- * @returns {() => void} función para des-registrar el callback
+ * `contexto.obtenerRayoActual()` devuelve el rayo *actual* de esa misma
+ * fuente en cualquier momento posterior (no sólo en el instante del
+ * evento que se está procesando); es la misma identidad de `contexto` en
+ * los tres callbacks para una fuente dada, así que sirve para reconocer
+ * "la misma mano/control/mouse que empezó el gesto" en `alSoltar`.
+ *
+ * @returns {() => void} función para des-registrar todos los listeners
  */
-export function enEventoSeleccion(renderer, callback) {
+function escucharFuentesDeSeleccion(renderer, { alPresionar, alMover, alSoltar }) {
   const controladores = [renderer.xr.getController(0), renderer.xr.getController(1)];
   const manejadoresControlador = [];
 
   controladores.forEach((controlador) => {
-    // Un `contexto` estable por controlador: así `habilitarArrastre` puede
-    // reconocer, en el evento 'fin', que es la misma fuente que lo agarró.
+    // Un `contexto` estable por controlador: así se puede reconocer, en
+    // `alSoltar`, que es la misma fuente que iniciò el gesto.
     const contexto = {
       obtenerRayoActual: () => calcularRayoDeControlador(controlador),
     };
 
-    const alIniciar = () => {
+    const alSelectStart = () => {
+      if (!alPresionar) return;
       const rayo = contexto.obtenerRayoActual();
-      callback(rayo.origen, rayo.direccion, 'inicio', contexto);
+      alPresionar(rayo.origen, rayo.direccion, contexto);
     };
-    const alTerminar = () => {
+    const alSelectEnd = () => {
       const rayo = contexto.obtenerRayoActual();
-      callback(rayo.origen, rayo.direccion, 'fin', contexto);
+      alSoltar(rayo.origen, rayo.direccion, contexto);
+    };
+    const alMoverControlador = () => {
+      const rayo = contexto.obtenerRayoActual();
+      alMover(rayo.origen, rayo.direccion, contexto);
     };
 
-    controlador.addEventListener('selectstart', alIniciar);
-    controlador.addEventListener('selectend', alTerminar);
+    controlador.addEventListener('selectstart', alSelectStart);
+    controlador.addEventListener('selectend', alSelectEnd);
+    if (alMover) controlador.addEventListener('move', alMoverControlador);
 
-    manejadoresControlador.push({ controlador, alIniciar, alTerminar });
+    manejadoresControlador.push({ controlador, alSelectStart, alSelectEnd, alMoverControlador });
   });
 
   // Igual que para los controladores: un único `contexto` estable, para
@@ -132,16 +145,19 @@ export function enEventoSeleccion(renderer, callback) {
 
   function alMoverMouse(evento) {
     actualizarNdcMouseDesdeEvento(evento, renderer.domElement);
+    if (!alMover || renderer.xr.isPresenting || !camaraVistaPrevia) return;
+    const rayo = calcularRayoDeMouse();
+    alMover(rayo.origen, rayo.direccion, contextoMouse);
   }
 
   function alPresionarMouse(evento) {
     // Durante una sesión de RA activa, el mouse no es un camino de
     // selección válido (ver constante global: un solo mecanismo por modo).
-    if (renderer.xr.isPresenting || !camaraVistaPrevia) return;
+    if (!alPresionar || renderer.xr.isPresenting || !camaraVistaPrevia) return;
 
     actualizarNdcMouseDesdeEvento(evento, renderer.domElement);
     const rayo = calcularRayoDeMouse();
-    const reclamado = callback(rayo.origen, rayo.direccion, 'inicio', contextoMouse);
+    const reclamado = alPresionar(rayo.origen, rayo.direccion, contextoMouse);
 
     if (reclamado) {
       evento.stopImmediatePropagation();
@@ -153,25 +169,80 @@ export function enEventoSeleccion(renderer, callback) {
     if (renderer.xr.isPresenting || !camaraVistaPrevia) return;
 
     const rayo = calcularRayoDeMouse();
-    callback(rayo.origen, rayo.direccion, 'fin', contextoMouse);
+    alSoltar(rayo.origen, rayo.direccion, contextoMouse);
   }
 
-  // 'pointerdown' en el canvas (para saber dónde arrancó el click), pero
-  // 'pointerup' en window: si el usuario suelta el botón fuera del canvas
-  // el arrastre tiene que terminar igual, para no dejar nada "pegado".
+  // 'pointerdown'/'pointermove' en el canvas, pero 'pointerup' en window:
+  // si el usuario suelta el botón fuera del canvas el gesto tiene que
+  // terminar igual, para no dejar nada "pegado".
   renderer.domElement.addEventListener('pointermove', alMoverMouse);
   renderer.domElement.addEventListener('pointerdown', alPresionarMouse);
   window.addEventListener('pointerup', alSoltarMouse);
 
   return function desregistrar() {
-    manejadoresControlador.forEach(({ controlador, alIniciar, alTerminar }) => {
-      controlador.removeEventListener('selectstart', alIniciar);
-      controlador.removeEventListener('selectend', alTerminar);
+    manejadoresControlador.forEach(({ controlador, alSelectStart, alSelectEnd, alMoverControlador }) => {
+      controlador.removeEventListener('selectstart', alSelectStart);
+      controlador.removeEventListener('selectend', alSelectEnd);
+      if (alMover) controlador.removeEventListener('move', alMoverControlador);
     });
     renderer.domElement.removeEventListener('pointermove', alMoverMouse);
     renderer.domElement.removeEventListener('pointerdown', alPresionarMouse);
     window.removeEventListener('pointerup', alSoltarMouse);
   };
+}
+
+/**
+ * Registra `callback` para cada gesto de selección *completo* del
+ * proyecto: pellizco de mano o gatillo de control en una sesión WebXR
+ * ('selectend'), o click con el mouse sobre el canvas en la vista previa
+ * de escritorio ('pointerup'). Es la fuente de selección de "un solo
+ * disparo" del proyecto -- pensada para taps simples, como un botón de
+ * menú, que no necesitan distinguir el inicio del gesto ni seguirlo
+ * mientras se sostiene.
+ *
+ * Se llama exactamente una vez por gesto, en el momento en que termina (el
+ * "tap" ya completo), como `callback(origen, direccion)`: el rayo de
+ * selección en ese instante, como objetos planos `{x,y,z}` (no instancias
+ * de `THREE.Vector3`, para no acoplar a quien escucha con Three.js).
+ *
+ * Si en cambio necesitás **seguir** el gesto mientras sigue sostenido (por
+ * ejemplo para arrastrar algo), no uses esta función: usá
+ * `enArrastreDeSeleccion`. Las dos comparten el mismo mecanismo de bajo
+ * nivel (`escucharFuentesDeSeleccion`); no hay un segundo camino de
+ * entrada paralelo.
+ *
+ * @param {THREE.WebGLRenderer} renderer
+ * @param {(origen:{x:number,y:number,z:number}, direccion:{x:number,y:number,z:number}) => void} callback
+ * @returns {() => void} función para des-registrar el callback
+ */
+export function enEventoSeleccion(renderer, callback) {
+  return escucharFuentesDeSeleccion(renderer, {
+    alSoltar: (origen, direccion) => callback(origen, direccion),
+  });
+}
+
+/**
+ * Registra el seguimiento de un gesto de selección mientras se mantiene
+ * sostenido (mano/control mantenidos, o mouse con el botón apretado).
+ * Construida sobre el mismo mecanismo de bajo nivel que `enEventoSeleccion`
+ * (ver `escucharFuentesDeSeleccion`): no agrega un camino de entrada nuevo,
+ * sólo expone sus tres momentos (inicio / movimiento / fin) en vez de
+ * colapsarlos en un solo disparo.
+ *
+ * @param {THREE.WebGLRenderer} renderer
+ * @param {{
+ *   alIniciar: (origen:{x:number,y:number,z:number}, direccion:{x:number,y:number,z:number}, contexto:{obtenerRayoActual:Function}) => (boolean|void),
+ *   alMover?: (origen:{x:number,y:number,z:number}, direccion:{x:number,y:number,z:number}, contexto:{obtenerRayoActual:Function}) => void,
+ *   alTerminar: (origen:{x:number,y:number,z:number}, direccion:{x:number,y:number,z:number}, contexto:{obtenerRayoActual:Function}) => void,
+ * }} manejadores
+ * @returns {() => void} función para des-registrar
+ */
+export function enArrastreDeSeleccion(renderer, { alIniciar, alMover, alTerminar }) {
+  return escucharFuentesDeSeleccion(renderer, {
+    alPresionar: alIniciar,
+    alMover,
+    alSoltar: alTerminar,
+  });
 }
 
 const raycasterArrastre = new THREE.Raycaster();
@@ -180,14 +251,11 @@ const vectorDireccionArrastre = new THREE.Vector3();
 
 /**
  * Habilita el arrastre de `objeto`: mientras está agarrado (seleccionado y
- * mantenido, con la mano, el control o el mouse, vía `enEventoSeleccion`),
- * lo mueve siguiendo el rayo de selección -- a la misma distancia del
- * origen a la que estaba cuando se lo agarró -- y aplica `limitarPosicion`
- * en cada frame.
- *
- * El "cada frame" se logra con `objeto.onBeforeRender`, que Three.js llama
- * justo antes de dibujar el objeto en cada cuadro (en RA y en escritorio
- * por igual), sin depender del bucle de animación de `main.js`.
+ * mantenido, con la mano, el control o el mouse, vía
+ * `enArrastreDeSeleccion`), lo mueve siguiendo el rayo de selección -- a la
+ * misma distancia del origen a la que estaba cuando se lo agarró -- y
+ * aplica `limitarPosicion` cada vez que el rayo se actualiza (en RA, en
+ * cada cuadro de la sesión; en escritorio, en cada movimiento del mouse).
  *
  * @param {THREE.WebGLRenderer} renderer
  * @param {THREE.Object3D} objeto
@@ -199,8 +267,21 @@ export function habilitarArrastre(renderer, objeto, limites) {
   // qué distancia del origen del rayo estaba el objeto en ese momento.
   let agarre = null;
 
-  const desregistrar = enEventoSeleccion(renderer, (origen, direccion, fase, contexto) => {
-    if (fase === 'inicio') {
+  function moverObjetoSiguiendoRayo(origen, direccion, distancia) {
+    vectorDireccionArrastre.set(direccion.x, direccion.y, direccion.z).normalize();
+
+    const posicionSeguida = {
+      x: origen.x + vectorDireccionArrastre.x * distancia,
+      y: origen.y + vectorDireccionArrastre.y * distancia,
+      z: origen.z + vectorDireccionArrastre.z * distancia,
+    };
+
+    const posicionLimitada = limitarPosicion(posicionSeguida, limites);
+    objeto.position.set(posicionLimitada.x, posicionLimitada.y, posicionLimitada.z);
+  }
+
+  return enArrastreDeSeleccion(renderer, {
+    alIniciar(origen, direccion, contexto) {
       if (agarre) return false; // ya está agarrado por otra fuente: ignorar
 
       vectorOrigenArrastre.set(origen.x, origen.y, origen.z);
@@ -210,35 +291,21 @@ export function habilitarArrastre(renderer, objeto, limites) {
       const impactos = raycasterArrastre.intersectObject(objeto, true);
       if (impactos.length === 0) return false; // el rayo no tocó el panel
 
-      agarre = { obtenerRayoActual: contexto.obtenerRayoActual, distancia: impactos[0].distance };
-      return true; // reclama el gesto (ver enEventoSeleccion)
-    }
+      agarre = { contexto, distancia: impactos[0].distance };
+      moverObjetoSiguiendoRayo(origen, direccion, agarre.distancia);
+      return true; // reclama el gesto (ver escucharFuentesDeSeleccion)
+    },
 
-    // fase === 'fin': sólo libera si quien suelta es quien lo agarró.
-    if (agarre && agarre.obtenerRayoActual === contexto.obtenerRayoActual) {
-      agarre = null;
-    }
+    alMover(origen, direccion, contexto) {
+      if (!agarre || agarre.contexto !== contexto) return;
+      moverObjetoSiguiendoRayo(origen, direccion, agarre.distancia);
+    },
+
+    alTerminar(origen, direccion, contexto) {
+      // Sólo libera si quien suelta es quien lo agarró.
+      if (agarre && agarre.contexto === contexto) {
+        agarre = null;
+      }
+    },
   });
-
-  objeto.onBeforeRender = () => {
-    if (!agarre) return;
-
-    const rayo = agarre.obtenerRayoActual();
-    vectorDireccionArrastre.set(rayo.direccion.x, rayo.direccion.y, rayo.direccion.z).normalize();
-
-    const posicionSeguida = {
-      x: rayo.origen.x + vectorDireccionArrastre.x * agarre.distancia,
-      y: rayo.origen.y + vectorDireccionArrastre.y * agarre.distancia,
-      z: rayo.origen.z + vectorDireccionArrastre.z * agarre.distancia,
-    };
-
-    const posicionLimitada = limitarPosicion(posicionSeguida, limites);
-    objeto.position.set(posicionLimitada.x, posicionLimitada.y, posicionLimitada.z);
-  };
-
-  return function deshabilitarArrastre() {
-    desregistrar();
-    objeto.onBeforeRender = () => {};
-    agarre = null;
-  };
 }
