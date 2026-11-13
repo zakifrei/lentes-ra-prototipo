@@ -27,8 +27,19 @@ export function iniciarBotonXR(renderizador, escena, camara) {
   }
 
   boton.addEventListener('click', async () => {
+    // Se declara aquí (y no con `const` dentro del try) para que el bloque
+    // catch pueda acceder a la sesión cruda si ya se llegó a crear.
+    let sesion;
     try {
-      const sesion = await navigator.xr.requestSession('immersive-ar', {
+      sesion = await navigator.xr.requestSession('immersive-ar', {
+        // 'local-floor' hay que pedirlo explícitamente: WebXRManager de
+        // Three.js (vendor/three/three.module.js) usa ese espacio de
+        // referencia por defecto dentro de setSession(), y
+        // session.requestReferenceSpace('local-floor') sólo puede
+        // resolverse si 'local-floor' se declaró como feature (requerida
+        // u opcional) al pedir la sesión. Si no se declara, setSession()
+        // rechaza su promesa aunque la sesión en sí ya esté activa.
+        requiredFeatures: ['local-floor'],
         optionalFeatures: ['hand-tracking'],
       });
 
@@ -44,6 +55,27 @@ export function iniciarBotonXR(renderizador, escena, camara) {
       boton.hidden = true;
     } catch (error) {
       console.error('No se pudo iniciar la sesión de RA:', error);
+
+      // Si requestSession() ya había creado la sesión cruda pero
+      // renderizador.xr.setSession() falló después (por ejemplo, porque no
+      // pudo negociar el espacio de referencia), la sesión queda activa en
+      // el casco sin que nada la esté dibujando: la persona se queda
+      // viendo una pantalla negra, sin forma de volver por su cuenta
+      // (no hay nada en pantalla con qué interactuar). Hay que cerrar esa
+      // sesión explícitamente para que el casco vuelva a la vista 2D
+      // normal, donde el botón "Entrar a RA" vuelve a estar disponible.
+      if (sesion) {
+        try {
+          await sesion.end();
+        } catch (errorAlCerrar) {
+          console.error(
+            'No se pudo cerrar la sesión de RA tras el error anterior:',
+            errorAlCerrar,
+          );
+        }
+      }
+
+      boton.hidden = false;
     }
   });
 
