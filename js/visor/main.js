@@ -6,6 +6,8 @@
 import * as THREE from '../../vendor/three/three.module.js';
 import { iniciarBotonXR } from './xr-sesion.js';
 import { activarVistaPrevia } from '../vista-previa/control-mouse.js';
+import { crearPanelSubtitulos } from './paneles/panel-subtitulos.js';
+import { establecerCamaraVistaPrevia, habilitarArrastre } from './interaccion.js';
 
 const canvas = document.getElementById('escena');
 const indicadorVistaPrevia = document.getElementById('indicador-vista-previa');
@@ -20,6 +22,10 @@ const camara = new THREE.PerspectiveCamera(
 );
 camara.position.set(0, 1.6, 3);
 
+// `interaccion.js` necesita la cámara para calcular el rayo del mouse en
+// la vista previa de escritorio (ver js/visor/interaccion.js).
+establecerCamaraVistaPrevia(camara);
+
 const renderizador = new THREE.WebGLRenderer({
   canvas,
   alpha: true,
@@ -31,6 +37,23 @@ renderizador.setClearColor(0x000000, 0);
 
 const luzAmbiental = new THREE.AmbientLight(0xffffff, 1);
 escena.add(luzAmbiental);
+
+// Panel de subtítulos: arrancamos con un texto de ejemplo fijo (los
+// subtítulos reales llegan en una tarea futura). Se registra el arrastre
+// ANTES de activar la vista previa de escritorio para que, al hacer click
+// sobre el panel, ese click quede "reclamado" (ver interaccion.js) y no
+// dispare además el orbit de OrbitControls.
+const panelSubtitulos = crearPanelSubtitulos('Texto de ejemplo');
+escena.add(panelSubtitulos);
+
+// Volumen cómodo y alcanzable frente al usuario: evita que el panel se
+// pueda arrastrar detrás de la cabeza, demasiado lejos, o pegado a la cara.
+const limitesPanelSubtitulos = {
+  x: [-1, 1],
+  y: [0.8, 2],
+  z: [-2, -0.3],
+};
+habilitarArrastre(renderizador, panelSubtitulos, limitesPanelSubtitulos);
 
 function alRedimensionar() {
   camara.aspect = window.innerWidth / window.innerHeight;
