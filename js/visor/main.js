@@ -64,12 +64,11 @@ const pantallasPorNombre = {
   reconocimiento: crearPantallaReconocimiento(),
   bienvenida: crearPantallaBienvenida(),
   // Al elegir una opción del menú, el cambio de pantalla pasa siempre por
-  // `aplicarComando` (igual que el resto de los cambios de estado, y como
-  // pasará después con los comandos de Firebase): no se asigna
-  // `estadoActual.pantalla` a mano.
+  // `cambiarPantalla` (ver más abajo) -- igual que el resto de los
+  // cambios de estado, y como pasará después con los comandos de
+  // Firebase -- así que no se asigna `estadoActual.pantalla` a mano.
   menu: crearPantallaMenu(renderizador, (opcion) => {
-    estadoActual = aplicarComando(estadoActual, { pantalla: opcion });
-    actualizarPantallaVisible();
+    cambiarPantalla(opcion);
   }),
   // Subtítulos reales (guion con información histórica, ver
   // js/common/subtitulos-guion.js), con tamaño ajustable y persistente
@@ -88,9 +87,28 @@ function actualizarPantallaVisible() {
 }
 actualizarPantallaVisible();
 
-habilitarNavegacionDev((pantalla) => {
-  estadoActual = aplicarComando(estadoActual, { pantalla });
+// Único punto de entrada para cambiar de pantalla (menú, navegación de
+// desarrollo y, a futuro, los comandos de Firebase): aplica el comando,
+// actualiza la visibilidad y, si la pantalla realmente cambió (no si
+// `aplicarComando` la rechazó, ni si ya estábamos en esa pantalla), le
+// avisa a la pantalla recién activada a través de su `alEntrar()`
+// opcional. Esto existe porque todas las pantallas se crean una sola vez
+// al arrancar la app (ver más arriba): una pantalla que necesite "hacer
+// algo" cada vez que el usuario entra de verdad (como reiniciar el reloj
+// del guion de subtítulos, o el futuro timer de pausa de las Tareas
+// 11/12) no puede hacerlo en su constructor, sólo acá.
+function cambiarPantalla(nuevaPantalla) {
+  const pantallaAnterior = estadoActual.pantalla;
+  estadoActual = aplicarComando(estadoActual, { pantalla: nuevaPantalla });
   actualizarPantallaVisible();
+
+  if (estadoActual.pantalla !== pantallaAnterior) {
+    pantallasPorNombre[estadoActual.pantalla]?.alEntrar?.();
+  }
+}
+
+habilitarNavegacionDev((pantalla) => {
+  cambiarPantalla(pantalla);
 });
 
 function alRedimensionar() {

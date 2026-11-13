@@ -101,7 +101,16 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   grupo.name = 'pantalla-subtitulos';
 
   let estadoLocal = { ...persistencia };
-  const inicio = performance.now();
+  // Reloj del guion: arranca en el momento en que se crea esta pantalla,
+  // pero eso pasa una sola vez al iniciar la app (todas las pantallas se
+  // crean de entrada -- ver main.js). Si el reloj no se reiniciara al
+  // entrar de verdad a esta pantalla, el participante podría llegar a una
+  // línea intermedia del guion (o directamente a la última, congelada)
+  // según cuánto haya tardado en pasar por reconocimiento/bienvenida/menú,
+  // rompiendo la ilusión de "clase en vivo". Por eso es `let`, no `const`:
+  // `alEntrar()`, más abajo, lo reinicia cada vez que `main.js` detecta
+  // que el usuario entró a esta pantalla.
+  let inicio = performance.now();
   let ultimoTextoDibujado = null;
   let ultimoTamanoDibujado = null;
 
@@ -184,6 +193,24 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
     redibujar();
     onCambiarTamano(delta);
   });
+
+  // Enganche genérico de "entró a esta pantalla": `main.js` lo llama cada
+  // vez que detecta una transición real hacia `'subtitulos'` (no al crear
+  // la pantalla, que pasa una sola vez al arrancar la app -- ver
+  // comentario junto a `inicio` más arriba). Reinicia el reloj del guion
+  // para que el participante vea siempre la línea 1 al entrar, y fuerza un
+  // redibujado inmediato (si no, se vería la línea vieja hasta el próximo
+  // tick de `INTERVALO_ACTUALIZACION_MS`). No toca `estadoLocal.tamanoSubtitulo`:
+  // el tamaño elegido sí es persistente entre entradas a la pantalla, sólo
+  // el guion se reinicia. El mismo patrón sirve, a futuro, para el timer de
+  // pausa (Tarea 11/12): cualquier pantalla puede exponer su propio
+  // `alEntrar()` sobre el `THREE.Object3D` que devuelve.
+  grupo.alEntrar = function alEntrarAPantallaSubtitulos() {
+    inicio = performance.now();
+    ultimoTextoDibujado = null;
+    ultimoTamanoDibujado = null;
+    redibujar();
+  };
 
   return grupo;
 }
