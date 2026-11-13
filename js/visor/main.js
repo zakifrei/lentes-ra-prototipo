@@ -6,13 +6,14 @@
 import * as THREE from '../../vendor/three/three.module.js';
 import { iniciarBotonXR } from './xr-sesion.js';
 import { activarVistaPrevia } from '../vista-previa/control-mouse.js';
-import { crearPanelSubtitulos } from './paneles/panel-subtitulos.js';
 import { crearPantallaReconocimiento } from './paneles/pantalla-reconocimiento.js';
 import { crearPantallaBienvenida } from './paneles/pantalla-bienvenida.js';
 import { crearPantallaMenu } from './paneles/pantalla-menu.js';
+import { crearPantallaSubtitulos } from './paneles/pantalla-subtitulos.js';
 import { habilitarNavegacionDev } from './navegacion-dev.js';
-import { establecerCamaraVistaPrevia, habilitarArrastre } from './interaccion.js';
+import { establecerCamaraVistaPrevia } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
+import { estadoPersistenciaInicial, ajustarTamanoSubtitulo } from '../common/persistencia.js';
 
 const canvas = document.getElementById('escena');
 const indicadorVistaPrevia = document.getElementById('indicador-vista-previa');
@@ -43,22 +44,11 @@ renderizador.setClearColor(0x000000, 0);
 const luzAmbiental = new THREE.AmbientLight(0xffffff, 1);
 escena.add(luzAmbiental);
 
-// Panel de subtítulos: arrancamos con un texto de ejemplo fijo (los
-// subtítulos reales llegan en una tarea futura). Se registra el arrastre
-// ANTES de activar la vista previa de escritorio para que, al hacer click
-// sobre el panel, ese click quede "reclamado" (ver interaccion.js) y no
-// dispare además el orbit de OrbitControls.
-const panelSubtitulos = crearPanelSubtitulos('Texto de ejemplo');
-escena.add(panelSubtitulos);
-
-// Volumen cómodo y alcanzable frente al usuario: evita que el panel se
-// pueda arrastrar detrás de la cabeza, demasiado lejos, o pegado a la cara.
-const limitesPanelSubtitulos = {
-  x: [-1, 1],
-  y: [0.8, 2],
-  z: [-2, -0.3],
-};
-habilitarArrastre(renderizador, panelSubtitulos, limitesPanelSubtitulos);
+// Estado persistente de preferencias del usuario (por ahora, sólo el
+// tamaño de subtítulos): vive acá, igual que `estadoActual`, y se
+// actualiza siempre con la función pura de `persistencia.js` -- nunca a
+// mano.
+let persistenciaActual = estadoPersistenciaInicial();
 
 // Pantallas estáticas (reconocimiento, bienvenida): se agregan las dos a
 // la escena desde el inicio y se alterna la visibilidad según
@@ -80,6 +70,13 @@ const pantallasPorNombre = {
   menu: crearPantallaMenu(renderizador, (opcion) => {
     estadoActual = aplicarComando(estadoActual, { pantalla: opcion });
     actualizarPantallaVisible();
+  }),
+  // Subtítulos reales (guion con información histórica, ver
+  // js/common/subtitulos-guion.js), con tamaño ajustable y persistente
+  // (ver js/common/persistencia.js): reemplaza al panel placeholder de
+  // una tarea anterior, que no estaba gateado por `estadoActual.pantalla`.
+  subtitulos: crearPantallaSubtitulos(renderizador, persistenciaActual, (delta) => {
+    persistenciaActual = ajustarTamanoSubtitulo(persistenciaActual, delta);
   }),
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
