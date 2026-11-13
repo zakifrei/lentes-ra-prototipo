@@ -20,10 +20,45 @@
       width: 100%;
       height: 100%;
     }
+
+    /* Botón "Entrar a RA" (creado por js/visor/xr-sesion.js) e indicador de
+       vista previa de escritorio: ambos flotan sobre el canvas. */
+    .boton-flotante {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      font-family: sans-serif;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #000000;
+      z-index: 10;
+    }
+
+    #indicador-vista-previa {
+      position: fixed;
+      left: 50%;
+      top: 16px;
+      transform: translateX(-50%);
+      padding: 6px 14px;
+      font-family: sans-serif;
+      font-size: 14px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #ffffff;
+      z-index: 10;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
   <canvas id="escena"></canvas>
+  <!-- Visible mientras no hay una sesión WebXR activa: avisa que se está
+       viendo la escena en modo de vista previa de escritorio. -->
+  <div id="indicador-vista-previa">Vista previa (mouse): arrastrá para orbitar</div>
   <script type="module" src="js/visor/main.js"></script>
 </body>
 </html>

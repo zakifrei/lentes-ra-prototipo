@@ -4,8 +4,11 @@
 // un navegador de escritorio sin WebXR se ve simplemente negro.
 
 import * as THREE from '../../vendor/three/three.module.js';
+import { iniciarBotonXR } from './xr-sesion.js';
+import { activarVistaPrevia } from '../vista-previa/control-mouse.js';
 
 const canvas = document.getElementById('escena');
+const indicadorVistaPrevia = document.getElementById('indicador-vista-previa');
 
 const escena = new THREE.Scene();
 
@@ -36,6 +39,24 @@ function alRedimensionar() {
 }
 window.addEventListener('resize', alRedimensionar);
 
+// Intenta WebXR primero (botón "Entrar a RA"); mientras no haya una sesión
+// activa, la vista previa de escritorio (orbitar con el mouse) queda
+// disponible como alternativa.
+const botonXR = iniciarBotonXR(renderizador, escena, camara);
+document.body.appendChild(botonXR);
+
+const controlesVistaPrevia = activarVistaPrevia(renderizador, camara, renderizador.domElement);
+
+renderizador.xr.addEventListener('sessionstart', () => {
+  controlesVistaPrevia.enabled = false;
+  if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = true;
+});
+renderizador.xr.addEventListener('sessionend', () => {
+  controlesVistaPrevia.enabled = true;
+  if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = false;
+});
+
 renderizador.setAnimationLoop(() => {
+  controlesVistaPrevia.update();
   renderizador.render(escena, camara);
 });
