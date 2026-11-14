@@ -703,3 +703,146 @@ git commit -m "feat: aplicar paleta y tipografia del moodboard a todas las panta
 git add README.md
 git commit -m "docs: instrucciones finales de uso para la prueba de usabilidad"
 ```
+
+---
+
+## Etapa 6 — Ajustes de la primera prueba real en dispositivos (Quest + panel)
+
+Surgen de probar el flujo completo (Etapas 1-4) por primera vez en el
+casco real y el panel en el celular. Se ejecutan ANTES de completar la
+Etapa 5 (pulido visual): son correcciones funcionales/UX, no estéticas,
+y afectan a pantallas que la Etapa 5 va a repintar de todas formas.
+
+Decisiones ya tomadas con el dueño del proyecto (no son para discutir
+de nuevo al ejecutar):
+- El botón de menú flotante (Task 25) aparece en todas las pantallas
+  EXCEPTO `aviso` y `pausa` (para no interrumpir esos momentos que el
+  observador controla a propósito).
+- El tiempo mostrado en "vuelta de la pausa" deja de ser real/ajustable:
+  pasa a ser SIEMPRE el texto fijo "Estuviste 5 min en pausa" (Task 26).
+  Esto revierte una funcionalidad ya construida y probada en la Etapa 4
+  (el cálculo real de minutos y el ajuste manual desde el panel) -- se
+  saca a propósito, no es un bug a medias arreglar.
+
+### Task 21: Pantalla de subtítulos -- posición, tamaño de botones, arrastre
+
+**Files:**
+- Modify: `js/visor/paneles/pantalla-subtitulos.js`
+
+**Interfaces:**
+- Consumes: `habilitarArrastre` (`js/visor/interaccion.js`, Task 4 -- mismo mecanismo que ya usa `pantalla-imagenes.js` para mover imágenes).
+
+- [ ] **Step 1: Bajar `POSICION_SUBTITULO.y`** lo suficiente para que el panel quede claramente por debajo del centro del campo visual (hoy en `y:1.2`, queda demasiado central en el casco real -- bajarlo a una altura similar a subtítulos de video real, ej. `y:0.95` a `1.0`; ajustar a ojo verificando en el Quest o la vista previa que no tape el centro).
+- [ ] **Step 2: Agrandar `ANCHO_BOTON`/`ALTO_BOTON`** de los botones "+"/"-" (hoy `0.12`, invisibles/intocables en el casco real) Y el `tamanoFuente` que se les pasa a `crearPanelTexto` para esos dos botones (hoy usan el default de `panel-texto.js`, 48px sobre un canvas de 1024px de ancho -- el glyph "+"/"-" ocupa una fracción mínima de ese canvas, así que incluso agrandando sólo el panel físico el símbolo se ve chico; hay que pasar un `tamanoFuente` bastante más grande, ej. 300-400px, para que el carácter llene gran parte del panel). Verificar visualmente (screenshot en la vista previa o el Quest) que el símbolo se lea bien, no sólo que el botón sea más grande.
+- [ ] **Step 3: Hacer el panel de subtítulos arrastrable**, igual mecanismo que las imágenes: `habilitarArrastre(renderer, panelSubtitulo, limites)`, con límites razonables (mismo criterio que `LIMITES_ARRASTRE` de `pantalla-imagenes.js`: alcanzable, sin llegar detrás de la cabeza ni pegado a la cara). La posición NO es persistente entre entradas a la pantalla (a diferencia de las imágenes) a menos que se decida sumarle persistencia -- por ahora, mantenerla simple: se puede mover, y si el usuario sale y vuelve a entrar a subtítulos, vuelve a la posición inicial (`alEntrar` no toca la posición, sólo el reloj del guion, que ya tiene ese comportamiento).
+- [ ] **Step 4: Confirmar (no es necesario cambiar código si ya funciona) que el guion avanza solo**: revisar `lineaActual()`/`GUION_SUBTITULOS` (`js/common/subtitulos-guion.js`) y `INTERVALO_ACTUALIZACION_MS` en este archivo -- si las líneas tienen tiempos de corte muy largos, el usuario de la prueba real puede haber tenido la sensación de que "no avanzan" simplemente por quedarse poco tiempo en la pantalla. Documentar en el reporte qué se encontró (si había o no un bug real) y, si los tiempos del guion son razonables pero muy largos para una prueba corta, se puede ajustar `GUION_SUBTITULOS` para que avance más seguido -- usar criterio, no es necesario pedir permiso para achicar los tiempos del guion.
+- [ ] **Step 5: Verificar manualmente** en la vista previa (arrastrar el panel con el mouse, confirmar posición más baja, confirmar que los botones se leen y se tocan bien).
+- [ ] **Step 6: Commit**
+
+```bash
+git add js/visor/paneles/pantalla-subtitulos.js
+git commit -m "fix: subtitulos mas abajo, botones +/- legibles y panel arrastrable"
+```
+
+### Task 22: Pantalla de imágenes -- 2 por página, botones más grandes
+
+**Files:**
+- Modify: `js/visor/paneles/pantalla-imagenes.js`
+
+- [ ] **Step 1: Cambiar `TAMANO_PAGINA` de 4 a 2** y `POSICIONES_GRILLA` de una grilla 2x2 a dos posiciones, una a cada lado del centro (ej. `{x:-0.6, y:1.2}` y `{x:0.6, y:1.2}`, fuera del centro del campo visual, a una altura cómoda -- no es necesario mantener las posiciones viejas, se reemplazan). Con 8 imágenes y 2 por página quedan 4 páginas en vez de 2; el botón "Ver más imágenes" ya rota entre todas sin cambios.
+- [ ] **Step 2: Agrandar `ANCHO_BOTON_ESCALA`/`ALTO_BOTON_ESCALA`** y pasarles un `tamanoFuente` explícito a los botones "+"/"-" de escala de imagen, mismo criterio y mismo motivo que el Task 21 Step 2 (el glyph se ve chico aunque el botón sea más grande, si no se agranda también el tamaño de fuente del canvas).
+- [ ] **Step 3: Verificar manualmente** en la vista previa: sólo 2 imágenes visibles por página, repartidas a los lados sin tapar el centro, botones de escala legibles.
+- [ ] **Step 4: Commit**
+
+```bash
+git add js/visor/paneles/pantalla-imagenes.js
+git commit -m "fix: 2 imagenes por pagina en vez de 4, botones de escala legibles"
+```
+
+### Task 23: Indicador visual de apuntado (rayo) para mano y control
+
+**Files:**
+- Modify: `js/visor/main.js`
+- Create o Modify: `js/visor/interaccion.js` (según convenga -- usar criterio)
+
+**Interfaces:**
+- Produces: alguna forma de que el usuario vea hacia dónde apunta (mano o control) dentro de la sesión WebXR real -- hoy no hay ningún indicador visual, sólo el raycasting lógico que ya usan `enEventoSeleccion`/`habilitarArrastre`.
+
+- [ ] **Step 1: Investigar el patrón estándar de Three.js para esto**: `renderer.xr.getController(0)`/`getController(1)` (y `getHand(0)`/`getHand(1)` si hace falta cubrir hand-tracking) devuelven objetos que Three.js ya posiciona/orienta según el input real de WebXR en cada cuadro -- agregarles como hijo un `THREE.Line` simple (geometría de dos puntos, `(0,0,0)` a `(0,0,-1)` o similar, con un material de color bien visible) sirve como "rayo láser" que automáticamente sigue la mano/control sin cálculo manual de pose. Confirmar este enfoque leyendo `js/visor/xr-sesion.js`/ejemplos oficiales de Three.js vendorizados (`vendor/three/`) antes de implementar.
+- [ ] **Step 2: Agregar el rayo a la escena**, visible sólo durante una sesión WebXR activa (no tiene sentido en la vista previa de escritorio, que ya usa el mouse) -- usar los eventos `sessionstart`/`sessionend` de `renderer.xr` que `main.js` ya escucha para mostrar/ocultar.
+- [ ] **Step 3: Elegir un largo/color que no estorbe** (ej. unos pocos metros, color cálido ámbar acorde a la paleta del proyecto, opacidad moderada) -- no tiene que llegar literalmente hasta el objeto apuntado, sólo dar una referencia clara de dirección.
+- [ ] **Step 4: Verificar manualmente lo que se pueda sin casco real** (que no rompa la vista previa de escritorio, que no tire errores de consola) y documentar en el reporte que la verificación visual final (que el rayo se vea bien desde dentro del casco) queda pendiente para cuando el dueño del proyecto lo prueba en el Quest.
+- [ ] **Step 5: Commit**
+
+```bash
+git add js/visor/main.js js/visor/interaccion.js
+git commit -m "feat: indicador visual de apuntado (rayo) para mano y control en RA"
+```
+
+### Task 24: Aviso de atención -- aceptar o rechazar la pausa
+
+**Files:**
+- Modify: `js/visor/paneles/pantalla-aviso.js`
+- Modify: `js/visor/main.js`
+
+**Interfaces:**
+- Consumes: mismo patrón de dos botones + raycasting que ya usa `pantalla-vuelta.js` (`botones`, `userData.accion`, `enEventoSeleccion`).
+- Produces: `crearPantallaAviso(renderer, onAceptar, onRechazar)` -- cambia la firma actual (`crearPantallaAviso(renderer, onAceptar)`, un solo botón implícito en todo el panel) a dos botones reales, cada uno con su callback.
+
+- [ ] **Step 1: Agregar un segundo botón** ("Sí, pausar" / "No, seguir" o similar en español, ver texto exacto del guion si lo menciona -- si no, usar criterio con un texto claro y breve) a `pantalla-aviso.js`, mismo patrón de `botones`/`userData.accion`/raycasting que `pantalla-vuelta.js`. El texto literal del aviso en sí (`TEXTO_AVISO`, el mensaje de atención) no cambia.
+- [ ] **Step 2: Cambiar la firma a `crearPantallaAviso(renderer, onAceptar, onRechazar)`** -- actualizar el único call-site en `main.js`: aceptar sigue yendo a `'pausa'` como hoy; rechazar debe volver a donde el usuario estaba ANTES del aviso, no a 'pausa' -- reutilizar `pantallaAntesDeAviso` (la misma variable que ya usa `pantalla-vuelta.js`/`pantalla-resumen.js` para "seguir con la clase"), con el mismo fallback a `'menu'` si por algún motivo todavía no se pasó por una pantalla real.
+- [ ] **Step 3: Verificar manualmente** ambos caminos en la vista previa: aceptar entra a pausa; rechazar vuelve a la pantalla de antes del aviso.
+- [ ] **Step 4: Commit**
+
+```bash
+git add js/visor/paneles/pantalla-aviso.js js/visor/main.js
+git commit -m "feat: aviso de atencion permite aceptar o rechazar la pausa"
+```
+
+### Task 25: Botón de menú flotante, accesible desde cualquier pantalla
+
+**Files:**
+- Create: `js/visor/paneles/boton-menu-flotante.js`
+- Modify: `js/visor/main.js`
+
+**Interfaces:**
+- Produces: un botón 3D, hijo de la cámara (no de la escena -- para que se vea siempre en la misma esquina de la vista, sin importar hacia dónde mire el usuario, a diferencia de todos los demás paneles del proyecto, que son fijos en el espacio del mundo), ubicado arriba a la derecha del campo visual. Al tocarlo (mismo mecanismo de selección único del proyecto), navega a `'menu'`.
+
+- [ ] **Step 1: Crear `crearBotonMenuFlotante(renderer, onTocar)`** en el archivo nuevo: un panel de texto chico (reutilizar `crearPanelTexto(['☰'] o ['Menú'], {...})`) posicionado en coordenadas LOCALES relativas a la cámara (ej. algo como `x: 0.35, y: 0.25, z: -0.5` dentro del frustum, ajustar a ojo para que caiga visualmente arriba a la derecha sin tapar nada importante), y agregado como hijo de la cámara, no de `escena` -- investigar en `main.js` cómo se crea `camara` y agregarlo con `camara.add(...)` en vez de `escena.add(...)`.
+- [ ] **Step 2: Conectarlo en `main.js`**: crear el botón pasándole `camara` desde ahí (`camara.add(botonMenuFlotante)`), y su callback debe llamar `cambiarPantalla('menu')`.
+- [ ] **Step 3: Visibilidad condicional** (decisión ya tomada, ver encabezado de esta Etapa): visible en todas las pantallas MENOS `'aviso'` y `'pausa'` -- enganchar esto en `actualizarPantallaVisible()` (que ya corre en cada cambio de pantalla) agregando una línea que fije `botonMenuFlotante.visible = !['aviso','pausa'].includes(estadoActual.pantalla)`.
+- [ ] **Step 4: Verificar manualmente** en la vista previa: el botón se ve siempre en la misma esquina visual sin importar hacia dónde se orbite la cámara (mientras no se esté en aviso/pausa), y tocarlo lleva al menú desde cualquier pantalla.
+- [ ] **Step 5: Commit**
+
+```bash
+git add js/visor/paneles/boton-menu-flotante.js js/visor/main.js
+git commit -m "feat: boton de menu flotante accesible desde cualquier pantalla"
+```
+
+### Task 26: Vuelta de la pausa -- tiempo siempre fijo en 5 minutos
+
+**Files:**
+- Modify: `js/visor/main.js`
+- Modify: `js/visor/paneles/pantalla-vuelta.js`
+- Modify: `js/common/estado.js`
+- Modify: `js/common/firebase-mensajes.js`
+- Modify: `panel.html`
+- Modify: `js/panel/main.js`
+- Modify: `test/estado.test.mjs`, `test/firebase-mensajes.test.mjs` (o los que correspondan -- revisar cuáles referencian `tiempoVueltaMin`/`construirComandoTiempoVuelta`)
+
+**Interfaces:**
+- Elimina (decisión ya tomada, revertir funcionalidad ya construida en la Etapa 4 a propósito): el campo `tiempoVueltaMin` del estado, `construirComandoTiempoVuelta`, el input + botón "Aplicar" del panel, y toda la lógica de `main.js` que calculaba minutos reales o aplicaba una sobreescritura manual.
+- Produces: una constante `MINUTOS_PAUSA_FIJOS = 5` (en `main.js`, junto a `TEMAS_PENDIENTES_EJEMPLO`, mismo criterio) -- la pantalla de vuelta siempre muestra "Estuviste 5 min en pausa", sin excepción.
+
+- [ ] **Step 1: En `main.js`**: sacar el bloque `if (estadoNuevo.pantalla === 'vuelta' && ...)`/`else if (... tiempoVueltaMin ...)` dentro de `aplicarComandoYActualizar` (Tasks 17/fix de tiempoVueltaMin) y reemplazarlo por uno solo: al entrar de verdad a `'vuelta'`, llamar siempre `pantallasPorNombre.vuelta.actualizarDatos(MINUTOS_PAUSA_FIJOS, TEMAS_PENDIENTES_EJEMPLO)`. Sacar también el import de `minutosTranscurridos` si queda sin uso (confirmar con grep antes de sacarlo -- `pantalla-pausa.js` lo sigue usando para su propio contador en vivo durante la pausa, que NO se toca; sólo se saca el uso que calculaba minutos para la pantalla de vuelta).
+- [ ] **Step 2: En `js/common/estado.js`**: sacar `tiempoVueltaMin` de `VALIDADORES`, de `estadoPorDefecto()` y de la documentación JSDoc del módulo -- confirmar con `grep -rn tiempoVueltaMin` en todo el repo que no queda ninguna referencia después de terminar este task.
+- [ ] **Step 3: En `js/common/firebase-mensajes.js`**: sacar `construirComandoTiempoVuelta` por completo (función muerta después de este task -- el panel ya no la va a llamar).
+- [ ] **Step 4: En `panel.html`/`js/panel/main.js`**: sacar el input numérico y el botón "Aplicar" de tiempo de vuelta, y el código que los conectaba.
+- [ ] **Step 5: Actualizar/limpiar tests**: sacar cualquier test que ejercite `construirComandoTiempoVuelta` o el campo `tiempoVueltaMin` (revisar `test/firebase-mensajes.test.mjs`, `test/estado.test.mjs` si existe, y cualquier otro que aparezca con `grep -rn tiempoVueltaMin test/`). Correr `node --test test/*.test.mjs` y confirmar que todo lo que queda pasa.
+- [ ] **Step 6: Verificar manualmente**: en la vista previa, pasar por aviso -> pausa -> terminar pausa, confirmar que la pantalla de vuelta siempre dice "Estuviste 5 min en pausa" sin importar cuánto se haya esperado en pausa.
+- [ ] **Step 7: Commit**
+
+```bash
+git add js/visor/main.js js/visor/paneles/pantalla-vuelta.js js/common/estado.js js/common/firebase-mensajes.js panel.html js/panel/main.js test/
+git commit -m "fix: tiempo de vuelta de pausa siempre fijo en 5 minutos, sacar ajuste manual"
+```
