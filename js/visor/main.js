@@ -10,10 +10,29 @@ import { crearPantallaReconocimiento } from './paneles/pantalla-reconocimiento.j
 import { crearPantallaBienvenida } from './paneles/pantalla-bienvenida.js';
 import { crearPantallaMenu } from './paneles/pantalla-menu.js';
 import { crearPantallaSubtitulos } from './paneles/pantalla-subtitulos.js';
+import { crearPantallaImagenes } from './paneles/pantalla-imagenes.js';
 import { habilitarNavegacionDev } from './navegacion-dev.js';
 import { establecerCamaraVistaPrevia } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
-import { estadoPersistenciaInicial, ajustarTamanoSubtitulo } from '../common/persistencia.js';
+import {
+  estadoPersistenciaInicial,
+  ajustarTamanoSubtitulo,
+  guardarPosicionImagen,
+  guardarEscalaImagen,
+} from '../common/persistencia.js';
+
+// Imágenes reales descargadas a assets/imagenes/ (ver CREDITS.md: autor y
+// licencia de cada una). Nunca enlazadas en línea -- quedan en el repo.
+const RUTAS_IMAGENES = [
+  'assets/imagenes/mapa-imperio-romano-occidente-395.png',
+  'assets/imagenes/mapa-rutas-invasiones-barbaras.jpg',
+  'assets/imagenes/mapa-reino-de-odoacro-476.png',
+  'assets/imagenes/pintura-saqueo-de-roma-410-sylvestre.jpg',
+  'assets/imagenes/ilustracion-romulo-augusto-y-odoacro.jpg',
+  'assets/imagenes/ilustracion-teodorico-mata-a-odoacro-493.jpg',
+  'assets/imagenes/moneda-solido-de-oro-romulo-augusto.jpg',
+  'assets/imagenes/pintura-alarico-depone-a-atalo-410.jpg',
+];
 
 const canvas = document.getElementById('escena');
 const indicadorVistaPrevia = document.getElementById('indicador-vista-previa');
@@ -77,6 +96,23 @@ const pantallasPorNombre = {
   subtitulos: crearPantallaSubtitulos(renderizador, persistenciaActual, (delta) => {
     persistenciaActual = ajustarTamanoSubtitulo(persistenciaActual, delta);
   }),
+  // Imágenes reales (mapas, pinturas e ilustraciones sobre la caída del
+  // Imperio romano de Occidente, ver CREDITS.md), movibles y con tamaño
+  // persistente por imagen (ver js/common/persistencia.js). `onVerMas` no
+  // necesita hacer nada hoy (el paginado es interno a la pantalla); queda
+  // el enganche por si una tarea futura necesita reaccionar a ese tap.
+  imagenes: crearPantallaImagenes(
+    renderizador,
+    RUTAS_IMAGENES,
+    persistenciaActual,
+    (idImagen, posicion) => {
+      persistenciaActual = guardarPosicionImagen(persistenciaActual, idImagen, posicion);
+    },
+    (idImagen, escala) => {
+      persistenciaActual = guardarEscalaImagen(persistenciaActual, idImagen, escala);
+    },
+    () => {}
+  ),
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 

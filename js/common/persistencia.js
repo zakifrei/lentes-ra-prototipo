@@ -36,6 +36,60 @@ export function ajustarTamanoSubtitulo(estado, delta) {
 }
 
 /**
+ * Guarda la posición de la imagen `idImagen`, sin tocar su escala previa
+ * (si la imagen todavía no tenía escala guardada, queda en TAMANO_MIN, el
+ * mismo valor inicial que usa estadoPersistenciaInicial para el tamaño de
+ * subtítulo). No muta `estado`.
+ * @param {{tamanoSubtitulo:number, imagenes:object}} estado
+ * @param {string} idImagen
+ * @param {{x:number,y:number,z:number}} posicion
+ * @returns {{tamanoSubtitulo:number, imagenes:object}}
+ */
+export function guardarPosicionImagen(estado, idImagen, posicion) {
+  const anterior = estado.imagenes[idImagen];
+  return {
+    ...estado,
+    imagenes: {
+      ...estado.imagenes,
+      [idImagen]: {
+        escala: TAMANO_MIN,
+        ...anterior,
+        x: posicion.x,
+        y: posicion.y,
+        z: posicion.z,
+      },
+    },
+  };
+}
+
+/**
+ * Guarda la escala de la imagen `idImagen`, clampada entre TAMANO_MIN y
+ * TAMANO_MAX (mismo rango que ajustarTamanoSubtitulo), sin tocar su
+ * posición previa. No muta `estado`.
+ * @param {{tamanoSubtitulo:number, imagenes:object}} estado
+ * @param {string} idImagen
+ * @param {number} escala
+ * @returns {{tamanoSubtitulo:number, imagenes:object}}
+ */
+export function guardarEscalaImagen(estado, idImagen, escala) {
+  const anterior = estado.imagenes[idImagen];
+  const escalaLimitada = Math.min(Math.max(escala, TAMANO_MIN), TAMANO_MAX);
+  return {
+    ...estado,
+    imagenes: {
+      ...estado.imagenes,
+      [idImagen]: {
+        x: 0,
+        y: 0,
+        z: 0,
+        ...anterior,
+        escala: escalaLimitada,
+      },
+    },
+  };
+}
+
+/**
  * Reinicia la persistencia a su estado inicial.
  * @returns {{tamanoSubtitulo: number, imagenes: Record<string,{x:number,y:number,z:number,escala:number}>}}
  */
