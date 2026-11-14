@@ -46,7 +46,20 @@ const camara = new THREE.PerspectiveCamera(
   0.01,
   100
 );
-camara.position.set(0, 1.6, 3);
+// Distancia de arranque elegida para que la vista previa de escritorio
+// quede a una distancia comparable al "alcance del brazo" (~1.5-2 m) para
+// el que están pensadas las pantallas estáticas (menú, subtítulos,
+// imágenes, mapa, etc.), todas alrededor de z=-1 a z=-1.3 (ver
+// POSICION_POR_DEFECTO en panel-texto.js y la posición propia de cada
+// pantalla). Con z=3 (valor anterior, heredado del esqueleto vacío de la
+// Tarea 1) la distancia real terminaba siendo de ~4.2 m: el contenido se
+// veía como una mota minúscula cerca del borde inferior del cuadro, fácil
+// de confundir con "no hay nada" (bug reportado en pruebas de usabilidad).
+// Esto NO afecta a la sesión WebXR real: una vez que arranca, la pose
+// trackeada del casco pisa esta posición en cada cuadro (ver
+// xr-sesion.js/WebXRManager de Three.js) -- sólo cambia dónde arranca la
+// cámara de la vista previa de escritorio antes de orbitar con el mouse.
+camara.position.set(0, 1.6, 0.6);
 
 // `interaccion.js` necesita la cámara para calcular el rayo del mouse en
 // la vista previa de escritorio (ver js/visor/interaccion.js).
