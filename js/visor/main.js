@@ -17,7 +17,7 @@ import { crearPantallaPausa } from './paneles/pantalla-pausa.js';
 import { crearPantallaVuelta } from './paneles/pantalla-vuelta.js';
 import { crearPantallaResumen } from './paneles/pantalla-resumen.js';
 import { escucharEstadoFirebase } from './firebase-cliente.js';
-import { establecerCamaraVistaPrevia } from './interaccion.js';
+import { establecerCamaraVistaPrevia, crearIndicadorDeApuntado } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
 import { minutosTranscurridos } from '../common/temporizador-pausa.js';
 import {
@@ -90,6 +90,14 @@ renderizador.setClearColor(0x000000, 0);
 
 const luzAmbiental = new THREE.AmbientLight(0xffffff, 1);
 escena.add(luzAmbiental);
+
+// Rayo visual que sigue a la mano/control durante una sesión WebXR real
+// (ver js/visor/interaccion.js): arranca oculto porque la vista previa de
+// escritorio usa el mouse, no mano/control -- se muestra sólo entre
+// 'sessionstart'/'sessionend' de `renderizador.xr`, más abajo.
+const indicadorApuntado = crearIndicadorDeApuntado(renderizador);
+indicadorApuntado.visible = false;
+escena.add(indicadorApuntado);
 
 // Estado persistente de preferencias del usuario (por ahora, sólo el
 // tamaño de subtítulos): vive acá, igual que `estadoActual`, y se
@@ -346,10 +354,12 @@ const controlesVistaPrevia = activarVistaPrevia(renderizador, camara, renderizad
 renderizador.xr.addEventListener('sessionstart', () => {
   controlesVistaPrevia.enabled = false;
   if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = true;
+  indicadorApuntado.visible = true;
 });
 renderizador.xr.addEventListener('sessionend', () => {
   controlesVistaPrevia.enabled = true;
   if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = false;
+  indicadorApuntado.visible = false;
 });
 
 // Refresco en vivo del contador de pausa: sólo mientras esa pantalla está

@@ -245,6 +245,60 @@ export function enArrastreDeSeleccion(renderer, { alIniciar, alMover, alTerminar
   });
 }
 
+// Largo del indicador visual de apuntado: no necesita llegar hasta el
+// objeto apuntado (eso ya lo resuelve el raycasting de `habilitarArrastre`),
+// sólo dar una referencia clara de hacia dónde apunta la mano/control.
+const LARGO_INDICADOR_DE_APUNTADO = 2;
+
+/**
+ * Crea un indicador visual ("rayo láser") que sigue automáticamente la
+ * posición/orientación de cada mano o control durante una sesión WebXR
+ * real -- ayuda al usuario a ver hacia dónde está apuntando, algo que el
+ * mecanismo de selección (más arriba en este archivo) ya calcula pero
+ * nunca dibujaba. Ambos controladores (`getController(0)`/`getController(1)`)
+ * cubren indistintamente mano o control físico -- mismo criterio de "un
+ * solo mecanismo" que usa el resto del archivo para selección: no hace
+ * falta un camino aparte para `getHand()`, porque el target ray space que
+ * expone `getController()` ya representa a cualquiera de los dos según el
+ * input source real de la sesión.
+ *
+ * Cada rayo es un simple `THREE.Line` de dos puntos, del origen local del
+ * controlador (0,0,0) hacia su -Z local -- misma convención que usa
+ * `calcularRayoDeControlador`, arriba en este archivo, para el raycasting
+ * lógico -- agregado como hijo del controlador para heredar su pose en
+ * cada cuadro sin ningún cálculo manual.
+ *
+ * @param {THREE.WebGLRenderer} renderer
+ * @returns {THREE.Object3D} grupo con ambos controladores (ya con su rayo
+ *   como hijo) agregado -- quien llama debe sumarlo a la escena para que
+ *   Three.js actualice su pose en cada cuadro (`renderer.xr.getController`
+ *   nunca se agrega solo: ver comentario de `calcularRayoDeControlador`).
+ */
+export function crearIndicadorDeApuntado(renderer) {
+  const grupo = new THREE.Group();
+
+  const geometriaRayo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 0, -LARGO_INDICADOR_DE_APUNTADO),
+  ]);
+  // Ámbar cálido, acorde a la paleta del proyecto; opacidad moderada para
+  // que sea una referencia de dirección y no un elemento invasivo.
+  const materialRayo = new THREE.LineBasicMaterial({
+    color: 0xffa040,
+    transparent: true,
+    opacity: 0.7,
+  });
+
+  [0, 1].forEach((indice) => {
+    const controlador = renderer.xr.getController(indice);
+    const rayo = new THREE.Line(geometriaRayo, materialRayo);
+    controlador.add(rayo);
+    grupo.add(controlador);
+  });
+
+  return grupo;
+}
+
 const raycasterArrastre = new THREE.Raycaster();
 const vectorOrigenArrastre = new THREE.Vector3();
 const vectorDireccionArrastre = new THREE.Vector3();
