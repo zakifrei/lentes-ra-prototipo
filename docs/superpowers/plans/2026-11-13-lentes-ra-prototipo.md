@@ -609,6 +609,7 @@ git commit -m "feat: integracion de firebase realtime database en el visor"
 - Create: `panel.html`
 - Create: `js/panel/main.js`
 - Create: `css/panel.css`
+- Modify: `js/visor/main.js` (ver Step 5 — saca la navegación de desarrollo, ahora que el panel real existe)
 
 **Interfaces:**
 - Consumes: `construirComandoPantalla`, `construirComandoTiempoVuelta`, `construirComandoReset`, `nodoRaizFirebase` (Task 15); mismo `firebaseConfig` que el visor (Task 16).
@@ -618,10 +619,11 @@ git commit -m "feat: integracion de firebase realtime database en el visor"
 - [ ] **Step 2: Implementar `js/panel/main.js`**: conecta a Firebase con el mismo `firebaseConfig`; cada botón de pantalla llama a `construirComandoPantalla(pantalla)`, "Aplicar" tiempo llama a `construirComandoTiempoVuelta(minutos)`, y "Reiniciar todo" llama a `construirComandoReset()`; cada comando se escribe (`set`) en el nodo `'estado'`, combinado con el valor previo (no pisar campos que no cambiaron).
 - [ ] **Step 3: Aplicar el estilo cálido/ámbar básico de `css/panel.css`** (puede ser simple en esta etapa; el pulido fino es la Etapa 5).
 - [ ] **Step 4: Verificar manualmente**: abrir `panel.html` en el celular y `index.html` en la vista previa de la compu (o en el Quest) al mismo tiempo, confirmar que cada botón del panel mueve al visor a la pantalla/estado correcto.
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Sacar `habilitarNavegacionDev(...)` de `js/visor/main.js`** (y el `import` de `navegacion-dev.js`). Decisión de la Tarea 16 (ver ledger): se dejó conviviendo con Firebase temporalmente porque este panel todavía no existía; ahora que existe, Firebase pasa a ser la única fuente de comandos de pantalla — `navegacion-dev.js` queda sin uso en el visor (el archivo puede quedar en el repo sin importarse, o borrarse; preferible borrarlo para no dejar código muerto). La tecla `'0'` (`terminarPausa`, ver Tarea 13) es un mecanismo aparte y no se toca acá.
+- [ ] **Step 6: Commit**
 
 ```bash
-git add panel.html js/panel/main.js css/panel.css
+git add panel.html js/panel/main.js css/panel.css js/visor/main.js
 git commit -m "feat: panel del observador conectado por firebase"
 ```
 
