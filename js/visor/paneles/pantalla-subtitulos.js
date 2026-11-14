@@ -21,14 +21,38 @@ import { enEventoSeleccion } from '../interaccion.js';
 import { lineaActual } from '../../common/subtitulos-guion.js';
 import { ajustarTamanoSubtitulo } from '../../common/persistencia.js';
 
-const ANCHO_CANVAS = 1024;
+// ANCHO_CANVAS quedó en 1536 (en vez de 1024) a raíz de un bug encontrado en
+// pruebas de usabilidad en vivo: con 1024 px de ancho, incluso la línea más
+// corta del guion (ver GUION_SUBTITULOS en subtitulos-guion.js) ya no
+// entraba en `anchoDisponible` al tamaño de fuente mínimo, así que
+// `calcularTamanoFuenteAjustado` tenía que achicarla SIEMPRE -- y como el
+// ancho de un texto escala ~linealmente con el tamaño de fuente pedido, ese
+// achicamiento terminaba devolviendo el mismo tamaño final sin importar el
+// factor de escala pedido (`tamanoFuente`): "+"/"-" cambiaban
+// `tamanoSubtitulo` (se guardaba y persistía bien) pero el tamaño
+// renderizado no se movía un píxel. Para que el factor de escala vuelva a
+// importar, el texto tiene que entrar SIN achicarse en el tamaño mínimo (y
+// buena parte del rango), y el achicamiento de `calcularTamanoFuenteAjustado`
+// (agregado en la Tarea 8) sólo debe intervenir cerca del máximo, para las
+// líneas más largas -- no en cada paso. Ensanchar el canvas (y el panel
+// físico, ver ANCHO_PANEL) le da ese margen sin tocar la protección de la
+// Tarea 8. ALTO_CANVAS se mantiene en 256 para no estirar la tipografía: ver
+// la nota de ANCHO_PANEL/ALTO_PANEL más abajo.
+const ANCHO_CANVAS = 1536;
 const ALTO_CANVAS = 256;
 
 // Margen horizontal (en px de canvas) que el texto nunca debe invadir.
 const MARGEN_HORIZONTAL = 40;
 
-// Tamaño físico del panel en metros (RA): ancho x alto.
-const ANCHO_PANEL = 0.7;
+// Tamaño físico del panel en metros (RA): ancho x alto. ANCHO_PANEL creció
+// de 0.7 a 1.05 (= ALTO_PANEL * (ANCHO_CANVAS / ALTO_CANVAS) = 0.175 * 6)
+// en la misma proporción que ANCHO_CANVAS creció de 1024 a 1536, para que
+// la cantidad de metros de panel por píxel de canvas sea igual en ancho y
+// alto (si no, el texto se vería estirado horizontalmente). Sigue bien por
+// debajo de la altura típica de los ojos (ver POSICION_SUBTITULO más abajo),
+// así que no invade el centro del campo visual: sólo es una franja más
+// ancha, como los subtítulos reales de video.
+const ANCHO_PANEL = 1.05;
 const ALTO_PANEL = 0.175;
 
 // Misma zona que el panel de subtítulos original: debajo de la altura
@@ -36,7 +60,16 @@ const ALTO_PANEL = 0.175;
 const POSICION_SUBTITULO = { x: 0, y: 1.2, z: -1 };
 
 // Tamaño de fuente (px de canvas) para el factor de escala 1 (el mínimo).
-const TAMANO_FUENTE_BASE = 40;
+// Bajó de 40 a 16: con ANCHO_CANVAS ensanchado (ver más arriba) un valor
+// chico acá es justamente lo que le da margen real al factor de escala para
+// crecer -- a este tamaño, incluso la línea más larga del guion entra sin
+// achicarse (ver comentario de ANCHO_CANVAS). Con TAMANO_MIN=1/TAMANO_MAX=3
+// (persistencia.js) el resultado medido con el guion real
+// (GUION_SUBTITULOS) es: factor 1 -> 16px, factor 2 -> 32px siempre sin
+// achicar, factor 3 -> 48px para la mayoría de las líneas y ~41-46px (sigue
+// siendo más grande que en el factor 2) para las tres líneas más largas,
+// que son las únicas que todavía activan `calcularTamanoFuenteAjustado`.
+const TAMANO_FUENTE_BASE = 16;
 
 const ANCHO_BOTON = 0.12;
 const ALTO_BOTON = 0.12;
