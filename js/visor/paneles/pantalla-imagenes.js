@@ -41,7 +41,7 @@ import { TAMANO_MIN, TAMANO_MAX } from '../../common/persistencia.js';
 
 // Cuántas imágenes se muestran a la vez. El resto, detrás del botón "Ver
 // más imágenes" (ver más abajo).
-const TAMANO_PAGINA = 4;
+const TAMANO_PAGINA = 2;
 
 // Tamaño (lado, en metros) del cuadrado en el que entra cada imagen a
 // escala 1 (TAMANO_MIN), ajustada "contain" según su proporción real (ver
@@ -50,14 +50,16 @@ const TAMANO_PAGINA = 4;
 // se usa ese mismo cuadrado como tamaño provisorio.
 const ANCHO_BASE_IMAGEN = 0.42;
 
-// Grilla 2x2 para las hasta `TAMANO_PAGINA` imágenes de cada página, por
-// debajo de la altura típica de los ojos (~1.6 m) -- igual criterio que el
-// resto de las pantallas: nunca tapar el centro del campo visual.
+// Dos posiciones (una a cada lado) para las hasta `TAMANO_PAGINA` imágenes
+// de cada página, por debajo de la altura típica de los ojos (~1.6 m) --
+// igual criterio que el resto de las pantallas: nunca tapar el centro del
+// campo visual. La altura (1.2) deja lugar debajo para los botones
+// "+"/"-" de escala (que se ubican con MARGEN_BOTONES_ESCALA por debajo del
+// borde de la imagen) sin que queden pegados al piso visual ni tan arriba
+// que se acerquen al centro.
 const POSICIONES_GRILLA = [
-  { x: -0.55, y: 1.58 },
-  { x: 0.55, y: 1.58 },
-  { x: -0.55, y: 0.92 },
-  { x: 0.55, y: 0.92 },
+  { x: -0.6, y: 1.2 },
+  { x: 0.6, y: 1.2 },
 ];
 const Z_POR_DEFECTO = -1.3;
 
@@ -70,9 +72,17 @@ const LIMITES_ARRASTRE = {
   z: [-2.5, -0.6],
 };
 
-const ANCHO_BOTON_ESCALA = 0.1;
-const ALTO_BOTON_ESCALA = 0.1;
-const SEPARACION_BOTONES_ESCALA = 0.22;
+// ANCHO_BOTON_ESCALA/ALTO_BOTON_ESCALA crecieron de 0.1 a 0.18 a raíz de
+// probar el flujo completo en un Quest real (Task 22): el símbolo "+"/"-"
+// se veía chico. `crearPanelTexto` dibuja sobre un canvas de 1024x512px con
+// un tamanoFuente que sólo se encoge si no entra, nunca se agranda solo --
+// agrandar el botón sin agrandar también TAMANO_FUENTE_BOTON_ESCALA no
+// alcanza (mismo motivo, y misma solución, que los botones de subtítulos
+// de la Task 21).
+const ANCHO_BOTON_ESCALA = 0.18;
+const ALTO_BOTON_ESCALA = 0.18;
+const TAMANO_FUENTE_BOTON_ESCALA = 350;
+const SEPARACION_BOTONES_ESCALA = 0.4;
 // Separación vertical entre el borde inferior de la imagen (a su tamaño
 // actual) y sus botones "+"/"-": nunca encima de la imagen.
 const MARGEN_BOTONES_ESCALA = 0.13;
@@ -187,6 +197,7 @@ export function crearPantallaImagenes(
     const botonMas = crearPanelTexto(['+'], {
       ancho: ANCHO_BOTON_ESCALA,
       alto: ALTO_BOTON_ESCALA,
+      tamanoFuente: TAMANO_FUENTE_BOTON_ESCALA,
       nombre: `pantalla-imagenes-boton-mas-${idImagen}`,
     });
     botonMas.userData.idImagen = idImagen;
@@ -195,6 +206,7 @@ export function crearPantallaImagenes(
     const botonMenos = crearPanelTexto(['-'], {
       ancho: ANCHO_BOTON_ESCALA,
       alto: ALTO_BOTON_ESCALA,
+      tamanoFuente: TAMANO_FUENTE_BOTON_ESCALA,
       nombre: `pantalla-imagenes-boton-menos-${idImagen}`,
     });
     botonMenos.userData.idImagen = idImagen;
