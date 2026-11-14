@@ -11,6 +11,7 @@ import { crearPantallaBienvenida } from './paneles/pantalla-bienvenida.js';
 import { crearPantallaMenu } from './paneles/pantalla-menu.js';
 import { crearPantallaSubtitulos } from './paneles/pantalla-subtitulos.js';
 import { crearPantallaImagenes } from './paneles/pantalla-imagenes.js';
+import { crearPantallaMapa } from './paneles/pantalla-mapa.js';
 import { habilitarNavegacionDev } from './navegacion-dev.js';
 import { establecerCamaraVistaPrevia } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
@@ -113,6 +114,10 @@ const pantallasPorNombre = {
     },
     () => {}
   ),
+  // Mapa conceptual (causas/hitos/consecuencias de la caída del Imperio
+  // romano de Occidente, ver assets/mapa-conceptual/contenido-mapa.js):
+  // pantalla estática, sin interacción ni persistencia propia.
+  mapa: crearPantallaMapa(),
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 
