@@ -12,6 +12,7 @@ import { crearPantallaMenu } from './paneles/pantalla-menu.js';
 import { crearPantallaSubtitulos } from './paneles/pantalla-subtitulos.js';
 import { crearPantallaImagenes } from './paneles/pantalla-imagenes.js';
 import { crearPantallaMapa } from './paneles/pantalla-mapa.js';
+import { crearPantallaAviso } from './paneles/pantalla-aviso.js';
 import { habilitarNavegacionDev } from './navegacion-dev.js';
 import { establecerCamaraVistaPrevia } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
@@ -131,6 +132,15 @@ const pantallasPorNombre = {
   // romano de Occidente, ver assets/mapa-conceptual/contenido-mapa.js):
   // pantalla estática, sin interacción ni persistencia propia.
   mapa: crearPantallaMapa(),
+  // Aviso de atención (Tarea 11): sin opción de "no" todavía -- aceptar
+  // (botón del lente: gatillo o pellizco) pasa a la pantalla de pausa, a
+  // través del mismo `cambiarPantalla` centralizado que usa el resto del
+  // visor. `pausa` todavía no existe como pantalla real (Tarea 12): el
+  // cambio de estado queda aplicado igual, simplemente no hay nada que
+  // mostrar todavía (no está en `pantallasPorNombre`).
+  aviso: crearPantallaAviso(renderizador, () => {
+    cambiarPantalla('pausa');
+  }),
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 
