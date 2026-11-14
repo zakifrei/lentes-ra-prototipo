@@ -225,18 +225,25 @@ actualizarPantallaVisible();
 // Incluye 'resumen' por la misma razón.
 const PANTALLAS_TRANSITORIAS_DE_PAUSA = ['aviso', 'pausa', 'vuelta', 'resumen'];
 
-function aplicarComandoYActualizar(comando) {
+function aplicarComandoYActualizar(comando, { esPrimeraSincronizacion = false } = {}) {
   const pantallaAnterior = estadoActual.pantalla;
   const estadoNuevo = aplicarComando(estadoActual, comando);
 
-  // Tarea 18: un resetId mayor al último conocido es un "Reiniciar todo"
-  // real (no un reenvío de Firebase del mismo valor que ya se procesó) --
-  // vuelve todo al estado inicial, persistencia incluida, sin importar en
-  // qué pantalla está el usuario. Se corta acá (return) porque un reset no
+  // Tarea 18 + fix (recarga a mitad de clase): un resetId mayor al último
+  // conocido es un "Reiniciar todo" real -- pero esa comparación sólo tiene
+  // sentido una vez que el visor ya está corriendo con un estado real
+  // sincronizado. En la primerísima sincronización tras cargar la página,
+  // `estadoActual.resetId` es sólo el 0 por defecto de `estadoPorDefecto()`,
+  // no un "último resetId conocido" de verdad -- compararlo haría que
+  // CUALQUIER resetId ya guardado en Firebase (de un reset anterior a esta
+  // carga de página, algo que va a pasar siempre entre un participante y el
+  // siguiente) dispare un reset espurio, mandando al visor a
+  // 'reconocimiento' sin que nadie lo pidiera, en vez de adoptar la pantalla
+  // real que Firebase ya tenía. Se corta acá (return) porque un reset no
   // es un cambio de pantalla común: no debe pasar por la lógica de
   // `pantallaAntesDeAviso` ni por el cálculo de minutos de pausa de más
   // abajo.
-  if (estadoNuevo.resetId > estadoActual.resetId) {
+  if (!esPrimeraSincronizacion && estadoNuevo.resetId > estadoActual.resetId) {
     persistenciaActual = reiniciarPersistencia();
     estadoActual = { ...estadoPorDefecto(), resetId: estadoNuevo.resetId };
     pantallaAntesDeAviso = null;
@@ -309,8 +316,16 @@ function cambiarPantalla(nuevaPantalla) {
 // `aplicarComando` (Tarea 5) para rechazar cualquier comando corrupto, vacío
 // o con campos inesperados -- este módulo no necesita (ni debe) validar
 // nada por su cuenta.
+// `primeraSincronizacionFirebase` distingue la PRIMERA entrega que llega
+// después de cargar la página (donde `estadoActual.resetId` es sólo el 0
+// por defecto, no un "último conocido" real -- ver el comentario del fix
+// dentro de `aplicarComandoYActualizar`) de cualquier sincronización
+// posterior, donde un reset real sigue debiendo detectarse normalmente.
+let primeraSincronizacionFirebase = true;
+
 escucharEstadoFirebase((comando) => {
-  aplicarComandoYActualizar(comando);
+  aplicarComandoYActualizar(comando, { esPrimeraSincronizacion: primeraSincronizacionFirebase });
+  primeraSincronizacionFirebase = false;
 });
 
 function alRedimensionar() {
