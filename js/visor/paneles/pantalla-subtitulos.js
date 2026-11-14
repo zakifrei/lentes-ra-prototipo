@@ -19,7 +19,7 @@ import * as THREE from '../../../vendor/three/three.module.js';
 import { crearPanelTexto } from './panel-texto.js';
 import { enEventoSeleccion } from '../interaccion.js';
 import { lineaActual } from '../../common/subtitulos-guion.js';
-import { ajustarTamanoSubtitulo } from '../../common/persistencia.js';
+import { ajustarTamanoSubtitulo, TAMANO_MIN } from '../../common/persistencia.js';
 
 // ANCHO_CANVAS quedó en 1536 (en vez de 1024) a raíz de un bug encontrado en
 // pruebas de usabilidad en vivo: con 1024 px de ancho, incluso la línea más
@@ -242,6 +242,18 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
     inicio = performance.now();
     ultimoTextoDibujado = null;
     ultimoTamanoDibujado = null;
+    redibujar();
+  };
+
+  // Gancho de "Reiniciar todo" (Tarea 18, panel del observador): a
+  // diferencia de `alEntrar()` (que reinicia el reloj del guion pero deja
+  // el tamaño elegido intacto -- es persistente entre entradas normales),
+  // esto vuelve el tamaño al mínimo de verdad, porque un reset de persistencia
+  // debe borrar también las preferencias guardadas, no sólo el progreso del
+  // guion.
+  grupo.alReiniciarTodo = function alReiniciarTodoPantallaSubtitulos() {
+    estadoLocal = { ...estadoLocal, tamanoSubtitulo: TAMANO_MIN };
+    ultimoTamanoDibujado = null; // fuerza el redibujado aunque el tamaño ya fuera TAMANO_MIN
     redibujar();
   };
 

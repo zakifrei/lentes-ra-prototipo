@@ -337,5 +337,22 @@ export function crearPantallaImagenes(
     sincronizarVisibilidad();
   };
 
+  // Gancho de "Reiniciar todo" (Tarea 18): vuelve cada imagen a su posición
+  // de grilla por defecto y a TAMANO_MIN, como si nadie la hubiera tocado
+  // todavía. A diferencia de `alEntrar()` (que sólo reinicia la página
+  // mostrada), esto sí debe tocar persistencia real -- un reset de verdad
+  // borra las preferencias guardadas, no sólo la navegación interna.
+  grupo.alReiniciarTodo = function alReiniciarTodoPantallaImagenes() {
+    imagenes.forEach((estadoImagen) => {
+      const posicionPorDefecto = POSICIONES_GRILLA[estadoImagen.indice % TAMANO_PAGINA];
+      const nuevaPosicion = { x: posicionPorDefecto.x, y: posicionPorDefecto.y, z: Z_POR_DEFECTO };
+      estadoImagen.meshImagen.position.set(nuevaPosicion.x, nuevaPosicion.y, nuevaPosicion.z);
+      estadoImagen.escalaActual = TAMANO_MIN;
+      estadoImagen.meshImagen.scale.setScalar(TAMANO_MIN);
+      estadoImagen.ultimaPosicionNotificada = { ...nuevaPosicion };
+      actualizarBotonesEscala(estadoImagen);
+    });
+  };
+
   return grupo;
 }

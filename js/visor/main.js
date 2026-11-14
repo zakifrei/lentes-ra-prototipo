@@ -25,6 +25,7 @@ import {
   ajustarTamanoSubtitulo,
   guardarPosicionImagen,
   guardarEscalaImagen,
+  reiniciarPersistencia,
 } from '../common/persistencia.js';
 
 // Imágenes reales descargadas a assets/imagenes/ (ver CREDITS.md: autor y
@@ -227,6 +228,23 @@ const PANTALLAS_TRANSITORIAS_DE_PAUSA = ['aviso', 'pausa', 'vuelta', 'resumen'];
 function aplicarComandoYActualizar(comando) {
   const pantallaAnterior = estadoActual.pantalla;
   const estadoNuevo = aplicarComando(estadoActual, comando);
+
+  // Tarea 18: un resetId mayor al último conocido es un "Reiniciar todo"
+  // real (no un reenvío de Firebase del mismo valor que ya se procesó) --
+  // vuelve todo al estado inicial, persistencia incluida, sin importar en
+  // qué pantalla está el usuario. Se corta acá (return) porque un reset no
+  // es un cambio de pantalla común: no debe pasar por la lógica de
+  // `pantallaAntesDeAviso` ni por el cálculo de minutos de pausa de más
+  // abajo.
+  if (estadoNuevo.resetId > estadoActual.resetId) {
+    persistenciaActual = reiniciarPersistencia();
+    estadoActual = { ...estadoPorDefecto(), resetId: estadoNuevo.resetId };
+    pantallaAntesDeAviso = null;
+    Object.values(pantallasPorNombre).forEach((pantalla) => pantalla.alReiniciarTodo?.());
+    actualizarPantallaVisible();
+    pantallasPorNombre[estadoActual.pantalla]?.alEntrar?.();
+    return;
+  }
 
   // Tarea 17: si la transición real es hacia 'vuelta' (venga de donde
   // venga -- antes sólo pasaba atada a la tecla de desarrollo '0', ahora
