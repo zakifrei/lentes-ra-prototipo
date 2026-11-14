@@ -13,6 +13,7 @@ import { crearPantallaSubtitulos } from './paneles/pantalla-subtitulos.js';
 import { crearPantallaImagenes } from './paneles/pantalla-imagenes.js';
 import { crearPantallaMapa } from './paneles/pantalla-mapa.js';
 import { crearPantallaAviso } from './paneles/pantalla-aviso.js';
+import { crearPantallaPausa } from './paneles/pantalla-pausa.js';
 import { habilitarNavegacionDev } from './navegacion-dev.js';
 import { establecerCamaraVistaPrevia } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
@@ -135,12 +136,16 @@ const pantallasPorNombre = {
   // Aviso de atención (Tarea 11): sin opción de "no" todavía -- aceptar
   // (botón del lente: gatillo o pellizco) pasa a la pantalla de pausa, a
   // través del mismo `cambiarPantalla` centralizado que usa el resto del
-  // visor. `pausa` todavía no existe como pantalla real (Tarea 12): el
-  // cambio de estado queda aplicado igual, simplemente no hay nada que
-  // mostrar todavía (no está en `pantallasPorNombre`).
+  // visor.
   aviso: crearPantallaAviso(renderizador, () => {
     cambiarPantalla('pausa');
   }),
+  // Pausa activa (Tarea 12): contador en vivo de minutos transcurridos
+  // desde que se entró de verdad a esta pantalla (ver `alEntrar` en
+  // pantalla-pausa.js). El refresco del contador no usa un `setInterval`
+  // propio -- se actualiza desde el loop de render de más abajo, sólo
+  // mientras esta pantalla está activa (ver `actualizarPantallaPausaSiCorresponde`).
+  pausa: crearPantallaPausa(),
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 
@@ -199,7 +204,17 @@ renderizador.xr.addEventListener('sessionend', () => {
   if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = false;
 });
 
+// Refresco en vivo del contador de pausa: sólo mientras esa pantalla está
+// activa (si no, redibujaría de más un canvas que nadie está viendo).
+// `pantalla-pausa.js` elige no usar un `setInterval` propio justamente
+// para depender de este gancho -- ver comentario de `actualizar` ahí.
+function actualizarPantallaPausaSiCorresponde() {
+  if (estadoActual.pantalla !== 'pausa') return;
+  pantallasPorNombre.pausa.actualizar(Date.now());
+}
+
 renderizador.setAnimationLoop(() => {
   controlesVistaPrevia.update();
+  actualizarPantallaPausaSiCorresponde();
   renderizador.render(escena, camara);
 });
