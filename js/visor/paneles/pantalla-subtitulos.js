@@ -17,7 +17,7 @@
 
 import * as THREE from '../../../vendor/three/three.module.js';
 import { crearPanelTexto } from './panel-texto.js';
-import { enEventoSeleccion } from '../interaccion.js';
+import { enEventoSeleccion, habilitarArrastre } from '../interaccion.js';
 import { lineaActual } from '../../common/subtitulos-guion.js';
 import { ajustarTamanoSubtitulo, TAMANO_MIN } from '../../common/persistencia.js';
 
@@ -56,8 +56,14 @@ const ANCHO_PANEL = 1.05;
 const ALTO_PANEL = 0.175;
 
 // Misma zona que el panel de subtítulos original: debajo de la altura
-// típica de los ojos (~1.6 m), fuera del centro del campo visual.
-const POSICION_SUBTITULO = { x: 0, y: 1.2, z: -1 };
+// típica de los ojos (~1.6 m), fuera del centro del campo visual. `y`
+// bajó de 1.2 a 0.95 a raíz de la primera prueba en un casco Meta Quest
+// real (Etapa 6): a 1.2 el panel quedaba demasiado central en el campo
+// visual real (la vista previa de escritorio no deja notar esto, porque
+// no simula el campo visual angosto de un casco real) -- 0.95 lo deja en
+// una altura más parecida a los subtítulos de un video real, claramente
+// por debajo del centro.
+const POSICION_SUBTITULO = { x: 0, y: 0.95, z: -1 };
 
 // Tamaño de fuente (px de canvas) para el factor de escala 1 (el mínimo).
 // Bajó de 40 a 16: con ANCHO_CANVAS ensanchado (ver más arriba) un valor
@@ -71,14 +77,39 @@ const POSICION_SUBTITULO = { x: 0, y: 1.2, z: -1 };
 // que son las únicas que todavía activan `calcularTamanoFuenteAjustado`.
 const TAMANO_FUENTE_BASE = 16;
 
-const ANCHO_BOTON = 0.12;
-const ALTO_BOTON = 0.12;
-// Separación horizontal entre centros de botones: con ANCHO_BOTON = 0.12
-// deja aire suficiente entre bordes para no tocarlos por error.
-const SEPARACION_BOTONES = 0.3;
+// ANCHO_BOTON/ALTO_BOTON crecieron de 0.12 a 0.2 a raíz de la misma prueba
+// en el Quest real: a 0.12 el botón era casi invisible/intocable con la
+// precisión real del pellizco de mano (muy distinta de la precisión de un
+// click de mouse en la vista previa). El tamaño del botón por sí solo no
+// alcanza para que el símbolo "+"/"-" se lea bien -- ver TAMANO_FUENTE_BOTON
+// más abajo.
+const ANCHO_BOTON = 0.2;
+const ALTO_BOTON = 0.2;
+// Separación horizontal entre centros de botones: con ANCHO_BOTON = 0.2
+// deja aire suficiente entre bordes (0.2 m) para no tocarlos por error.
+const SEPARACION_BOTONES = 0.4;
+// Tamaño de fuente (px de canvas, sobre el canvas de 1024px de
+// panel-texto.js) para el glyph "+"/"-" de estos botones. El default de
+// crearPanelTexto (48px) sólo se ENCOGE si no entra en el ancho del canvas,
+// nunca se agranda solo -- un único carácter a 48px ocupa una fracción
+// mínima del canvas, así que aunque el panel físico sea grande el símbolo
+// sigue viéndose chico. Hace falta pasar un tamaño mucho mayor a propósito
+// para que el glyph llene gran parte del panel.
+const TAMANO_FUENTE_BOTON = 350;
 // Debajo del panel de subtítulos: nunca encima (mismo criterio que el
 // resto de los paneles del proyecto).
 const Y_BOTONES = POSICION_SUBTITULO.y - ALTO_PANEL / 2 - 0.15;
+
+// Volumen en el que se puede arrastrar el panel de subtítulos: mismo
+// criterio que LIMITES_ARRASTRE de pantalla-imagenes.js (alcanzable, sin
+// llegar detrás de la cabeza ni pegado a la cara), pero algo más angosto en
+// x/y porque el panel de subtítulos es una franja (no una grilla 2x2) y no
+// tiene sentido alejarlo demasiado del centro.
+const LIMITES_ARRASTRE = {
+  x: [-0.6, 0.6],
+  y: [0.4, 1.5],
+  z: [-2.2, -0.6],
+};
 
 // Cada cuánto se revisa si hay que avanzar de línea (no hace falta
 // redibujar en cada cuadro: el guion avanza en segundos, no en cuadros).
@@ -168,6 +199,15 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   panelSubtitulo.position.set(POSICION_SUBTITULO.x, POSICION_SUBTITULO.y, POSICION_SUBTITULO.z);
   grupo.add(panelSubtitulo);
 
+  // Arrastrable con el mismo mecanismo que las imágenes (Task 4): la
+  // posición, a diferencia de las imágenes, no es persistente -- si el
+  // usuario sale de esta pantalla y vuelve a entrar, `alEntrar()` no la
+  // toca (sólo reinicia el reloj del guion), así que el panel vuelve a
+  // POSICION_SUBTITULO por venir de una pantalla recién creada. Mantenerlo
+  // simple a propósito (ver brief de la Tarea 21): sumar persistencia queda
+  // para una tarea futura si hiciera falta.
+  habilitarArrastre(renderer, panelSubtitulo, LIMITES_ARRASTRE);
+
   function redibujar() {
     const segundosTranscurridos = (performance.now() - inicio) / 1000;
     const texto = lineaActual(segundosTranscurridos);
@@ -189,6 +229,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
     posicion: { x: SEPARACION_BOTONES / 2, y: Y_BOTONES, z: POSICION_SUBTITULO.z },
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
+    tamanoFuente: TAMANO_FUENTE_BOTON,
     nombre: 'pantalla-subtitulos-boton-mas',
   });
   botonMas.userData.delta = 1;
@@ -197,6 +238,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
     posicion: { x: -SEPARACION_BOTONES / 2, y: Y_BOTONES, z: POSICION_SUBTITULO.z },
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
+    tamanoFuente: TAMANO_FUENTE_BOTON,
     nombre: 'pantalla-subtitulos-boton-menos',
   });
   botonMenos.userData.delta = -1;
