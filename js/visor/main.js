@@ -239,6 +239,16 @@ function aplicarComandoYActualizar(comando) {
   if (estadoNuevo.pantalla === 'vuelta' && estadoNuevo.pantalla !== pantallaAnterior) {
     const minutos = minutosTranscurridos(pantallasPorNombre.pausa.obtenerInicioMs(), Date.now());
     pantallasPorNombre.vuelta.actualizarDatos(minutos, TEMAS_PENDIENTES_EJEMPLO);
+  } else if (
+    estadoNuevo.pantalla === 'vuelta' &&
+    estadoNuevo.tiempoVueltaMin !== estadoActual.tiempoVueltaMin
+  ) {
+    // Spec (docs/superpowers/specs/2026-11-13-lentes-ra-design.md, "Contador
+    // de la pausa"): el observador puede sobreescribir el tiempo mostrado en
+    // la vuelta desde el panel, para igualar el ejemplo del guion, ANTES de
+    // confirmar (tocar "Seguir con la clase"/"Ver un resumen rápido"). Esto
+    // reemplaza el tiempo real precargado al entrar, con el valor aplicado.
+    pantallasPorNombre.vuelta.actualizarDatos(estadoNuevo.tiempoVueltaMin, TEMAS_PENDIENTES_EJEMPLO);
   }
 
   // Tarea 13: si la transición real (después de validar, no antes) es
