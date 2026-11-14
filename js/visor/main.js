@@ -17,6 +17,7 @@ import { crearPantallaPausa } from './paneles/pantalla-pausa.js';
 import { crearPantallaVuelta } from './paneles/pantalla-vuelta.js';
 import { crearPantallaResumen } from './paneles/pantalla-resumen.js';
 import { habilitarNavegacionDev } from './navegacion-dev.js';
+import { escucharEstadoFirebase } from './firebase-cliente.js';
 import { establecerCamaraVistaPrevia } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
 import { minutosTranscurridos } from '../common/temporizador-pausa.js';
@@ -99,11 +100,13 @@ let persistenciaActual = estadoPersistenciaInicial();
 // Pantallas estáticas (reconocimiento, bienvenida): se agregan las dos a
 // la escena desde el inicio y se alterna la visibilidad según
 // `estadoActual.pantalla`, en vez de crear/destruir objetos en cada
-// cambio. `navegacion-dev.js` es un placeholder TEMPORAL (teclas '1'-'9')
-// hasta que exista el panel real del observador, controlado por Firebase
-// (Etapa 4): ese módulo sólo traduce la tecla a un nombre de pantalla, la
-// aplicación del estado (`aplicarComando`, de estado.js) pasa siempre por
-// acá, igual que pasará después con los comandos de Firebase.
+// cambio. `navegacion-dev.js` (teclas '1'-'9') sigue activa como
+// herramienta de desarrollo (ver justificación más abajo, junto a
+// `habilitarNavegacionDev`); desde la Tarea 16, Firebase es la fuente real
+// de comandos (ver `escucharEstadoFirebase` más abajo) rumbo al panel del
+// observador (Etapa 4, Tarea 17 todavía no existe). Ambas fuentes aplican
+// el comando siempre a través de `aplicarComandoYActualizar`, que usa
+// `aplicarComando` (de estado.js) -- nunca a mano.
 let estadoActual = estadoPorDefecto();
 
 // Pantalla activa justo antes de entrar a 'aviso' (Tarea 13): como el flujo
@@ -198,16 +201,23 @@ function actualizarPantallaVisible() {
 }
 actualizarPantallaVisible();
 
-// Único punto de entrada para cambiar de pantalla (menú, navegación de
-// desarrollo y, a futuro, los comandos de Firebase): aplica el comando,
+// Único punto de entrada para aplicar CUALQUIER comando de estado (menú,
+// aviso/vuelta/resumen, navegación de desarrollo y, desde la Tarea 16, los
+// comandos crudos que llegan de Firebase -- a futuro escritos por el panel
+// del observador, Tarea 17, todavía no existe). Un comando de Firebase es
+// un objeto genérico (`{ pantalla: 'menu' }`, pero a futuro también
+// `{ tiempoVueltaMin: 5 }` o `{ resetId: ... }`, Tareas 17/18): por eso
+// esta función toma el comando completo, no sólo un nombre de pantalla.
+// Aplica el comando con `aplicarComando` (Tarea 5 -- ahí vive toda la
+// validación/defensa contra comandos corruptos, no se duplica acá),
 // actualiza la visibilidad y, si la pantalla realmente cambió (no si
-// `aplicarComando` la rechazó, ni si ya estábamos en esa pantalla), le
-// avisa a la pantalla recién activada a través de su `alEntrar()`
-// opcional. Esto existe porque todas las pantallas se crean una sola vez
-// al arrancar la app (ver más arriba): una pantalla que necesite "hacer
-// algo" cada vez que el usuario entra de verdad (como reiniciar el reloj
-// del guion de subtítulos, o el futuro timer de pausa de las Tareas
-// 11/12) no puede hacerlo en su constructor, sólo acá.
+// `aplicarComando` rechazó el comando entero, ni si ya estábamos en esa
+// pantalla), le avisa a la pantalla recién activada a través de su
+// `alEntrar()` opcional. Esto existe porque todas las pantallas se crean
+// una sola vez al arrancar la app (ver más arriba): una pantalla que
+// necesite "hacer algo" cada vez que el usuario entra de verdad (como
+// reiniciar el reloj del guion de subtítulos, o el timer de pausa de las
+// Tareas 11/12) no puede hacerlo en su constructor, sólo acá.
 
 // Pantallas "transitorias" del flujo de aviso/pausa: nunca deben quedar
 // guardadas como "la pantalla antes de pausar" -- si `pantallaAnterior`
@@ -218,22 +228,29 @@ actualizarPantallaVisible();
 // trabajando. Incluye 'resumen' por la misma razón, a futuro.
 const PANTALLAS_TRANSITORIAS_DE_PAUSA = ['aviso', 'pausa', 'vuelta', 'resumen'];
 
-function cambiarPantalla(nuevaPantalla) {
+function aplicarComandoYActualizar(comando) {
   const pantallaAnterior = estadoActual.pantalla;
+  const estadoNuevo = aplicarComando(estadoActual, comando);
 
-  // Tarea 13: antes de aplicar el cambio, si la transición real es hacia
-  // 'aviso' y se viene de una pantalla que NO es transitoria (no si ya se
-  // estaba en 'aviso', ni si se venía de 'pausa'/'vuelta'/'resumen' --
-  // ninguna de esas es "donde estaba trabajando el usuario"), se recuerda
-  // la pantalla de la que se viene. Es la única pantalla por la que
-  // siempre se pasa antes de pausar (aviso -> pausa), así que acá es el
-  // único lugar que hace falta tocar para que "Seguir con la clase"
-  // (pantalla-vuelta.js) sepa a dónde volver.
-  if (nuevaPantalla === 'aviso' && !PANTALLAS_TRANSITORIAS_DE_PAUSA.includes(pantallaAnterior)) {
+  // Tarea 13: si la transición real (después de validar, no antes) es
+  // hacia 'aviso' y se viene de una pantalla que NO es transitoria (no si
+  // ya se estaba en 'aviso', ni si se venía de 'pausa'/'vuelta'/'resumen'
+  // -- ninguna de esas es "donde estaba trabajando el usuario"), se
+  // recuerda la pantalla de la que se viene. Comparar contra
+  // `estadoNuevo.pantalla` (en vez del campo `pantalla` del comando, antes
+  // de validar) es necesario ahora que un comando puede venir de Firebase:
+  // si `aplicarComando` rechaza el comando entero (por otro campo
+  // inválido, por ejemplo), `estadoNuevo` es igual a `estadoActual` y no
+  // hay que guardar nada, aunque el comando pidiera 'aviso'.
+  if (
+    estadoNuevo.pantalla === 'aviso' &&
+    estadoNuevo.pantalla !== pantallaAnterior &&
+    !PANTALLAS_TRANSITORIAS_DE_PAUSA.includes(pantallaAnterior)
+  ) {
     pantallaAntesDeAviso = pantallaAnterior;
   }
 
-  estadoActual = aplicarComando(estadoActual, { pantalla: nuevaPantalla });
+  estadoActual = estadoNuevo;
   actualizarPantallaVisible();
 
   if (estadoActual.pantalla !== pantallaAnterior) {
@@ -241,8 +258,34 @@ function cambiarPantalla(nuevaPantalla) {
   }
 }
 
+// Atajo para el caso simple "cambiar a esta pantalla por nombre": lo que
+// siguen pidiendo el menú, el aviso, "seguir con la clase"/"ver resumen" de
+// la pantalla de vuelta, el resumen y la navegación de desarrollo. Ninguno
+// de esos call-sites cambia; todos pasan igual por
+// `aplicarComandoYActualizar`.
+function cambiarPantalla(nuevaPantalla) {
+  aplicarComandoYActualizar({ pantalla: nuevaPantalla });
+}
+
+// Navegación de desarrollo (teclas '1'-'9'): se deja activa a propósito,
+// incluso después de sumar Firebase como fuente real de comandos. Todavía
+// no existe el panel del observador (Tarea 17) ni el proyecto de Firebase
+// real del dueño (ver Tarea 16), así que sacarla dejaría el visor sin
+// ninguna forma de probarse a mano mientras tanto. El día que el panel
+// real reemplace la necesidad de esto en desarrollo, sacar esta llamada es
+// una línea.
 habilitarNavegacionDev((pantalla) => {
   cambiarPantalla(pantalla);
+});
+
+// Fuente real de comandos (Tarea 16): cada valor crudo que Firebase entregue
+// para el nodo de estado (`nodoRaizFirebase()`, js/common/firebase-mensajes.js)
+// pasa siempre por `aplicarComandoYActualizar`, que a su vez usa
+// `aplicarComando` (Tarea 5) para rechazar cualquier comando corrupto, vacío
+// o con campos inesperados -- este módulo no necesita (ni debe) validar
+// nada por su cuenta.
+escucharEstadoFirebase((comando) => {
+  aplicarComandoYActualizar(comando);
 });
 
 // Termina la pausa activa: calcula los minutos reales transcurridos desde
