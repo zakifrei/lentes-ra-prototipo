@@ -196,16 +196,28 @@ actualizarPantallaVisible();
 // algo" cada vez que el usuario entra de verdad (como reiniciar el reloj
 // del guion de subtítulos, o el futuro timer de pausa de las Tareas
 // 11/12) no puede hacerlo en su constructor, sólo acá.
+
+// Pantallas "transitorias" del flujo de aviso/pausa: nunca deben quedar
+// guardadas como "la pantalla antes de pausar" -- si `pantallaAnterior`
+// resulta ser alguna de éstas (por ejemplo, saltando con la navegación de
+// desarrollo: tecla '8' a 'pausa' y después '7' a 'aviso', sin pasar antes
+// por una pantalla real), "Seguir con la clase" terminaría devolviendo al
+// usuario a 'pausa' o 'vuelta' en vez de a donde realmente estaba
+// trabajando. Incluye 'resumen' por la misma razón, a futuro.
+const PANTALLAS_TRANSITORIAS_DE_PAUSA = ['aviso', 'pausa', 'vuelta', 'resumen'];
+
 function cambiarPantalla(nuevaPantalla) {
   const pantallaAnterior = estadoActual.pantalla;
 
   // Tarea 13: antes de aplicar el cambio, si la transición real es hacia
-  // 'aviso' (no si ya se estaba ahí -- ese caso no es una "llegada" real),
-  // se recuerda la pantalla de la que se viene. Es la única pantalla por
-  // la que siempre se pasa antes de pausar (aviso -> pausa), así que acá
-  // es el único lugar que hace falta tocar para que "Seguir con la clase"
+  // 'aviso' y se viene de una pantalla que NO es transitoria (no si ya se
+  // estaba en 'aviso', ni si se venía de 'pausa'/'vuelta'/'resumen' --
+  // ninguna de esas es "donde estaba trabajando el usuario"), se recuerda
+  // la pantalla de la que se viene. Es la única pantalla por la que
+  // siempre se pasa antes de pausar (aviso -> pausa), así que acá es el
+  // único lugar que hace falta tocar para que "Seguir con la clase"
   // (pantalla-vuelta.js) sepa a dónde volver.
-  if (nuevaPantalla === 'aviso' && pantallaAnterior !== 'aviso') {
+  if (nuevaPantalla === 'aviso' && !PANTALLAS_TRANSITORIAS_DE_PAUSA.includes(pantallaAnterior)) {
     pantallaAntesDeAviso = pantallaAnterior;
   }
 
