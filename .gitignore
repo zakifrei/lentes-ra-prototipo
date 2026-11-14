@@ -1,3 +1,6 @@
-# Credenciales reales de Firebase (Tarea 16). La plantilla sin datos
-# sensibles vive en js/config/firebase-config.ejemplo.js y sí se commitea.
-js/config/firebase-config.js
+# js/config/firebase-config.js SÍ se commitea a propósito (ver ledger,
+# ruling de la Etapa 4): el `apiKey` de Firebase para apps web está
+# pensado para ser público -- la seguridad real la dan las reglas de la
+# base de datos, no ocultar este archivo. Sin commitearlo, GitHub Pages
+# no podría servirlo y el panel/visor no conectarían a Firebase en la URL
+# pública.
