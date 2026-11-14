@@ -14,9 +14,11 @@ import { crearPantallaImagenes } from './paneles/pantalla-imagenes.js';
 import { crearPantallaMapa } from './paneles/pantalla-mapa.js';
 import { crearPantallaAviso } from './paneles/pantalla-aviso.js';
 import { crearPantallaPausa } from './paneles/pantalla-pausa.js';
+import { crearPantallaVuelta } from './paneles/pantalla-vuelta.js';
 import { habilitarNavegacionDev } from './navegacion-dev.js';
 import { establecerCamaraVistaPrevia } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
+import { minutosTranscurridos } from '../common/temporizador-pausa.js';
 import {
   estadoPersistenciaInicial,
   ajustarTamanoSubtitulo,
@@ -36,6 +38,14 @@ const RUTAS_IMAGENES = [
   'assets/imagenes/moneda-solido-de-oro-romulo-augusto.jpg',
   'assets/imagenes/pintura-alarico-depone-a-atalo-410.jpg',
 ];
+
+// Cantidad de "temas pendientes" que se muestra en la pantalla de "vuelta
+// de la pausa" (Tarea 13): constante fija a propósito, a diferencia de los
+// minutos (que sí son dinámicos, calculados de la duración real de la
+// pausa) -- el spec sólo pide que el observador pueda ajustar el tiempo
+// mostrado, nunca la cantidad de temas (todavía no hay una fuente real de
+// "temas guardados" en 'Temas pendientes', ver pantalla-pausa.js).
+const TEMAS_PENDIENTES_EJEMPLO = 2;
 
 const canvas = document.getElementById('escena');
 const indicadorVistaPrevia = document.getElementById('indicador-vista-previa');
@@ -95,6 +105,14 @@ let persistenciaActual = estadoPersistenciaInicial();
 // acá, igual que pasará después con los comandos de Firebase.
 let estadoActual = estadoPorDefecto();
 
+// Pantalla activa justo antes de entrar a 'aviso' (Tarea 13): como el flujo
+// aviso -> pausa -> vuelta siempre pasa por 'aviso', esta variable es la
+// que "Seguir con la clase" (pantalla-vuelta.js) necesita para volver a
+// donde estaba el usuario antes de pausar -- no siempre la misma pantalla
+// fija. Se actualiza en `cambiarPantalla`, cada vez que detecta una
+// transición real hacia 'aviso' (ver ahí abajo).
+let pantallaAntesDeAviso = null;
+
 const pantallasPorNombre = {
   reconocimiento: crearPantallaReconocimiento(),
   bienvenida: crearPantallaBienvenida(),
@@ -146,6 +164,18 @@ const pantallasPorNombre = {
   // propio -- se actualiza desde el loop de render de más abajo, sólo
   // mientras esta pantalla está activa (ver `actualizarPantallaPausaSiCorresponde`).
   pausa: crearPantallaPausa(),
+  // Vuelta de la pausa (Tarea 13): "Seguir con la clase" vuelve a la
+  // pantalla donde estaba el usuario antes de pausar (`pantallaAntesDeAviso`,
+  // ver más arriba; si por algún motivo todavía no se pasó por 'aviso' --
+  // por ejemplo, llegando acá directo con la navegación de desarrollo --
+  // cae de vuelta a 'menu'). "Ver un resumen rápido" va a 'resumen' (Tarea
+  // 14, todavía no existe como pantalla real: `cambiarPantalla` no hace
+  // nada raro si el nombre no tiene pantalla asociada).
+  vuelta: crearPantallaVuelta(
+    renderizador,
+    () => cambiarPantalla(pantallaAntesDeAviso ?? 'menu'),
+    () => cambiarPantalla('resumen')
+  ),
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 
@@ -168,6 +198,17 @@ actualizarPantallaVisible();
 // 11/12) no puede hacerlo en su constructor, sólo acá.
 function cambiarPantalla(nuevaPantalla) {
   const pantallaAnterior = estadoActual.pantalla;
+
+  // Tarea 13: antes de aplicar el cambio, si la transición real es hacia
+  // 'aviso' (no si ya se estaba ahí -- ese caso no es una "llegada" real),
+  // se recuerda la pantalla de la que se viene. Es la única pantalla por
+  // la que siempre se pasa antes de pausar (aviso -> pausa), así que acá
+  // es el único lugar que hace falta tocar para que "Seguir con la clase"
+  // (pantalla-vuelta.js) sepa a dónde volver.
+  if (nuevaPantalla === 'aviso' && pantallaAnterior !== 'aviso') {
+    pantallaAntesDeAviso = pantallaAnterior;
+  }
+
   estadoActual = aplicarComando(estadoActual, { pantalla: nuevaPantalla });
   actualizarPantallaVisible();
 
@@ -178,6 +219,28 @@ function cambiarPantalla(nuevaPantalla) {
 
 habilitarNavegacionDev((pantalla) => {
   cambiarPantalla(pantalla);
+});
+
+// Termina la pausa activa: calcula los minutos reales transcurridos desde
+// que se entró a 'pausa' (ver `obtenerInicioMs` en pantalla-pausa.js),
+// actualiza el mensaje de la pantalla de vuelta con esos minutos y la
+// cantidad fija de temas, y recién ahí cambia a 'vuelta' -- en ese orden,
+// para que el mensaje ya esté actualizado cuando la pantalla se hace
+// visible.
+function terminarPausa() {
+  const minutos = minutosTranscurridos(pantallasPorNombre.pausa.obtenerInicioMs(), Date.now());
+  pantallasPorNombre.vuelta.actualizarDatos(minutos, TEMAS_PENDIENTES_EJEMPLO);
+  cambiarPantalla('vuelta');
+}
+
+// Tecla de desarrollo TEMPORAL (Tarea 13): todavía no existe un botón real
+// para "terminar pausa" (llegaría del panel del observador, Etapa 4) ni
+// una tecla genérica en `navegacion-dev.js` sirve para esto -- ese módulo
+// sólo salta de pantalla, sin calcular minutos ni actualizar el mensaje de
+// vuelta. '0' no está usada por `habilitarNavegacionDev` (que sólo cubre
+// '1'-'9'), así que no hay conflicto.
+window.addEventListener('keydown', (evento) => {
+  if (evento.key === '0') terminarPausa();
 });
 
 function alRedimensionar() {

@@ -114,12 +114,15 @@ function dibujarPausa(contexto, minutos) {
  * cada entrada real -- mismo patrón que el reloj de guion de
  * `pantalla-subtitulos.js` (Tarea 8).
  *
- * @returns {THREE.Object3D} grupo con dos métodos agregados:
+ * @returns {THREE.Object3D} grupo con tres métodos agregados:
  *   - `alEntrar()`: reinicia el contador a 0 (lo llama `main.js` cada vez
  *     que detecta una transición real hacia 'pausa').
  *   - `actualizar(ahoraMs:number)`: redibuja el contador si el minuto
  *     mostrado cambió respecto de `ahoraMs` (lo llama `main.js` desde su
  *     loop de render, sólo mientras esta pantalla está activa).
+ *   - `obtenerInicioMs()`: devuelve el `inicioMs` interno (Tarea 13: lo usa
+ *     `main.js` para calcular cuántos minutos duró la pausa al salir de
+ *     ella, hacia la pantalla de "vuelta").
  */
 export function crearPantallaPausa() {
   const grupo = new THREE.Group();
@@ -182,6 +185,16 @@ export function crearPantallaPausa() {
   // en otra pantalla futura.
   grupo.actualizar = function actualizarPantallaPausa(ahoraMs) {
     redibujarSiCambio(ahoraMs);
+  };
+
+  // Getter de sólo lectura para `inicioMs` (Tarea 13): la pantalla de
+  // "vuelta de la pausa" (pantalla-vuelta.js) necesita saber cuándo arrancó
+  // esta pausa en particular para calcular cuántos minutos duró, con
+  // `minutosTranscurridos(obtenerInicioMs(), Date.now())`. No se expone
+  // `inicioMs` directo (sin función) para que nadie de afuera pueda
+  // pisarlo por error -- sólo `alEntrar()`, acá mismo, debe poder hacerlo.
+  grupo.obtenerInicioMs = function obtenerInicioMsPantallaPausa() {
+    return inicioMs;
   };
 
   return grupo;
