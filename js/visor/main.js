@@ -16,7 +16,6 @@ import { crearPantallaAviso } from './paneles/pantalla-aviso.js';
 import { crearPantallaPausa } from './paneles/pantalla-pausa.js';
 import { crearPantallaVuelta } from './paneles/pantalla-vuelta.js';
 import { crearPantallaResumen } from './paneles/pantalla-resumen.js';
-import { habilitarNavegacionDev } from './navegacion-dev.js';
 import { escucharEstadoFirebase } from './firebase-cliente.js';
 import { establecerCamaraVistaPrevia } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
@@ -100,13 +99,12 @@ let persistenciaActual = estadoPersistenciaInicial();
 // Pantallas estáticas (reconocimiento, bienvenida): se agregan las dos a
 // la escena desde el inicio y se alterna la visibilidad según
 // `estadoActual.pantalla`, en vez de crear/destruir objetos en cada
-// cambio. `navegacion-dev.js` (teclas '1'-'9') sigue activa como
-// herramienta de desarrollo (ver justificación más abajo, junto a
-// `habilitarNavegacionDev`); desde la Tarea 16, Firebase es la fuente real
-// de comandos (ver `escucharEstadoFirebase` más abajo) rumbo al panel del
-// observador (Etapa 4, Tarea 17 todavía no existe). Ambas fuentes aplican
-// el comando siempre a través de `aplicarComandoYActualizar`, que usa
-// `aplicarComando` (de estado.js) -- nunca a mano.
+// cambio. Desde la Tarea 17, Firebase (panel real del observador, ver
+// `escucharEstadoFirebase` más abajo) es la ÚNICA fuente de comandos de
+// pantalla -- la navegación de desarrollo por teclado que existía antes
+// (`navegacion-dev.js`) ya se sacó. Todo comando aplica siempre a través
+// de `aplicarComandoYActualizar`, que usa `aplicarComando` (de
+// estado.js) -- nunca a mano.
 let estadoActual = estadoPorDefecto();
 
 // Pantalla activa justo antes de entrar a 'aviso' (Tarea 13): como el flujo
@@ -122,8 +120,8 @@ const pantallasPorNombre = {
   bienvenida: crearPantallaBienvenida(),
   // Al elegir una opción del menú, el cambio de pantalla pasa siempre por
   // `cambiarPantalla` (ver más abajo) -- igual que el resto de los
-  // cambios de estado, y como pasará después con los comandos de
-  // Firebase -- así que no se asigna `estadoActual.pantalla` a mano.
+  // cambios de estado, incluidos los comandos que llegan de Firebase --
+  // así que no se asigna `estadoActual.pantalla` a mano.
   menu: crearPantallaMenu(renderizador, (opcion) => {
     cambiarPantalla(opcion);
   }),
@@ -171,23 +169,22 @@ const pantallasPorNombre = {
   // Vuelta de la pausa (Tarea 13): "Seguir con la clase" vuelve a la
   // pantalla donde estaba el usuario antes de pausar (`pantallaAntesDeAviso`,
   // ver más arriba; si por algún motivo todavía no se pasó por 'aviso' --
-  // por ejemplo, llegando acá directo con la navegación de desarrollo --
-  // cae de vuelta a 'menu'). "Ver un resumen rápido" va a 'resumen' (Tarea
-  // 14, ver abajo).
+  // por ejemplo, llegando acá directo con un comando de Firebase -- cae de
+  // vuelta a 'menu'). "Ver un resumen rápido" va a 'resumen' (Tarea 14, ver
+  // abajo).
   vuelta: crearPantallaVuelta(
     renderizador,
     () => cambiarPantalla(pantallaAntesDeAviso ?? 'menu'),
     () => cambiarPantalla('resumen')
   ),
   // Resumen rápido (Tarea 14): se llega acá sólo desde "Ver un resumen
-  // rápido" de la pantalla de vuelta (no hay tecla de desarrollo dedicada
-  // -- `navegacion-dev.js` sólo cubre `PANTALLAS[0..8]`, y 'resumen' es
-  // `PANTALLAS[9]`; para probarla a mano alcanza con el camino normal:
-  // aviso -> pausa -> '0' termina la pausa -> vuelta -> "Ver un resumen
-  // rápido"). "Volver a la clase" usa exactamente el mismo mecanismo de
-  // retorno que "Seguir con la clase" de la pantalla de vuelta -- vuelve a
-  // `pantallaAntesDeAviso` (o 'menu' si todavía no se pasó por 'aviso'), no
-  // un segundo mecanismo paralelo para el mismo concepto.
+  // rápido" de la pantalla de vuelta (para probarla a mano alcanza con el
+  // camino normal: aviso -> pausa -> "Terminar pausa" del panel -> vuelta
+  // -> "Ver un resumen rápido"). "Volver a la clase" usa exactamente el
+  // mismo mecanismo de retorno que "Seguir con la clase" de la pantalla de
+  // vuelta -- vuelve a `pantallaAntesDeAviso` (o 'menu' si todavía no se
+  // pasó por 'aviso'), no un segundo mecanismo paralelo para el mismo
+  // concepto.
   resumen: crearPantallaResumen(renderizador, () =>
     cambiarPantalla(pantallaAntesDeAviso ?? 'menu')
   ),
@@ -202,12 +199,11 @@ function actualizarPantallaVisible() {
 actualizarPantallaVisible();
 
 // Único punto de entrada para aplicar CUALQUIER comando de estado (menú,
-// aviso/vuelta/resumen, navegación de desarrollo y, desde la Tarea 16, los
-// comandos crudos que llegan de Firebase -- a futuro escritos por el panel
-// del observador, Tarea 17, todavía no existe). Un comando de Firebase es
-// un objeto genérico (`{ pantalla: 'menu' }`, pero a futuro también
-// `{ tiempoVueltaMin: 5 }` o `{ resetId: ... }`, Tareas 17/18): por eso
-// esta función toma el comando completo, no sólo un nombre de pantalla.
+// aviso/vuelta/resumen, y los comandos crudos que llegan de Firebase,
+// escritos por el panel real del observador, Tarea 17). Un comando de
+// Firebase es un objeto genérico (`{ pantalla: 'menu' }`, pero también
+// `{ tiempoVueltaMin: 5 }` o `{ resetId: ... }`): por eso esta función toma
+// el comando completo, no sólo un nombre de pantalla.
 // Aplica el comando con `aplicarComando` (Tarea 5 -- ahí vive toda la
 // validación/defensa contra comandos corruptos, no se duplica acá),
 // actualiza la visibilidad y, si la pantalla realmente cambió (no si
@@ -221,16 +217,29 @@ actualizarPantallaVisible();
 
 // Pantallas "transitorias" del flujo de aviso/pausa: nunca deben quedar
 // guardadas como "la pantalla antes de pausar" -- si `pantallaAnterior`
-// resulta ser alguna de éstas (por ejemplo, saltando con la navegación de
-// desarrollo: tecla '8' a 'pausa' y después '7' a 'aviso', sin pasar antes
-// por una pantalla real), "Seguir con la clase" terminaría devolviendo al
-// usuario a 'pausa' o 'vuelta' en vez de a donde realmente estaba
-// trabajando. Incluye 'resumen' por la misma razón, a futuro.
+// resulta ser alguna de éstas (por ejemplo, saltando directo a 'pausa' y
+// después a 'aviso' con comandos de Firebase, sin pasar antes por una
+// pantalla real), "Seguir con la clase" terminaría devolviendo al usuario
+// a 'pausa' o 'vuelta' en vez de a donde realmente estaba trabajando.
+// Incluye 'resumen' por la misma razón.
 const PANTALLAS_TRANSITORIAS_DE_PAUSA = ['aviso', 'pausa', 'vuelta', 'resumen'];
 
 function aplicarComandoYActualizar(comando) {
   const pantallaAnterior = estadoActual.pantalla;
   const estadoNuevo = aplicarComando(estadoActual, comando);
+
+  // Tarea 17: si la transición real es hacia 'vuelta' (venga de donde
+  // venga -- antes sólo pasaba atada a la tecla de desarrollo '0', ahora
+  // también dispara con el botón "Terminar pausa" del panel, que llega
+  // acá como `{ pantalla: 'vuelta' }` por Firebase), calcular los minutos
+  // reales transcurridos desde que se entró a 'pausa' y actualizar el
+  // mensaje de la pantalla de vuelta ANTES de hacerla visible -- si no,
+  // mostraría siempre "0 min en pausa" porque `actualizarDatos` nunca se
+  // llamaría.
+  if (estadoNuevo.pantalla === 'vuelta' && estadoNuevo.pantalla !== pantallaAnterior) {
+    const minutos = minutosTranscurridos(pantallasPorNombre.pausa.obtenerInicioMs(), Date.now());
+    pantallasPorNombre.vuelta.actualizarDatos(minutos, TEMAS_PENDIENTES_EJEMPLO);
+  }
 
   // Tarea 13: si la transición real (después de validar, no antes) es
   // hacia 'aviso' y se viene de una pantalla que NO es transitoria (no si
@@ -260,23 +269,11 @@ function aplicarComandoYActualizar(comando) {
 
 // Atajo para el caso simple "cambiar a esta pantalla por nombre": lo que
 // siguen pidiendo el menú, el aviso, "seguir con la clase"/"ver resumen" de
-// la pantalla de vuelta, el resumen y la navegación de desarrollo. Ninguno
-// de esos call-sites cambia; todos pasan igual por
-// `aplicarComandoYActualizar`.
+// la pantalla de vuelta y el resumen. Ninguno de esos call-sites cambia;
+// todos pasan igual por `aplicarComandoYActualizar`.
 function cambiarPantalla(nuevaPantalla) {
   aplicarComandoYActualizar({ pantalla: nuevaPantalla });
 }
-
-// Navegación de desarrollo (teclas '1'-'9'): se deja activa a propósito,
-// incluso después de sumar Firebase como fuente real de comandos. Todavía
-// no existe el panel del observador (Tarea 17) ni el proyecto de Firebase
-// real del dueño (ver Tarea 16), así que sacarla dejaría el visor sin
-// ninguna forma de probarse a mano mientras tanto. El día que el panel
-// real reemplace la necesidad de esto en desarrollo, sacar esta llamada es
-// una línea.
-habilitarNavegacionDev((pantalla) => {
-  cambiarPantalla(pantalla);
-});
 
 // Fuente real de comandos (Tarea 16): cada valor crudo que Firebase entregue
 // para el nodo de estado (`nodoRaizFirebase()`, js/common/firebase-mensajes.js)
@@ -286,28 +283,6 @@ habilitarNavegacionDev((pantalla) => {
 // nada por su cuenta.
 escucharEstadoFirebase((comando) => {
   aplicarComandoYActualizar(comando);
-});
-
-// Termina la pausa activa: calcula los minutos reales transcurridos desde
-// que se entró a 'pausa' (ver `obtenerInicioMs` en pantalla-pausa.js),
-// actualiza el mensaje de la pantalla de vuelta con esos minutos y la
-// cantidad fija de temas, y recién ahí cambia a 'vuelta' -- en ese orden,
-// para que el mensaje ya esté actualizado cuando la pantalla se hace
-// visible.
-function terminarPausa() {
-  const minutos = minutosTranscurridos(pantallasPorNombre.pausa.obtenerInicioMs(), Date.now());
-  pantallasPorNombre.vuelta.actualizarDatos(minutos, TEMAS_PENDIENTES_EJEMPLO);
-  cambiarPantalla('vuelta');
-}
-
-// Tecla de desarrollo TEMPORAL (Tarea 13): todavía no existe un botón real
-// para "terminar pausa" (llegaría del panel del observador, Etapa 4) ni
-// una tecla genérica en `navegacion-dev.js` sirve para esto -- ese módulo
-// sólo salta de pantalla, sin calcular minutos ni actualizar el mensaje de
-// vuelta. '0' no está usada por `habilitarNavegacionDev` (que sólo cubre
-// '1'-'9'), así que no hay conflicto.
-window.addEventListener('keydown', (evento) => {
-  if (evento.key === '0') terminarPausa();
 });
 
 function alRedimensionar() {

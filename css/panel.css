@@ -1,0 +1,113 @@
+/* Estilo cálido/ámbar básico del panel del observador (Tarea 17). Pensado
+   para usarse en el celular del observador durante la prueba de
+   usabilidad: botones grandes, fáciles de tocar, con buen contraste sobre
+   fondo oscuro (restricción visual global del proyecto). El pulido fino de
+   verdad es la Etapa 5 (Tarea 19) -- acá alcanza con algo simple y
+   prolijo. */
+
+:root {
+  color-scheme: dark;
+  --fondo: #1a120b;
+  --superficie: #2b1d10;
+  --ambar: #ffb74d;
+  --ambar-fuerte: #ff9800;
+  --texto: #fdebd3;
+  --texto-tenue: #c9a97e;
+  --peligro: #d9480f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+  min-height: 100vh;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin: 0 0 16px;
+  color: var(--ambar);
+}
+
+h2 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+  color: var(--texto-tenue);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+section {
+  background: var(--superficie);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+button {
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--ambar);
+  color: #1a120b;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:active {
+  background: var(--ambar-fuerte);
+}
+
+.grilla-botones {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.fila-tiempo-vuelta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.fila-tiempo-vuelta label {
+  flex: 1 0 100%;
+  color: var(--texto-tenue);
+}
+
+#input-tiempo-vuelta {
+  flex: 1;
+  min-width: 80px;
+  font-size: 1.05rem;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--texto-tenue);
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+.boton-peligro {
+  width: 100%;
+  background: var(--peligro);
+  color: var(--texto);
+}
+
+.boton-peligro:active {
+  background: #a53b0e;
+}
+
+#estado-conexion {
+  text-align: center;
+  color: var(--texto-tenue);
+  font-size: 0.85rem;
+}

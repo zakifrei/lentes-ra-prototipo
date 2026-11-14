@@ -1,7 +1,6 @@
 // Pantalla de aviso de atención: se muestra cuando el sistema detecta que
-// los niveles de atención del usuario bajaron (a futuro, disparada por el
-// panel del observador -- ver Etapa 4 del plan; por ahora, por la
-// navegación de desarrollo, ver navegacion-dev.js). Wrapper fino sobre
+// los niveles de atención del usuario bajaron, disparada por el botón
+// "Disparar aviso" del panel real del observador (Tarea 17). Wrapper fino sobre
 // `panel-texto.js`, igual que bienvenida/reconocimiento, pero agrega el
 // único mecanismo de aceptación del proyecto (`enEventoSeleccion`, ver
 // interaccion.js): esta tarea no tiene una opción de "no" -- el único

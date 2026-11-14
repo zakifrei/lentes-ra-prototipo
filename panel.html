@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel del observador - Lentes RA</title>
+  <link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+  <h1>Panel del observador</h1>
+
+  <section aria-labelledby="titulo-pantallas">
+    <h2 id="titulo-pantallas">Pantallas</h2>
+    <div id="botones-pantalla" class="grilla-botones">
+      <!-- Los botones se generan desde js/panel/main.js, uno por cada
+           valor de PANTALLAS (js/common/estado.js), para no duplicar esa
+           lista a mano acá. -->
+    </div>
+  </section>
+
+  <section aria-labelledby="titulo-vuelta">
+    <h2 id="titulo-vuelta">Tiempo mostrado en la vuelta</h2>
+    <div class="fila-tiempo-vuelta">
+      <label for="input-tiempo-vuelta">Minutos en pausa</label>
+      <input type="number" id="input-tiempo-vuelta" min="0" step="1" value="0">
+      <button type="button" id="boton-aplicar-tiempo-vuelta">Aplicar</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="titulo-reset">
+    <h2 id="titulo-reset">Reinicio</h2>
+    <button type="button" id="boton-reiniciar-todo" class="boton-peligro">Reiniciar todo</button>
+  </section>
+
+  <p id="estado-conexion" aria-live="polite"></p>
+
+  <script type="module" src="js/panel/main.js"></script>
+</body>
+</html>
