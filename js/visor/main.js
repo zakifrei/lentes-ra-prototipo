@@ -15,6 +15,7 @@ import { crearPantallaMapa } from './paneles/pantalla-mapa.js';
 import { crearPantallaAviso } from './paneles/pantalla-aviso.js';
 import { crearPantallaPausa } from './paneles/pantalla-pausa.js';
 import { crearPantallaVuelta } from './paneles/pantalla-vuelta.js';
+import { crearPantallaResumen } from './paneles/pantalla-resumen.js';
 import { habilitarNavegacionDev } from './navegacion-dev.js';
 import { establecerCamaraVistaPrevia } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
@@ -169,12 +170,23 @@ const pantallasPorNombre = {
   // ver más arriba; si por algún motivo todavía no se pasó por 'aviso' --
   // por ejemplo, llegando acá directo con la navegación de desarrollo --
   // cae de vuelta a 'menu'). "Ver un resumen rápido" va a 'resumen' (Tarea
-  // 14, todavía no existe como pantalla real: `cambiarPantalla` no hace
-  // nada raro si el nombre no tiene pantalla asociada).
+  // 14, ver abajo).
   vuelta: crearPantallaVuelta(
     renderizador,
     () => cambiarPantalla(pantallaAntesDeAviso ?? 'menu'),
     () => cambiarPantalla('resumen')
+  ),
+  // Resumen rápido (Tarea 14): se llega acá sólo desde "Ver un resumen
+  // rápido" de la pantalla de vuelta (no hay tecla de desarrollo dedicada
+  // -- `navegacion-dev.js` sólo cubre `PANTALLAS[0..8]`, y 'resumen' es
+  // `PANTALLAS[9]`; para probarla a mano alcanza con el camino normal:
+  // aviso -> pausa -> '0' termina la pausa -> vuelta -> "Ver un resumen
+  // rápido"). "Volver a la clase" usa exactamente el mismo mecanismo de
+  // retorno que "Seguir con la clase" de la pantalla de vuelta -- vuelve a
+  // `pantallaAntesDeAviso` (o 'menu' si todavía no se pasó por 'aviso'), no
+  // un segundo mecanismo paralelo para el mismo concepto.
+  resumen: crearPantallaResumen(renderizador, () =>
+    cambiarPantalla(pantallaAntesDeAviso ?? 'menu')
   ),
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
