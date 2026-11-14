@@ -246,6 +246,56 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   grupo.add(botonMas, botonMenos);
   const botones = [botonMas, botonMenos];
 
+  // Los botones "+"/"-" no son hijos de `panelSubtitulo` (mismo motivo que
+  // en pantalla-imagenes.js: si lo fueran, tocarlos con el mismo gesto que
+  // agarra el panel también lo arrastraría un poco), así que hay que
+  // reposicionarlos a mano para que sigan al panel mientras se lo arrastra
+  // -- si no, quedan flotando en su posición original, desconectados
+  // visualmente del panel movido (hallazgo de revisión de esta tarea). El
+  // offset relativo se calcula una sola vez acá (con la posición inicial de
+  // ambos) y se vuelve a aplicar sobre la posición *actual* del panel en
+  // cada chequeo.
+  const offsetBotonMas = {
+    x: botonMas.position.x - panelSubtitulo.position.x,
+    y: botonMas.position.y - panelSubtitulo.position.y,
+    z: botonMas.position.z - panelSubtitulo.position.z,
+  };
+  const offsetBotonMenos = {
+    x: botonMenos.position.x - panelSubtitulo.position.x,
+    y: botonMenos.position.y - panelSubtitulo.position.y,
+    z: botonMenos.position.z - panelSubtitulo.position.z,
+  };
+
+  function actualizarBotonesSubtitulo() {
+    const { x, y, z } = panelSubtitulo.position;
+    botonMas.position.set(x + offsetBotonMas.x, y + offsetBotonMas.y, z + offsetBotonMas.z);
+    botonMenos.position.set(x + offsetBotonMenos.x, y + offsetBotonMenos.y, z + offsetBotonMenos.z);
+  }
+
+  // `habilitarArrastre` mueve `panelSubtitulo.position` directamente, sin
+  // avisar a quien lo llamó (no hay nada que notificar hacia `main.js` acá,
+  // a diferencia de `onMoverImagen` en pantalla-imagenes.js: la posición de
+  // este panel no es persistente, ver el comentario junto a
+  // `habilitarArrastre` más arriba) -- así que, igual que
+  // `verificarCambios` en pantalla-imagenes.js, se compara la posición del
+  // panel cuadro a cuadro en su propio `requestAnimationFrame` (no se
+  // reutiliza `renderer.setAnimationLoop`: ya lo ocupa el loop de render de
+  // `main.js`, ajeno a esta pantalla). Sólo corre mientras la pantalla está
+  // visible, para no hacer trabajo de más cuando no se la está viendo.
+  let ultimaPosicionPanelConocida = { ...panelSubtitulo.position };
+  function verificarArrastrePanel() {
+    if (grupo.visible) {
+      const { x, y, z } = panelSubtitulo.position;
+      const anterior = ultimaPosicionPanelConocida;
+      if (x !== anterior.x || y !== anterior.y || z !== anterior.z) {
+        ultimaPosicionPanelConocida = { x, y, z };
+        actualizarBotonesSubtitulo();
+      }
+    }
+    requestAnimationFrame(verificarArrastrePanel);
+  }
+  requestAnimationFrame(verificarArrastrePanel);
+
   const raycaster = new THREE.Raycaster();
   const vectorOrigen = new THREE.Vector3();
   const vectorDireccion = new THREE.Vector3();
