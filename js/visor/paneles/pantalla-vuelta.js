@@ -117,9 +117,11 @@ function dibujarMensaje(contexto, texto) {
  * @param {() => void} onVerResumen llamado al tocar "Ver un resumen rápido"
  * @returns {THREE.Object3D} grupo con un método agregado:
  *   - `actualizarDatos(minutos:number, temas:number)`: redibuja el panel
- *     de mensaje con `formatearTextoVuelta(minutos, temas)`. Lo llama
- *     `main.js` con los datos reales de la pausa justo antes de mostrar
- *     esta pantalla (ver `terminarPausa` ahí).
+ *     de mensaje con `formatearTextoVuelta(minutos, temas)`. La llama
+ *     `main.js` dentro de `aplicarComandoYActualizar` (Tarea 17), tanto al
+ *     entrar de verdad a esta pantalla con el tiempo real de la pausa como
+ *     cuando el observador lo sobreescribe después (Tarea de fix de
+ *     `tiempoVueltaMin`).
  */
 export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
   const grupo = new THREE.Group();
