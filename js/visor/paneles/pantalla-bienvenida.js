@@ -50,7 +50,7 @@ const POSICION = { x: 0, y: 1.1, z: -1.8 };
 
 const TEXTO_SALUDO = '¡Hola, Sofía!';
 const TEXTO_CLASE = 'Ahora arranca tu clase de Historia';
-const TEXTO_TIP = 'Tip: prestá atención a las imágenes';
+const TEXTO_TIP = 'Tip: Te recomiendo usar imágenes';
 
 // 3 tamaños de fuente distintos, de mayor a menor -- el saludo es el
 // elemento principal de la pantalla, el anuncio de la clase es secundario,
