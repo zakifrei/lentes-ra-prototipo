@@ -16,6 +16,7 @@ import { crearPantallaAviso } from './paneles/pantalla-aviso.js';
 import { crearPantallaPausa } from './paneles/pantalla-pausa.js';
 import { crearPantallaVuelta } from './paneles/pantalla-vuelta.js';
 import { crearPantallaResumen } from './paneles/pantalla-resumen.js';
+import { crearBotonMenuFlotante } from './paneles/boton-menu-flotante.js';
 import { escucharEstadoFirebase } from './firebase-cliente.js';
 import { establecerCamaraVistaPrevia, crearIndicadorDeApuntado } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
@@ -74,6 +75,23 @@ const camara = new THREE.PerspectiveCamera(
 // xr-sesion.js/WebXRManager de Three.js) -- sólo cambia dónde arranca la
 // cámara de la vista previa de escritorio antes de orbitar con el mouse.
 camara.position.set(0, 1.6, 0.6);
+
+// Se agrega la cámara a la escena (Tarea 25, botón de menú flotante):
+// `WebGLRenderer.render(escena, camara)` sólo dibuja lo que encuentra
+// recorriendo `escena.children` (y sus descendientes) -- nunca recorre
+// `camara.children` de forma independiente. Sin esto, cualquier objeto
+// agregado como hijo de la cámara (como el botón de menú flotante, más
+// abajo) jamás se recorrería durante el render: quedaría invisible
+// siempre, sin ningún error en consola que lo delate. Es el patrón
+// estándar de Three.js para HUDs ("parent the camera to the scene, then
+// parent HUD elements to the camera") -- confirmado leyendo
+// `vendor/three/three.module.js` (WebGLRenderer.render actualiza
+// `scene.matrixWorld` recorriendo `escena.children`, y WebXRManager
+// sincroniza la pose trackeada del casco de vuelta a este mismo objeto
+// `camara` en cada cuadro de una sesión real, con `updateMatrixWorld(true)`
+// -- forzando también a sus hijos -- así que un HUD colgado de `camara`
+// sigue funcionando en RA real, no sólo en la vista previa de escritorio).
+escena.add(camara);
 
 // `interaccion.js` necesita la cámara para calcular el rayo del mouse en
 // la vista previa de escritorio (ver js/visor/interaccion.js).
@@ -205,10 +223,27 @@ const pantallasPorNombre = {
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 
+// Botón de menú flotante (Tarea 25): a diferencia de TODAS las pantallas de
+// `pantallasPorNombre` arriba (fijas en el espacio del mundo, hijas de
+// `escena`), éste es un HUD real -- se agrega como hijo de la CÁMARA, no de
+// la escena, para que se vea siempre en la misma esquina de la vista sin
+// importar hacia dónde mire el usuario (ver el comentario junto a
+// `escena.add(camara)`, más arriba, y boton-menu-flotante.js). Por eso no
+// vive en `pantallasPorNombre` ni se recorre junto con el resto en
+// `actualizarPantallaVisible`, más abajo -- necesita su propia línea.
+const botonMenuFlotante = crearBotonMenuFlotante(renderizador, () => cambiarPantalla('menu'));
+camara.add(botonMenuFlotante);
+
 function actualizarPantallaVisible() {
   Object.entries(pantallasPorNombre).forEach(([nombre, objeto]) => {
     objeto.visible = nombre === estadoActual.pantalla;
   });
+  // Visible en todas las pantallas MENOS 'aviso' y 'pausa' (decisión ya
+  // tomada con el dueño del proyecto): en ambas, lo que el usuario necesita
+  // tocar es uno de los botones propios de esa pantalla (aceptar/rechazar
+  // el aviso, terminar la pausa), no distraerse con un acceso directo al
+  // menú.
+  botonMenuFlotante.visible = !['aviso', 'pausa'].includes(estadoActual.pantalla);
 }
 actualizarPantallaVisible();
 
