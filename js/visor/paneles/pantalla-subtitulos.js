@@ -20,6 +20,7 @@ import { crearPanelTexto } from './panel-texto.js';
 import { enEventoSeleccion, habilitarArrastre } from '../interaccion.js';
 import { lineaActual } from '../../common/subtitulos-guion.js';
 import { ajustarTamanoSubtitulo, TAMANO_MIN } from '../../common/persistencia.js';
+import { dibujarFondoPanel, COLOR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
 
 // ANCHO_CANVAS quedó en 1536 (en vez de 1024) a raíz de un bug encontrado en
 // pruebas de usabilidad en vivo: con 1024 px de ancho, incluso la línea más
@@ -121,7 +122,7 @@ const INTERVALO_ACTUALIZACION_MS = 1000;
 // margen -- mismo criterio que panel-texto.js, para que los subtítulos
 // nunca se corten contra el borde del panel.
 function calcularTamanoFuenteAjustado(contexto, texto, tamanoFuente) {
-  contexto.font = `${tamanoFuente}px sans-serif`;
+  contexto.font = `${tamanoFuente}px ${FUENTE_PRINCIPAL}`;
   const anchoDisponible = ANCHO_CANVAS - MARGEN_HORIZONTAL * 2;
   const anchoTexto = contexto.measureText(texto).width;
   if (anchoTexto <= anchoDisponible) return tamanoFuente;
@@ -131,15 +132,14 @@ function calcularTamanoFuenteAjustado(contexto, texto, tamanoFuente) {
 function dibujarSubtitulo(contexto, texto, tamanoFuente) {
   contexto.clearRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
 
-  contexto.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  contexto.fillRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
+  dibujarFondoPanel(contexto, ANCHO_CANVAS, ALTO_CANVAS);
 
-  contexto.fillStyle = '#ffffff';
+  contexto.fillStyle = COLOR_TEXTO;
   contexto.textAlign = 'center';
   contexto.textBaseline = 'middle';
 
   const tamanoFuenteAjustado = calcularTamanoFuenteAjustado(contexto, texto, tamanoFuente);
-  contexto.font = `${tamanoFuenteAjustado}px sans-serif`;
+  contexto.font = `${tamanoFuenteAjustado}px ${FUENTE_PRINCIPAL}`;
   contexto.fillText(texto, ANCHO_CANVAS / 2, ALTO_CANVAS / 2);
 }
 

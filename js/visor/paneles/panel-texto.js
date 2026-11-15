@@ -10,6 +10,7 @@
 // cubrir el centro de lo que el usuario está mirando.
 
 import * as THREE from '../../../vendor/three/three.module.js';
+import { dibujarFondoPanel, COLOR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
 
 const ANCHO_CANVAS = 1024;
 const ALTO_CANVAS = 512;
@@ -36,7 +37,7 @@ const TAMANO_FUENTE_POR_DEFECTO = 48;
 // tamaño de fuente pedido, se reduce ese tamaño (igual para todas las
 // líneas, para no dejar tamaños dispares) hasta que entre con margen.
 function calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente) {
-  contexto.font = `${tamanoFuente}px sans-serif`;
+  contexto.font = `${tamanoFuente}px ${FUENTE_PRINCIPAL}`;
   const anchoDisponible = ANCHO_CANVAS - MARGEN_HORIZONTAL * 2;
   const anchoMaximo = Math.max(...lineas.map((linea) => contexto.measureText(linea).width));
   if (anchoMaximo <= anchoDisponible) return tamanoFuente;
@@ -46,15 +47,14 @@ function calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente) {
 function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente) {
   contexto.clearRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
 
-  contexto.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  contexto.fillRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
+  dibujarFondoPanel(contexto, ANCHO_CANVAS, ALTO_CANVAS);
 
-  contexto.fillStyle = '#ffffff';
+  contexto.fillStyle = COLOR_TEXTO;
   contexto.textAlign = 'center';
   contexto.textBaseline = 'middle';
 
   const tamanoFuenteAjustado = calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente);
-  contexto.font = `${tamanoFuenteAjustado}px sans-serif`;
+  contexto.font = `${tamanoFuenteAjustado}px ${FUENTE_PRINCIPAL}`;
 
   const interlineado = tamanoFuenteAjustado * 1.4;
   const altoTotal = interlineado * lineas.length;

@@ -25,6 +25,7 @@
 
 import * as THREE from '../../../vendor/three/three.module.js';
 import { minutosTranscurridos } from '../../common/temporizador-pausa.js';
+import { dibujarFondoPanel, COLOR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
 
 const ANCHO_CANVAS = 1024;
 const ALTO_CANVAS = 512;
@@ -52,7 +53,7 @@ const TEXTO_PAUSA =
 // comentario de arriba sobre por qué hace falta redibujar en caliente),
 // así que esta pantalla necesita su propio wrap de texto.
 function partirEnLineas(contexto, texto, tamanoFuente) {
-  contexto.font = `${tamanoFuente}px sans-serif`;
+  contexto.font = `${tamanoFuente}px ${FUENTE_PRINCIPAL}`;
   const anchoDisponible = ANCHO_CANVAS - MARGEN_HORIZONTAL * 2;
   const palabras = texto.split(' ');
   const lineas = [];
@@ -74,10 +75,9 @@ function partirEnLineas(contexto, texto, tamanoFuente) {
 function dibujarPausa(contexto, minutos) {
   contexto.clearRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
 
-  contexto.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  contexto.fillRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
+  dibujarFondoPanel(contexto, ANCHO_CANVAS, ALTO_CANVAS);
 
-  contexto.fillStyle = '#ffffff';
+  contexto.fillStyle = COLOR_TEXTO;
   contexto.textAlign = 'center';
   contexto.textBaseline = 'middle';
 
@@ -92,14 +92,14 @@ function dibujarPausa(contexto, minutos) {
 
   let y = ALTO_CANVAS / 2 - altoTotal / 2 + interlineadoTexto / 2;
 
-  contexto.font = `${TAMANO_FUENTE_TEXTO}px sans-serif`;
+  contexto.font = `${TAMANO_FUENTE_TEXTO}px ${FUENTE_PRINCIPAL}`;
   lineasTexto.forEach((linea) => {
     contexto.fillText(linea, ANCHO_CANVAS / 2, y);
     y += interlineadoTexto;
   });
 
   y += espacioAntesContador;
-  contexto.font = `bold ${TAMANO_FUENTE_CONTADOR}px sans-serif`;
+  contexto.font = `bold ${TAMANO_FUENTE_CONTADOR}px ${FUENTE_PRINCIPAL}`;
   contexto.fillText(textoContador, ANCHO_CANVAS / 2, y);
 }
 

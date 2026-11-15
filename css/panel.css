@@ -1,17 +1,20 @@
-/* Estilo cálido/ámbar básico del panel del observador (Tarea 17). Pensado
-   para usarse en el celular del observador durante la prueba de
+/* Estilo cálido/ámbar del panel del observador (Tarea 19, Etapa 5: pulido
+   visual final -- reemplaza el estilo básico de la Tarea 17). Mismos tonos
+   que js/visor/tema-visual.js (COLOR_FONDO_PANEL/COLOR_AMBAR/
+   COLOR_AMBAR_FUERTE/COLOR_TEXTO/COLOR_BRILLO), para que lo que ve el
+   observador en su celular combine con lo que ve el usuario en el visor.
+   Pensado para usarse en el celular del observador durante la prueba de
    usabilidad: botones grandes, fáciles de tocar, con buen contraste sobre
-   fondo oscuro (restricción visual global del proyecto). El pulido fino de
-   verdad es la Etapa 5 (Tarea 19) -- acá alcanza con algo simple y
-   prolijo. */
+   fondo oscuro (restricción visual global del proyecto). */
 
 :root {
   color-scheme: dark;
-  --fondo: #1a120b;
-  --superficie: #2b1d10;
-  --ambar: #ffb74d;
-  --ambar-fuerte: #ff9800;
-  --texto: #fdebd3;
+  --fondo: #1c1008;
+  --superficie: #2b1a0e;
+  --ambar: #ffb454;
+  --ambar-fuerte: #ff8c32;
+  --brillo-ambar: rgba(255, 150, 60, 0.45);
+  --texto: #fff3e0;
   --texto-tenue: #c9a97e;
   --peligro: #d9480f;
 }
@@ -26,7 +29,7 @@ body {
   min-height: 100vh;
   background: var(--fondo);
   color: var(--texto);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 h1 {
@@ -46,9 +49,13 @@ h2 {
 
 section {
   background: var(--superficie);
+  border: 1px solid rgba(255, 180, 84, 0.25);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
+  /* Brillo ámbar suave alrededor de cada sección, mismo lenguaje visual
+     que dibujarFondoPanel() en tema-visual.js. */
+  box-shadow: 0 0 16px var(--brillo-ambar);
 }
 
 button {
@@ -58,9 +65,10 @@ button {
   border: none;
   border-radius: 10px;
   background: var(--ambar);
-  color: #1a120b;
+  color: #1c1008;
   cursor: pointer;
   touch-action: manipulation;
+  box-shadow: 0 0 10px var(--brillo-ambar);
 }
 
 button:active {

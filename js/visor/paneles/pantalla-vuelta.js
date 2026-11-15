@@ -23,6 +23,7 @@ import * as THREE from '../../../vendor/three/three.module.js';
 import { crearPanelTexto } from './panel-texto.js';
 import { formatearTextoVuelta } from '../../common/temporizador-pausa.js';
 import { enEventoSeleccion } from '../interaccion.js';
+import { dibujarFondoPanel, COLOR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
 
 const ANCHO_CANVAS = 1024;
 const ALTO_CANVAS = 512;
@@ -62,7 +63,7 @@ const vectorDireccion = new THREE.Vector3();
 // pausa, así que arma su propio canvas en vez de uno fijo creado una sola
 // vez.
 function partirEnLineas(contexto, texto, tamanoFuente) {
-  contexto.font = `${tamanoFuente}px sans-serif`;
+  contexto.font = `${tamanoFuente}px ${FUENTE_PRINCIPAL}`;
   const anchoDisponible = ANCHO_CANVAS - MARGEN_HORIZONTAL * 2;
   const palabras = texto.split(' ');
   const lineas = [];
@@ -84,10 +85,9 @@ function partirEnLineas(contexto, texto, tamanoFuente) {
 function dibujarMensaje(contexto, texto) {
   contexto.clearRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
 
-  contexto.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  contexto.fillRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
+  dibujarFondoPanel(contexto, ANCHO_CANVAS, ALTO_CANVAS);
 
-  contexto.fillStyle = '#ffffff';
+  contexto.fillStyle = COLOR_TEXTO;
   contexto.textAlign = 'center';
   contexto.textBaseline = 'middle';
 
@@ -96,7 +96,7 @@ function dibujarMensaje(contexto, texto) {
   const altoTotal = interlineado * lineas.length;
   let y = ALTO_CANVAS / 2 - altoTotal / 2 + interlineado / 2;
 
-  contexto.font = `${TAMANO_FUENTE_MENSAJE}px sans-serif`;
+  contexto.font = `${TAMANO_FUENTE_MENSAJE}px ${FUENTE_PRINCIPAL}`;
   lineas.forEach((linea) => {
     contexto.fillText(linea, ANCHO_CANVAS / 2, y);
     y += interlineado;
