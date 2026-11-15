@@ -41,7 +41,17 @@ const TEXTO_BOTON = 'Menú';
 // más corta, ese mismo tamaño físico tapiaría buena parte del campo visual
 // (el campo visual cubierto por un panel de tamaño fijo crece cuanto más
 // cerca está de la cámara).
-const POSICION_LOCAL = { x: 0.18, y: 0.13, z: -0.5 };
+//
+// `y` NEGATIVO a propósito (feedback en vivo del Quest real): todo el
+// resto del contenido del proyecto vive por DEBAJO de la altura de ojos
+// (ver panel-texto.js/POSICION_POR_DEFECTO.y=1.1 con los ojos a ~1.6m, un
+// ángulo de ~15° bajo la mirada al frente) -- con `y` positivo acá, este
+// botón quedaba arriba del centro, en la dirección contraria a donde
+// aparece todo lo demás, y se sentía "muy encima" del usuario aunque el
+// valor en metros fuera chico. y=-0.12 a esta distancia (z=-0.5) replica
+// ese mismo ángulo de ~15° hacia abajo, para que el botón quede a la
+// misma "altura" relativa que el resto de los paneles.
+const POSICION_LOCAL = { x: 0.18, y: -0.12, z: -0.5 };
 const ANCHO_BOTON = 0.18;
 const ALTO_BOTON = 0.09;
 // Más grande que el TAMANO_FUENTE_POR_DEFECTO (48) de panel-texto.js: el
@@ -111,16 +121,21 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
   // abierto la próxima vez que el botón vuelva a mostrarse.
   let desplegado = false;
 
-  // Apilados verticalmente debajo del botón principal, en coordenadas
-  // locales de cámara (mismo x/z que el botón principal, para que el
-  // desplegable quede justo debajo de él). Arrancan ocultos: sólo se
-  // muestran mientras `desplegado` es true.
+  // Apilados verticalmente ARRIBA del botón principal (no debajo), en
+  // coordenadas locales de cámara (mismo x/z que el botón principal).
+  // Desde que `POSICION_LOCAL.y` pasó a ser negativo (el botón bajó para
+  // quedar "a la altura" del resto del contenido, ver el comentario junto
+  // a esa constante), abrir el desplegable hacia abajo sacaría al tercer
+  // botón fuera del campo visual (a z=-0.5, el semi-alto visible es de
+  // apenas ~0.35m) -- hacia arriba, en cambio, hay margen de sobra hasta
+  // el centro de la vista. Arrancan ocultos: sólo se muestran mientras
+  // `desplegado` es true.
   const botonesOpcion = OPCIONES.map(({ opcion, texto }, indice) => {
     const y =
-      POSICION_LOCAL.y -
-      ALTO_BOTON / 2 -
-      MARGEN_VERTICAL -
-      ALTO_BOTON_OPCION / 2 -
+      POSICION_LOCAL.y +
+      ALTO_BOTON / 2 +
+      MARGEN_VERTICAL +
+      ALTO_BOTON_OPCION / 2 +
       indice * (ALTO_BOTON_OPCION + MARGEN_VERTICAL);
 
     const botonOpcion = crearPanelTexto([texto], {
