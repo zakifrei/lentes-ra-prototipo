@@ -99,8 +99,10 @@ const SEPARACION_BOTONES = 0.4;
 // para que el glyph llene gran parte del panel.
 const TAMANO_FUENTE_BOTON = 350;
 // Debajo del panel de subtítulos: nunca encima (mismo criterio que el
-// resto de los paneles del proyecto).
-const Y_BOTONES = POSICION_SUBTITULO.y - ALTO_PANEL / 2 - 0.15;
+// resto de los paneles del proyecto). Offset LOCAL al contenedor (ver más
+// abajo), no una coordenada de mundo -- el origen local del contenedor
+// coincide con el centro del panel.
+const Y_LOCAL_BOTONES = -ALTO_PANEL / 2 - 0.15;
 
 // Volumen en el que se puede arrastrar el panel de subtítulos: mismo
 // criterio que LIMITES_ARRASTRE de pantalla-imagenes.js (alcanzable, sin
@@ -195,19 +197,36 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   });
   const geometria = new THREE.PlaneGeometry(ANCHO_PANEL, ALTO_PANEL);
 
+  // `contenedor` agrupa el panel y sus dos botones "+"/"-": se arrastran
+  // siempre juntos, como una sola unidad (feedback en vivo del Quest real:
+  // antes los botones "perseguían" al panel un cuadro después, vía un
+  // `requestAnimationFrame` propio, y se sentía desincronizado). Esto sólo
+  // es seguro porque `habilitarArrastre` separa el objeto contra el que se
+  // raycastea para AGARRAR (acá, `panelSubtitulo` solo) del objeto que
+  // efectivamente se MUEVE (acá, `contenedor`, que sí incluye los botones
+  // como hijos) -- mismo mecanismo y mismo motivo que pantalla-imagenes.js
+  // (ver su comentario grande al principio del archivo y el JSDoc de
+  // `habilitarArrastre` en interaccion.js): si el raycasting recursivo del
+  // agarre apuntara al contenedor entero, tocar un botón agarraría (y
+  // movería) el panel sin querer.
+  const contenedor = new THREE.Group();
+  contenedor.name = 'pantalla-subtitulos-contenedor';
+  contenedor.position.set(POSICION_SUBTITULO.x, POSICION_SUBTITULO.y, POSICION_SUBTITULO.z);
+  grupo.add(contenedor);
+
   const panelSubtitulo = new THREE.Mesh(geometria, material);
   panelSubtitulo.name = 'pantalla-subtitulos-texto';
-  panelSubtitulo.position.set(POSICION_SUBTITULO.x, POSICION_SUBTITULO.y, POSICION_SUBTITULO.z);
-  grupo.add(panelSubtitulo);
+  // Siempre en el origen local del contenedor -- quien se mueve de verdad,
+  // al arrastrar, es `contenedor`.
+  contenedor.add(panelSubtitulo);
 
-  // Arrastrable con el mismo mecanismo que las imágenes (Task 4): la
-  // posición, a diferencia de las imágenes, no es persistente -- si el
+  // La posición, a diferencia de las imágenes, no es persistente -- si el
   // usuario sale de esta pantalla y vuelve a entrar, `alEntrar()` no la
   // toca (sólo reinicia el reloj del guion), así que el panel vuelve a
   // POSICION_SUBTITULO por venir de una pantalla recién creada. Mantenerlo
   // simple a propósito (ver brief de la Tarea 21): sumar persistencia queda
   // para una tarea futura si hiciera falta.
-  habilitarArrastre(renderer, panelSubtitulo, LIMITES_ARRASTRE);
+  habilitarArrastre(renderer, panelSubtitulo, contenedor, LIMITES_ARRASTRE);
 
   function redibujar() {
     const segundosTranscurridos = (performance.now() - inicio) / 1000;
@@ -225,9 +244,14 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   setInterval(redibujar, INTERVALO_ACTUALIZACION_MS);
 
   // Botones "+"/"-": paneles de texto chicos y estáticos (no cambian), así
-  // que sí se reutiliza crearPanelTexto para ellos.
+  // que sí se reutiliza crearPanelTexto para ellos. Posición LOCAL al
+  // contenedor (el origen local es el centro del panel) -- ya NO hace
+  // falta reposicionarlos a mano para que sigan al panel al arrastrarlo:
+  // al ser hijos del mismo `contenedor` que se mueve, heredan la posición
+  // automáticamente (ver el comentario grande junto a `contenedor`, más
+  // arriba).
   const botonMas = crearPanelTexto(['+'], {
-    posicion: { x: SEPARACION_BOTONES / 2, y: Y_BOTONES, z: POSICION_SUBTITULO.z },
+    posicion: { x: SEPARACION_BOTONES / 2, y: Y_LOCAL_BOTONES, z: 0 },
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
     tamanoFuente: TAMANO_FUENTE_BOTON,
@@ -236,7 +260,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   botonMas.userData.delta = 1;
 
   const botonMenos = crearPanelTexto(['-'], {
-    posicion: { x: -SEPARACION_BOTONES / 2, y: Y_BOTONES, z: POSICION_SUBTITULO.z },
+    posicion: { x: -SEPARACION_BOTONES / 2, y: Y_LOCAL_BOTONES, z: 0 },
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
     tamanoFuente: TAMANO_FUENTE_BOTON,
@@ -244,58 +268,8 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   });
   botonMenos.userData.delta = -1;
 
-  grupo.add(botonMas, botonMenos);
+  contenedor.add(botonMas, botonMenos);
   const botones = [botonMas, botonMenos];
-
-  // Los botones "+"/"-" no son hijos de `panelSubtitulo` (mismo motivo que
-  // en pantalla-imagenes.js: si lo fueran, tocarlos con el mismo gesto que
-  // agarra el panel también lo arrastraría un poco), así que hay que
-  // reposicionarlos a mano para que sigan al panel mientras se lo arrastra
-  // -- si no, quedan flotando en su posición original, desconectados
-  // visualmente del panel movido (hallazgo de revisión de esta tarea). El
-  // offset relativo se calcula una sola vez acá (con la posición inicial de
-  // ambos) y se vuelve a aplicar sobre la posición *actual* del panel en
-  // cada chequeo.
-  const offsetBotonMas = {
-    x: botonMas.position.x - panelSubtitulo.position.x,
-    y: botonMas.position.y - panelSubtitulo.position.y,
-    z: botonMas.position.z - panelSubtitulo.position.z,
-  };
-  const offsetBotonMenos = {
-    x: botonMenos.position.x - panelSubtitulo.position.x,
-    y: botonMenos.position.y - panelSubtitulo.position.y,
-    z: botonMenos.position.z - panelSubtitulo.position.z,
-  };
-
-  function actualizarBotonesSubtitulo() {
-    const { x, y, z } = panelSubtitulo.position;
-    botonMas.position.set(x + offsetBotonMas.x, y + offsetBotonMas.y, z + offsetBotonMas.z);
-    botonMenos.position.set(x + offsetBotonMenos.x, y + offsetBotonMenos.y, z + offsetBotonMenos.z);
-  }
-
-  // `habilitarArrastre` mueve `panelSubtitulo.position` directamente, sin
-  // avisar a quien lo llamó (no hay nada que notificar hacia `main.js` acá,
-  // a diferencia de `onMoverImagen` en pantalla-imagenes.js: la posición de
-  // este panel no es persistente, ver el comentario junto a
-  // `habilitarArrastre` más arriba) -- así que, igual que
-  // `verificarCambios` en pantalla-imagenes.js, se compara la posición del
-  // panel cuadro a cuadro en su propio `requestAnimationFrame` (no se
-  // reutiliza `renderer.setAnimationLoop`: ya lo ocupa el loop de render de
-  // `main.js`, ajeno a esta pantalla). Sólo corre mientras la pantalla está
-  // visible, para no hacer trabajo de más cuando no se la está viendo.
-  let ultimaPosicionPanelConocida = { ...panelSubtitulo.position };
-  function verificarArrastrePanel() {
-    if (grupo.visible) {
-      const { x, y, z } = panelSubtitulo.position;
-      const anterior = ultimaPosicionPanelConocida;
-      if (x !== anterior.x || y !== anterior.y || z !== anterior.z) {
-        ultimaPosicionPanelConocida = { x, y, z };
-        actualizarBotonesSubtitulo();
-      }
-    }
-    requestAnimationFrame(verificarArrastrePanel);
-  }
-  requestAnimationFrame(verificarArrastrePanel);
 
   const raycaster = new THREE.Raycaster();
   const vectorOrigen = new THREE.Vector3();

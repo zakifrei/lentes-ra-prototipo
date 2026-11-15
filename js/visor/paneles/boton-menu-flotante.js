@@ -32,12 +32,12 @@ const TEXTO_BOTON = 'Menú';
 
 // Coordenadas LOCALES a la cámara (no del mundo): +X a la derecha, +Y hacia
 // arriba, -Z hacia adelante (misma convención que usa Three.js para
-// cualquier cámara). z=-0.5 (medio metro) en vez de los -1 a -1.3 m en los
+// cualquier cámara). z=-0.5 (medio metro) en vez de los -1.6 a -1.9 m en los
 // que viven el resto de los paneles del proyecto -- a propósito, para que el
 // botón quede "pegado" a la esquina sin competir con el contenido
 // principal. Por la misma razón, el tamaño físico de abajo es bastante más
 // chico que el de los botones normales (ANCHO_BOTON/ALTO_BOTON = 0.6x0.3 a
-// z=-1.2 en pantalla-aviso.js/pantalla-vuelta.js): a esta distancia mucho
+// z=-1.8 en pantalla-aviso.js/pantalla-vuelta.js): a esta distancia mucho
 // más corta, ese mismo tamaño físico tapiaría buena parte del campo visual
 // (el campo visual cubierto por un panel de tamaño fijo crece cuanto más
 // cerca está de la cámara).

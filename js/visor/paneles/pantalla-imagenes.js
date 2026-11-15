@@ -25,14 +25,18 @@
 // sí: cada una guarda su propio registro en `persistencia.imagenes`, con su
 // propio id (el nombre de archivo, sin ruta ni extensión).
 //
-// Los botones "+"/"-" de cada imagen NO son hijos del plano que se arrastra:
-// `habilitarArrastre` hace raycasting recursivo sobre el objeto que le
-// pasamos, así que si los botones colgaran de ese mismo objeto, tocar un
-// botón también "agarraría" la imagen (el mismo gesto de click dispara
-// 'selectstart' en ambos mecanismos) y la movería un poco al mismo tiempo
-// que cambia su escala. Por eso los botones son objetos independientes,
-// agregados directo a `grupo`, y se reposicionan a mano para seguir a su
-// imagen (ver `actualizarBotonesEscala`, llamada en cada cuadro).
+// Cada imagen vive dentro de un `contenedor` (THREE.Group) propio, que
+// agrupa la imagen y sus dos botones "+"/"-" -- así se arrastran siempre
+// juntos, como una sola unidad, en vez de que los botones "persigan" a la
+// imagen un cuadro después (ver feedback en vivo del Quest real: el
+// seguimiento por `requestAnimationFrame` se sentía desincronizado). Esto
+// sólo es seguro porque `habilitarArrastre` (ver interaccion.js) separa el
+// objeto contra el que se raycastea para AGARRAR (acá, `meshImagen` solo,
+// sin sus hermanos) del objeto que efectivamente se MUEVE (acá,
+// `contenedor`, que sí incluye los botones como hijos) -- si tocáramos un
+// botón con el raycasting recursivo apuntando al contenedor entero, se
+// agarraría (y movería) la imagen sin querer, el mismo bug que esta
+// separación evita desde la Tarea 9.
 
 import * as THREE from '../../../vendor/three/three.module.js';
 import { crearPanelTexto } from './panel-texto.js';
@@ -141,11 +145,10 @@ export function crearPantallaImagenes(
   const botonesEscala = [];
 
   // Una entrada por imagen, con todo lo que hace falta para moverla,
-  // escalarla y saber a qué página pertenece. `meshImagen` es, a la vez,
-  // el objeto que se arrastra (vía `habilitarArrastre`) y el que lleva la
-  // posición "de verdad" de la imagen -- no hay un contenedor envolvente
-  // (ver el comentario grande al principio del archivo, sobre por qué los
-  // botones no son sus hijos).
+  // escalarla y saber a qué página pertenece. `contenedor` es el objeto
+  // que se arrastra de verdad (lleva la posición "de verdad" de la unidad
+  // imagen+botones); `meshImagen` vive adentro, siempre en el origen local
+  // del contenedor (ver el comentario grande al principio del archivo).
   const imagenes = rutasImagenes.map((ruta, indice) => {
     const idImagen = idDesdeRuta(ruta);
     const guardado = persistencia.imagenes[idImagen];
@@ -157,6 +160,11 @@ export function crearPantallaImagenes(
       z: Z_POR_DEFECTO,
     };
 
+    const contenedor = new THREE.Group();
+    contenedor.name = `pantalla-imagenes-contenedor-${idImagen}`;
+    contenedor.position.set(posicionInicial.x, posicionInicial.y, posicionInicial.z);
+    grupo.add(contenedor);
+
     const material = new THREE.MeshBasicMaterial({
       color: 0x333333, // placeholder gris hasta que cargue la textura real
       transparent: true,
@@ -166,7 +174,8 @@ export function crearPantallaImagenes(
     const geometria = new THREE.PlaneGeometry(ANCHO_BASE_IMAGEN, ANCHO_BASE_IMAGEN);
     const meshImagen = new THREE.Mesh(geometria, material);
     meshImagen.name = `pantalla-imagenes-imagen-${idImagen}`;
-    meshImagen.position.set(posicionInicial.x, posicionInicial.y, posicionInicial.z);
+    // Siempre en el origen local del contenedor -- quien se mueve de
+    // verdad, al arrastrar, es `contenedor` (ver más abajo).
 
     // Tarea de ajuste UX (feedback en vivo del Quest real): cada imagen rota
     // levemente hacia el centro ("en ángulo", como un tríptico), para que se
@@ -175,22 +184,24 @@ export function crearPantallaImagenes(
     // la regla de la mano derecha, rotar en +Y gira esa normal hacia +X -- por
     // eso la imagen de la IZQUIERDA (x negativo) necesita rotación POSITIVA
     // (para girar su cara hacia +X, o sea hacia el centro) y la de la DERECHA
-    // necesita la rotación opuesta. El ángulo persiste aunque se arrastre la
-    // imagen a otra posición (`habilitarArrastre` sólo toca `.position`, nunca
-    // `.rotation`) -- es intencional: la imagen conserva su ángulo "de origen"
-    // sin importar dónde termine.
+    // necesita la rotación opuesta. El ángulo persiste aunque se arrastre el
+    // contenedor a otra posición (la rotación vive en `meshImagen`, que
+    // `habilitarArrastre` nunca toca -- sólo mueve `.position` de
+    // `contenedor`) -- es intencional: la imagen conserva su ángulo "de
+    // origen" sin importar dónde termine.
     meshImagen.rotation.y = posicionInicial.x < 0 ? ANGULO_TOE_IN : -ANGULO_TOE_IN;
 
     const estadoImagen = {
       idImagen,
       indice,
       meshImagen,
+      contenedor,
       altoActual: ANCHO_BASE_IMAGEN,
       escalaActual: guardado?.escala ?? TAMANO_MIN,
       ultimaPosicionNotificada: { ...posicionInicial },
     };
     meshImagen.scale.setScalar(estadoImagen.escalaActual);
-    grupo.add(meshImagen);
+    contenedor.add(meshImagen);
 
     cargador.load(ruta, (textura) => {
       // Ajuste "contain": la imagen entra siempre dentro de un cuadrado de
@@ -230,26 +241,32 @@ export function crearPantallaImagenes(
     botonMenos.userData.idImagen = idImagen;
     botonMenos.userData.delta = -1;
 
-    grupo.add(botonMas, botonMenos);
+    contenedor.add(botonMas, botonMenos);
     estadoImagen.botonMas = botonMas;
     estadoImagen.botonMenos = botonMenos;
     botonesEscala.push(botonMas, botonMenos);
 
-    habilitarArrastre(renderer, meshImagen, LIMITES_ARRASTRE);
+    // `meshImagen` (sin sus hermanos) es el blanco del raycasting que
+    // AGARRA el arrastre; `contenedor` (imagen + botones) es lo que
+    // efectivamente se MUEVE -- ver el comentario grande al principio del
+    // archivo y el JSDoc de `habilitarArrastre` en interaccion.js.
+    habilitarArrastre(renderer, meshImagen, contenedor, LIMITES_ARRASTRE);
 
     return estadoImagen;
   });
 
   // Ubica los botones "+"/"-" de una imagen justo debajo de ella, a su
-  // tamaño visible actual -- se llama en cada cuadro (ver
-  // `verificarCambios`) para que sigan a la imagen mientras se arrastra, y
-  // también cada vez que cambia su escala.
+  // tamaño visible actual, en coordenadas LOCALES al contenedor (el origen
+  // local es el centro de la imagen) -- se llama al construir, cada vez
+  // que cambia la escala, y al reiniciar todo. Ya NO hace falta llamarla
+  // en cada cuadro para "seguir" a la imagen durante un arrastre: al ser
+  // hijos del mismo `contenedor` que se mueve, los botones heredan la
+  // posición automáticamente, sin ningún cálculo manual de por medio.
   function actualizarBotonesEscala(estadoImagen) {
-    const { x, y, z } = estadoImagen.meshImagen.position;
     const altoVisible = estadoImagen.altoActual * estadoImagen.escalaActual;
-    const yBoton = y - altoVisible / 2 - MARGEN_BOTONES_ESCALA;
-    estadoImagen.botonMas.position.set(x + SEPARACION_BOTONES_ESCALA / 2, yBoton, z);
-    estadoImagen.botonMenos.position.set(x - SEPARACION_BOTONES_ESCALA / 2, yBoton, z);
+    const yBoton = -altoVisible / 2 - MARGEN_BOTONES_ESCALA;
+    estadoImagen.botonMas.position.set(SEPARACION_BOTONES_ESCALA / 2, yBoton, 0);
+    estadoImagen.botonMenos.position.set(-SEPARACION_BOTONES_ESCALA / 2, yBoton, 0);
   }
   imagenes.forEach(actualizarBotonesEscala);
 
@@ -325,13 +342,17 @@ export function crearPantallaImagenes(
     onEscalarImagen(idImagen, nuevaEscala);
   });
 
-  // `habilitarArrastre` (Task 4) mueve `meshImagen.position` directamente,
-  // sin avisar a quien lo llamó: para notificar `onMoverImagen` en cada
-  // cambio (y para que los botones sigan a la imagen mientras se arrastra,
-  // ver `actualizarBotonesEscala`) se compara la posición de cada imagen
-  // cuadro a cuadro. No se usa `renderer.setAnimationLoop` -- ya lo ocupa
-  // main.js con el loop de render -- así que este chequeo corre en su
-  // propio `requestAnimationFrame`, independiente de ése.
+  // `habilitarArrastre` mueve `contenedor.position` directamente, sin
+  // avisar a quien lo llamó: para notificar `onMoverImagen` en cada cambio
+  // se compara la posición de cada contenedor cuadro a cuadro. No se usa
+  // `renderer.setAnimationLoop` -- ya lo ocupa main.js con el loop de
+  // render -- así que este chequeo corre en su propio
+  // `requestAnimationFrame`, independiente de ése. A diferencia de antes,
+  // ya NO hace falta llamar a `actualizarBotonesEscala` acá: los botones
+  // son hijos del mismo `contenedor` que se mueve, así que ya siguen la
+  // posición solos (ver el comentario grande al principio del archivo) --
+  // este chequeo sólo existe para la notificación de persistencia hacia
+  // `main.js`, no para mantener nada sincronizado visualmente.
   //
   // De paso, cada cuadro vuelve a aplicar `sincronizarVisibilidad()`: no
   // alcanza con llamarla sólo al cambiar de página o al entrar a esta
@@ -346,11 +367,10 @@ export function crearPantallaImagenes(
 
     if (grupo.visible) {
       imagenes.forEach((estadoImagen) => {
-        const { x, y, z } = estadoImagen.meshImagen.position;
+        const { x, y, z } = estadoImagen.contenedor.position;
         const anterior = estadoImagen.ultimaPosicionNotificada;
         if (x !== anterior.x || y !== anterior.y || z !== anterior.z) {
           estadoImagen.ultimaPosicionNotificada = { x, y, z };
-          actualizarBotonesEscala(estadoImagen);
           onMoverImagen(estadoImagen.idImagen, { x, y, z });
         }
       });
@@ -376,7 +396,7 @@ export function crearPantallaImagenes(
     imagenes.forEach((estadoImagen) => {
       const posicionPorDefecto = POSICIONES_GRILLA[estadoImagen.indice % TAMANO_PAGINA];
       const nuevaPosicion = { x: posicionPorDefecto.x, y: posicionPorDefecto.y, z: Z_POR_DEFECTO };
-      estadoImagen.meshImagen.position.set(nuevaPosicion.x, nuevaPosicion.y, nuevaPosicion.z);
+      estadoImagen.contenedor.position.set(nuevaPosicion.x, nuevaPosicion.y, nuevaPosicion.z);
       estadoImagen.escalaActual = TAMANO_MIN;
       estadoImagen.meshImagen.scale.setScalar(TAMANO_MIN);
       estadoImagen.ultimaPosicionNotificada = { ...nuevaPosicion };

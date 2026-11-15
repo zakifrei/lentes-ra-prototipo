@@ -304,19 +304,38 @@ const vectorOrigenArrastre = new THREE.Vector3();
 const vectorDireccionArrastre = new THREE.Vector3();
 
 /**
- * Habilita el arrastre de `objeto`: mientras está agarrado (seleccionado y
- * mantenido, con la mano, el control o el mouse, vía
+ * Habilita el arrastre de `objetoAMover`: mientras está agarrado
+ * (seleccionado y mantenido, con la mano, el control o el mouse, vía
  * `enArrastreDeSeleccion`), lo mueve siguiendo el rayo de selección -- a la
  * misma distancia del origen a la que estaba cuando se lo agarró -- y
  * aplica `limitarPosicion` cada vez que el rayo se actualiza (en RA, en
  * cada cuadro de la sesión; en escritorio, en cada movimiento del mouse).
  *
+ * `objetoParaTocar` (el blanco del raycasting que detecta el agarre) y
+ * `objetoAMover` (a quien se le pisa `.position`) son parámetros separados
+ * a propósito -- si fueran el mismo objeto y ese objeto tuviera hijos
+ * "de control" colgando (por ejemplo, botones "+"/"-" integrados para que
+ * se muevan juntos), el raycasting recursivo del agarre (`intersectObject`
+ * con `recursive:true`) agarraría el panel entero al tocar uno de esos
+ * hijos, moviéndolo sin querer (bug real encontrado y evitado desde la
+ * Tarea 9 -- ver pantalla-imagenes.js/pantalla-subtitulos.js: ambas pasan
+ * acá el MESH/PANEL de contenido como `objetoParaTocar`, pero un grupo
+ * contenedor -- que sí incluye los botones como hijos, para que se muevan
+ * solos con él -- como `objetoAMover`).
+ *
+ * `objetoAMover.position` se interpreta en el espacio local de SU padre:
+ * quien llama debe asegurarse de que ese padre esté en el origen del mundo
+ * sin rotación/escala (como ya pasa con los `grupo` de nivel superior de
+ * cada pantalla), para que las coordenadas de mundo que calcula el
+ * seguimiento del rayo sigan siendo válidas como posición local.
+ *
  * @param {THREE.WebGLRenderer} renderer
- * @param {THREE.Object3D} objeto
+ * @param {THREE.Object3D} objetoParaTocar
+ * @param {THREE.Object3D} objetoAMover
  * @param {{x:[number,number],y:[number,number],z:[number,number]}} limites
  * @returns {() => void} función para deshabilitar el arrastre
  */
-export function habilitarArrastre(renderer, objeto, limites) {
+export function habilitarArrastre(renderer, objetoParaTocar, objetoAMover, limites) {
   // Mientras está agarrado: de qué fuente (contexto) vino el agarre, y a
   // qué distancia del origen del rayo estaba el objeto en ese momento.
   let agarre = null;
@@ -331,7 +350,7 @@ export function habilitarArrastre(renderer, objeto, limites) {
     };
 
     const posicionLimitada = limitarPosicion(posicionSeguida, limites);
-    objeto.position.set(posicionLimitada.x, posicionLimitada.y, posicionLimitada.z);
+    objetoAMover.position.set(posicionLimitada.x, posicionLimitada.y, posicionLimitada.z);
   }
 
   return enArrastreDeSeleccion(renderer, {
@@ -342,7 +361,7 @@ export function habilitarArrastre(renderer, objeto, limites) {
       vectorDireccionArrastre.set(direccion.x, direccion.y, direccion.z).normalize();
       raycasterArrastre.set(vectorOrigenArrastre, vectorDireccionArrastre);
 
-      const impactos = raycasterArrastre.intersectObject(objeto, true);
+      const impactos = raycasterArrastre.intersectObject(objetoParaTocar, true);
       if (impactos.length === 0) return false; // el rayo no tocó el panel
 
       agarre = { contexto, distancia: impactos[0].distance };
