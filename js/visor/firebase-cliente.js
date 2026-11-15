@@ -1,6 +1,6 @@
 // Cliente de Firebase Realtime Database para el visor (Tarea 16): escucha
-// el nodo de estado que va a escribir el panel del observador (Tarea 17,
-// todavía no existe) y entrega cada valor crudo a quien lo llame. Módulo
+// el nodo de estado que escribe el panel del observador (panel.html,
+// Tarea 17) y entrega cada valor crudo a quien lo llame. Módulo
 // deliberadamente "tonto" -- no valida ni aplica nada: esa responsabilidad
 // ya existe y queda en `aplicarComando` (js/common/estado.js, Tarea 5), que
 // rechaza cualquier comando corrupto o con campos inesperados. Duplicar esa
