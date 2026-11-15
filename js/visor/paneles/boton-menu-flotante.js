@@ -44,13 +44,15 @@ const TEXTO_BOTON = 'Menú';
 //
 // `y` NEGATIVO a propósito (feedback en vivo del Quest real): todo el
 // resto del contenido del proyecto vive por DEBAJO de la altura de ojos
-// (ver panel-texto.js/POSICION_POR_DEFECTO.y=1.1 con los ojos a ~1.6m, un
-// ángulo de ~15° bajo la mirada al frente) -- con `y` positivo acá, este
-// botón quedaba arriba del centro, en la dirección contraria a donde
-// aparece todo lo demás, y se sentía "muy encima" del usuario aunque el
-// valor en metros fuera chico. y=-0.12 a esta distancia (z=-0.5) replica
-// ese mismo ángulo de ~15° hacia abajo, para que el botón quede a la
-// misma "altura" relativa que el resto de los paneles.
+// (ver panel-texto.js/POSICION_POR_DEFECTO.y=1.1 con los ojos a ~1.6m, a
+// 1.8m de distancia: un ángulo de atan(0.5/1.8)≈15.5° bajo la mirada al
+// frente) -- con `y` positivo acá, este botón quedaba arriba del centro,
+// en la dirección contraria a donde aparece todo lo demás, y se sentía
+// "muy encima" del usuario aunque el valor en metros fuera chico. El
+// valor final (y=-0.12 a z=-0.5, ≈13.5° hacia abajo) salió de ajustar a
+// ojo en el Quest real, no de aplicar la fórmula exacta -- queda cerca
+// del mismo ángulo que el resto de los paneles, sin pretender igualarlo
+// al grado.
 const POSICION_LOCAL = { x: 0.18, y: -0.12, z: -0.5 };
 const ANCHO_BOTON = 0.18;
 const ALTO_BOTON = 0.09;
