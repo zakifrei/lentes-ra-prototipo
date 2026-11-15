@@ -58,8 +58,15 @@ const POSICION_LOCAL = {
   y: 0.13 * FACTOR_ESCALA_PROFUNDIDAD,
   z: -1.8,
 };
-const ANCHO_BOTON = 0.18 * FACTOR_ESCALA_PROFUNDIDAD;
-const ALTO_BOTON = 0.09 * FACTOR_ESCALA_PROFUNDIDAD;
+// Reducción adicional (independiente de la profundidad de arriba) para que
+// el botón pase más desapercibido en la esquina -- feedback en vivo del
+// Quest real: con el tamaño de ANTES, el desplegable (que hasta este ajuste
+// era bastante más grande que el botón principal, ver comentario de
+// ANCHO_BOTON_OPCION) se sentía "enorme". No toca POSICION_LOCAL (x/y): el
+// botón se achica, pero su punto central en pantalla no se mueve.
+const FACTOR_ACHICAR_BOTON = 0.8;
+const ANCHO_BOTON = 0.18 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
+const ALTO_BOTON = 0.09 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
 // Más grande que el TAMANO_FUENTE_POR_DEFECTO (48) de panel-texto.js: el
 // texto "Menú" es corto y el panel chico, así que conviene aprovechar el
 // espacio disponible del canvas para que siga siendo legible aun con el
@@ -74,21 +81,26 @@ const OPCIONES = [
   { opcion: 'mapa', texto: 'Mapa conceptual' },
 ];
 
-// Tamaño de los 3 botones del desplegable: más anchos que el botón
-// principal (hace falta para que "Mapa conceptual" entre sin achicarse
-// demasiado), pero bastante más chicos que los de pantalla-menu.js (que sí
-// pueden ocupar buena parte del campo visual porque son el contenido
-// principal de esa pantalla) -- este desplegable vive pegado al HUD, a la
-// misma distancia corta (z) que el botón principal, y no debe tapar el
-// centro.
-const ANCHO_BOTON_OPCION = 0.3 * FACTOR_ESCALA_PROFUNDIDAD;
-const ALTO_BOTON_OPCION = 0.1 * FACTOR_ESCALA_PROFUNDIDAD;
+// Mismo tamaño que el botón principal (a pedido explícito del dueño del
+// proyecto: antes eran más anchos que el botón principal -- pensado para
+// que "Mapa conceptual" entrara sin achicarse demasiado -- y esa diferencia
+// de tamaño era justamente lo que hacía ver "enorme" al desplegable). El
+// ajuste automático de tamaño de fuente de `crearPanelTexto` sigue
+// funcionando igual que antes (mide en píxeles del canvas interno de
+// resolución fija, no en metros del panel): confirmado en la revisión de
+// la Tarea 29 que "Mapa conceptual" entra con ~157-197px de margen de
+// sobra sobre un presupuesto de 944px, muy por debajo del punto en el que
+// haría falta achicar la fuente -- ese margen no depende del tamaño físico
+// del panel, así que igualarlo al botón principal no lo pone en riesgo.
+const ANCHO_BOTON_OPCION = ANCHO_BOTON;
+const ALTO_BOTON_OPCION = ALTO_BOTON;
 const TAMANO_FUENTE_OPCION = 36;
 // Separación vertical entre el borde de un botón y el siguiente (principal
 // incluido): nunca pegados entre sí, para no tocar el de al lado por error.
-// También escalada por FACTOR_ESCALA_PROFUNDIDAD, por la misma razón que
-// el resto de las medidas físicas de este archivo.
-const MARGEN_VERTICAL = 0.02 * FACTOR_ESCALA_PROFUNDIDAD;
+// También escalada por FACTOR_ESCALA_PROFUNDIDAD y FACTOR_ACHICAR_BOTON,
+// por la misma razón que el resto de las medidas físicas de este archivo
+// (mantener la misma proporción visual del espaciado al achicar todo).
+const MARGEN_VERTICAL = 0.02 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
 
 const raycaster = new THREE.Raycaster();
 const vectorOrigen = new THREE.Vector3();
