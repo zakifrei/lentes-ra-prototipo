@@ -30,7 +30,7 @@ const TEXTO_BOTON = 'Menú';
 // más corta, ese mismo tamaño físico tapiaría buena parte del campo visual
 // (el campo visual cubierto por un panel de tamaño fijo crece cuanto más
 // cerca está de la cámara).
-const POSICION_LOCAL = { x: 0.35, y: 0.25, z: -0.5 };
+const POSICION_LOCAL = { x: 0.18, y: 0.13, z: -0.5 };
 const ANCHO_BOTON = 0.18;
 const ALTO_BOTON = 0.09;
 // Más grande que el TAMANO_FUENTE_POR_DEFECTO (48) de panel-texto.js: el
