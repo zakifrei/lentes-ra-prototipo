@@ -5,15 +5,24 @@
    observador en su celular combine con lo que ve el usuario en el visor.
    Pensado para usarse en el celular del observador durante la prueba de
    usabilidad: botones grandes, fáciles de tocar, con buen contraste sobre
-   fondo oscuro (restricción visual global del proyecto). */
+   fondo oscuro (restricción visual global del proyecto).
+
+   Tarea 30 (pulido ámbar-neón, parte del plan de 2026-11-15): vidrio
+   esmerilado real con backdrop-filter en las secciones y botones tipo
+   cápsula, para combinar con el brillo más intenso que ya tiene el visor
+   desde la Tarea 27 (tema-visual.js subió COLOR_BRILLO de 0.6 a 0.85 de
+   opacidad). Acá en CSS no hay una unidad 1:1 con el canvas del visor, así
+   que el --brillo-ambar y los blur de box-shadow se subieron a ojo para
+   lograr la misma intención: un salto real hacia "neón". */
 
 :root {
   color-scheme: dark;
   --fondo: #1c1008;
   --superficie: #2b1a0e;
+  --superficie-vidrio: rgba(43, 26, 14, 0.55);
   --ambar: #ffb454;
   --ambar-fuerte: #ff8c32;
-  --brillo-ambar: rgba(255, 150, 60, 0.45);
+  --brillo-ambar: rgba(255, 150, 60, 0.65);
   --texto: #fff3e0;
   --texto-tenue: #c9a97e;
   --peligro: #d9480f;
@@ -48,14 +57,34 @@ h2 {
 }
 
 section {
+  /* Respaldo sólido (siempre aplicado, base): si el navegador no soporta
+     backdrop-filter, el panel queda con este fondo opaco de la Tarea 19 en
+     vez de quedar transparente-sin-blur (ilegible). El bloque @supports de
+     abajo lo reemplaza por el vidrio esmerilado real donde es viable. */
   background: var(--superficie);
   border: 1px solid rgba(255, 180, 84, 0.25);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
-  /* Brillo ámbar suave alrededor de cada sección, mismo lenguaje visual
-     que dibujarFondoPanel() en tema-visual.js. */
-  box-shadow: 0 0 16px var(--brillo-ambar);
+  /* Brillo ámbar alrededor de cada sección, mismo lenguaje visual que
+     dibujarFondoPanel() en tema-visual.js (intensificado en la Tarea 30). */
+  box-shadow: 0 0 24px var(--brillo-ambar);
+}
+
+/* Vidrio esmerilado real (Tarea 30): a diferencia del visor 3D (que sólo
+   puede imitar el desenfoque dibujando a mano), el panel es HTML/CSS normal
+   y puede pedirle al navegador que desenfoque de verdad lo que hay detrás
+   de cada sección. Hace falta bajar la opacidad del fondo acá adentro --
+   con el fondo 100% opaco de arriba el blur no tendría nada que desenfocar
+   y no se notaría. Usamos "or" con el prefijo -webkit- porque Safari de
+   iPhone (navegador real que puede usar el observador) todavía requiere
+   ese prefijo para reconocer el soporte. */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  section {
+    background: var(--superficie-vidrio);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
 }
 
 button {
@@ -63,12 +92,16 @@ button {
   font-weight: 600;
   padding: 16px;
   border: none;
-  border-radius: 10px;
+  /* Botón tipo cápsula (Tarea 30): con la altura real del botón (padding
+     16px + texto), 999px excede la mitad de esa altura, así que el
+     navegador lo recorta solo y queda una píldora completa sin achicar el
+     área táctil (el padding/tamaño de fuente no se tocaron). */
+  border-radius: 999px;
   background: var(--ambar);
   color: #1c1008;
   cursor: pointer;
   touch-action: manipulation;
-  box-shadow: 0 0 10px var(--brillo-ambar);
+  box-shadow: 0 0 18px var(--brillo-ambar);
 }
 
 button:active {
