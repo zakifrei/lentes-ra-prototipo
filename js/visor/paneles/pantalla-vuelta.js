@@ -118,10 +118,10 @@ function dibujarMensaje(contexto, texto) {
  * @returns {THREE.Object3D} grupo con un método agregado:
  *   - `actualizarDatos(minutos:number, temas:number)`: redibuja el panel
  *     de mensaje con `formatearTextoVuelta(minutos, temas)`. La llama
- *     `main.js` dentro de `aplicarComandoYActualizar` (Tarea 17), tanto al
- *     entrar de verdad a esta pantalla con el tiempo real de la pausa como
- *     cuando el observador lo sobreescribe después (Tarea de fix de
- *     `tiempoVueltaMin`).
+ *     `main.js` dentro de `aplicarComandoYActualizar` (Tarea 17) al entrar
+ *     de verdad a esta pantalla -- desde la Tarea 26 siempre con
+ *     `MINUTOS_PAUSA_FIJOS` (ver main.js), nunca con la duración real de la
+ *     pausa.
  */
 export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
   const grupo = new THREE.Group();

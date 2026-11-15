@@ -73,29 +73,6 @@ button:active {
   gap: 10px;
 }
 
-.fila-tiempo-vuelta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.fila-tiempo-vuelta label {
-  flex: 1 0 100%;
-  color: var(--texto-tenue);
-}
-
-#input-tiempo-vuelta {
-  flex: 1;
-  min-width: 80px;
-  font-size: 1.05rem;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid var(--texto-tenue);
-  background: var(--fondo);
-  color: var(--texto);
-}
-
 .boton-peligro {
   width: 100%;
   background: var(--peligro);

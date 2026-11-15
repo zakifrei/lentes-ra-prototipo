@@ -14,7 +14,6 @@ import { firebaseConfig } from '../config/firebase-config.js';
 import {
   nodoRaizFirebase,
   construirComandoPantalla,
-  construirComandoTiempoVuelta,
   construirComandoReset,
 } from '../common/firebase-mensajes.js';
 import { PANTALLAS } from '../common/estado.js';
@@ -72,17 +71,6 @@ function crearBotonesDePantalla() {
   });
 }
 
-function habilitarTiempoVuelta() {
-  const boton = document.getElementById('boton-aplicar-tiempo-vuelta');
-  const input = document.getElementById('input-tiempo-vuelta');
-  if (!boton || !input) return;
-
-  boton.addEventListener('click', () => {
-    const minutos = Number(input.value);
-    enviarComando(construirComandoTiempoVuelta(minutos));
-  });
-}
-
 function habilitarReiniciarTodo() {
   const boton = document.getElementById('boton-reiniciar-todo');
   if (!boton) return;
@@ -93,6 +81,5 @@ function habilitarReiniciarTodo() {
 }
 
 crearBotonesDePantalla();
-habilitarTiempoVuelta();
 habilitarReiniciarTodo();
 mostrarEstadoConexion('Panel listo.');

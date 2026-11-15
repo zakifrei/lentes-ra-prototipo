@@ -20,7 +20,6 @@ import { crearBotonMenuFlotante } from './paneles/boton-menu-flotante.js';
 import { escucharEstadoFirebase } from './firebase-cliente.js';
 import { establecerCamaraVistaPrevia, crearIndicadorDeApuntado } from './interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
-import { minutosTranscurridos } from '../common/temporizador-pausa.js';
 import {
   estadoPersistenciaInicial,
   ajustarTamanoSubtitulo,
@@ -43,12 +42,19 @@ const RUTAS_IMAGENES = [
 ];
 
 // Cantidad de "temas pendientes" que se muestra en la pantalla de "vuelta
-// de la pausa" (Tarea 13): constante fija a propósito, a diferencia de los
-// minutos (que sí son dinámicos, calculados de la duración real de la
-// pausa) -- el spec sólo pide que el observador pueda ajustar el tiempo
-// mostrado, nunca la cantidad de temas (todavía no hay una fuente real de
-// "temas guardados" en 'Temas pendientes', ver pantalla-pausa.js).
+// de la pausa" (Tarea 13): constante fija a propósito (todavía no hay una
+// fuente real de "temas guardados" en 'Temas pendientes', ver
+// pantalla-pausa.js).
 const TEMAS_PENDIENTES_EJEMPLO = 2;
+
+// Minutos que la pantalla de "vuelta de la pausa" muestra siempre, sin
+// importar la duración real de la pausa (Tarea 26): en la Etapa 4 (Tasks
+// 15-18) esto se calculaba de la duración real, y hasta hace poco el panel
+// del observador podía sobreescribirlo a mano con un valor distinto --
+// el dueño del proyecto probó ese ajuste manual en vivo en el Quest real y
+// decidió sacarlo (no arreglarlo): la pantalla de vuelta siempre dice
+// "Estuviste 5 min en pausa", fijo.
+const MINUTOS_PAUSA_FIJOS = 5;
 
 const canvas = document.getElementById('escena');
 const indicadorVistaPrevia = document.getElementById('indicador-vista-previa');
@@ -251,8 +257,8 @@ actualizarPantallaVisible();
 // aviso/vuelta/resumen, y los comandos crudos que llegan de Firebase,
 // escritos por el panel real del observador, Tarea 17). Un comando de
 // Firebase es un objeto genérico (`{ pantalla: 'menu' }`, pero también
-// `{ tiempoVueltaMin: 5 }` o `{ resetId: ... }`): por eso esta función toma
-// el comando completo, no sólo un nombre de pantalla.
+// `{ resetId: ... }`): por eso esta función toma el comando completo, no
+// sólo un nombre de pantalla.
 // Aplica el comando con `aplicarComando` (Tarea 5 -- ahí vive toda la
 // validación/defensa contra comandos corruptos, no se duplica acá),
 // actualiza la visibilidad y, si la pantalla realmente cambió (no si
@@ -301,27 +307,16 @@ function aplicarComandoYActualizar(comando, { esPrimeraSincronizacion = false } 
     return;
   }
 
-  // Tarea 17: si la transición real es hacia 'vuelta' (venga de donde
-  // venga -- antes sólo pasaba atada a la tecla de desarrollo '0', ahora
-  // también dispara con el botón "Terminar pausa" del panel, que llega
-  // acá como `{ pantalla: 'vuelta' }` por Firebase), calcular los minutos
-  // reales transcurridos desde que se entró a 'pausa' y actualizar el
-  // mensaje de la pantalla de vuelta ANTES de hacerla visible -- si no,
-  // mostraría siempre "0 min en pausa" porque `actualizarDatos` nunca se
-  // llamaría.
+  // Tarea 17 (y Tarea 26: ya no calcula minutos reales, ver comentario de
+  // `MINUTOS_PAUSA_FIJOS` más arriba): si la transición real es hacia
+  // 'vuelta' (venga de donde venga -- antes sólo pasaba atada a la tecla de
+  // desarrollo '0', ahora también dispara con el botón "Terminar pausa" del
+  // panel, que llega acá como `{ pantalla: 'vuelta' }` por Firebase),
+  // actualizar el mensaje de la pantalla de vuelta ANTES de hacerla visible
+  // -- si no, mostraría siempre "0 min en pausa" porque `actualizarDatos`
+  // nunca se llamaría.
   if (estadoNuevo.pantalla === 'vuelta' && estadoNuevo.pantalla !== pantallaAnterior) {
-    const minutos = minutosTranscurridos(pantallasPorNombre.pausa.obtenerInicioMs(), Date.now());
-    pantallasPorNombre.vuelta.actualizarDatos(minutos, TEMAS_PENDIENTES_EJEMPLO);
-  } else if (
-    estadoNuevo.pantalla === 'vuelta' &&
-    estadoNuevo.tiempoVueltaMin !== estadoActual.tiempoVueltaMin
-  ) {
-    // Spec (docs/superpowers/specs/2026-11-13-lentes-ra-design.md, "Contador
-    // de la pausa"): el observador puede sobreescribir el tiempo mostrado en
-    // la vuelta desde el panel, para igualar el ejemplo del guion, ANTES de
-    // confirmar (tocar "Seguir con la clase"/"Ver un resumen rápido"). Esto
-    // reemplaza el tiempo real precargado al entrar, con el valor aplicado.
-    pantallasPorNombre.vuelta.actualizarDatos(estadoNuevo.tiempoVueltaMin, TEMAS_PENDIENTES_EJEMPLO);
+    pantallasPorNombre.vuelta.actualizarDatos(MINUTOS_PAUSA_FIJOS, TEMAS_PENDIENTES_EJEMPLO);
   }
 
   // Tarea 13: si la transición real (después de validar, no antes) es

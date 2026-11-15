@@ -21,18 +21,16 @@ export const PANTALLAS = Object.freeze([
 // Campos que un comando puede traer y validador de cada uno.
 const VALIDADORES = {
   pantalla: (valor) => typeof valor === 'string' && PANTALLAS.includes(valor),
-  tiempoVueltaMin: (valor) => typeof valor === 'number' && Number.isFinite(valor) && valor >= 0,
   resetId: (valor) => Number.isInteger(valor) && valor >= 0,
 };
 
 /**
  * Estado inicial de la aplicación.
- * @returns {{pantalla:string, tiempoVueltaMin:number, resetId:number}}
+ * @returns {{pantalla:string, resetId:number}}
  */
 export function estadoPorDefecto() {
   return {
     pantalla: 'reconocimiento',
-    tiempoVueltaMin: 0,
     resetId: 0,
   };
 }
@@ -41,9 +39,9 @@ export function estadoPorDefecto() {
  * Aplica un comando al estado y devuelve el nuevo estado.
  * No muta `estadoActual`. Si el comando no es un objeto, trae campos
  * desconocidos o algún valor no válido, devuelve `estadoActual` sin cambios.
- * @param {{pantalla:string, tiempoVueltaMin:number, resetId:number}} estadoActual
+ * @param {{pantalla:string, resetId:number}} estadoActual
  * @param {object} comando ej. `{ pantalla: 'menu' }`
- * @returns {{pantalla:string, tiempoVueltaMin:number, resetId:number}}
+ * @returns {{pantalla:string, resetId:number}}
  */
 export function aplicarComando(estadoActual, comando) {
   if (comando === null || typeof comando !== 'object' || Array.isArray(comando)) {

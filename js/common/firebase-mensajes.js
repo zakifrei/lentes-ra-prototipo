@@ -15,12 +15,6 @@ export function construirComandoPantalla(pantalla) {
   return { pantalla };
 }
 
-// Se sanea acá además de en el visor: un valor inválido nunca debe llegar a Firebase.
-export function construirComandoTiempoVuelta(minutos) {
-  const valido = typeof minutos === 'number' && Number.isFinite(minutos) && minutos >= 0;
-  return { tiempoVueltaMin: valido ? minutos : 0 };
-}
-
 // Date.now() puede repetirse si dos resets se piden en el mismo milisegundo;
 // forzar que crezca garantiza que el visor siempre vea un id distinto.
 export function construirComandoReset() {
