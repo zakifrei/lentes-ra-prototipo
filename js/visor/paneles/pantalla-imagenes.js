@@ -302,6 +302,7 @@ export function crearPantallaImagenes(
     ancho: ANCHO_BOTON_VER_MAS,
     alto: ALTO_BOTON_VER_MAS,
     nombre: 'pantalla-imagenes-boton-ver-mas',
+    icono: 'flecha',
   });
   grupo.add(botonVerMas);
 

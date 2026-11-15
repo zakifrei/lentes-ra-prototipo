@@ -164,6 +164,7 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
     nombre: 'pantalla-vuelta-boton-seguir',
+    icono: 'flecha',
   });
   botonSeguir.userData.accion = 'seguir';
   grupo.add(botonSeguir);
@@ -173,6 +174,7 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
     nombre: 'pantalla-vuelta-boton-resumen',
+    icono: 'flecha',
   });
   botonResumen.userData.accion = 'resumen';
   grupo.add(botonResumen);

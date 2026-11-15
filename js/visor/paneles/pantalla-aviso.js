@@ -59,6 +59,7 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
     nombre: 'pantalla-aviso-boton-aceptar',
+    icono: 'aceptar',
   });
   botonAceptar.userData.accion = 'aceptar';
   grupo.add(botonAceptar);
@@ -68,6 +69,7 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
     nombre: 'pantalla-aviso-boton-rechazar',
+    icono: 'rechazar',
   });
   botonRechazar.userData.accion = 'rechazar';
   grupo.add(botonRechazar);

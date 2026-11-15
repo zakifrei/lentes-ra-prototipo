@@ -135,6 +135,7 @@ export function crearPantallaResumen(renderer, onVolverClase) {
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
     nombre: 'pantalla-resumen-boton-volver',
+    icono: 'flecha',
   });
   grupo.add(botonVolver);
 
