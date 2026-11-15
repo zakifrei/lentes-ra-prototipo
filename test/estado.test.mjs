@@ -24,3 +24,8 @@ test('aplicarComando ignora un comando nulo o no es objeto', () => {
   assert.deepEqual(aplicarComando(inicial, null), inicial);
   assert.deepEqual(aplicarComando(inicial, 'texto'), inicial);
 });
+
+test('aplicarComando aplica los campos validos e ignora los invalidos del mismo comando', () => {
+  const estado = aplicarComando(estadoPorDefecto(), { pantalla: 'menu', campoLegacySinValidador: 3 });
+  assert.equal(estado.pantalla, 'menu');
+});

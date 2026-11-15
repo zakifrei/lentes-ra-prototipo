@@ -37,8 +37,16 @@ export function estadoPorDefecto() {
 
 /**
  * Aplica un comando al estado y devuelve el nuevo estado.
- * No muta `estadoActual`. Si el comando no es un objeto, trae campos
- * desconocidos o algún valor no válido, devuelve `estadoActual` sin cambios.
+ * No muta `estadoActual`. Si el comando no es un objeto, está vacío o
+ * NINGÚN campo resulta válido, devuelve `estadoActual` sin cambios. Si al
+ * menos un campo es válido, se aplica ese (y los demás que también lo sean),
+ * ignorando en silencio los campos desconocidos o con valor inválido -- esto
+ * es necesario porque Firebase entrega el nodo COMPLETO en cada cambio, y
+ * ese nodo puede acumular campos viejos/legacy con el tiempo (cambios de
+ * esquema, datos de pruebas anteriores que nadie borró) que ya no tienen
+ * validador. Rechazar el comando entero por un solo campo legacy tiraba
+ * abajo TODO el panel del observador, aunque trajera también un campo
+ * válido (ver incidente de Firebase con `tiempoVueltaMin` post Tarea 26).
  * @param {{pantalla:string, resetId:number}} estadoActual
  * @param {object} comando ej. `{ pantalla: 'menu' }`
  * @returns {{pantalla:string, resetId:number}}
@@ -51,10 +59,15 @@ export function aplicarComando(estadoActual, comando) {
   const campos = Object.keys(comando);
   if (campos.length === 0) return estadoActual;
 
+  const camposValidos = {};
   for (const campo of campos) {
     const validar = Object.hasOwn(VALIDADORES, campo) ? VALIDADORES[campo] : null;
-    if (!validar || !validar(comando[campo])) return estadoActual;
+    if (validar && validar(comando[campo])) {
+      camposValidos[campo] = comando[campo];
+    }
   }
 
-  return { ...estadoActual, ...comando };
+  if (Object.keys(camposValidos).length === 0) return estadoActual;
+
+  return { ...estadoActual, ...camposValidos };
 }
