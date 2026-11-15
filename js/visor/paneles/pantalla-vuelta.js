@@ -1,12 +1,21 @@
 // Pantalla de "vuelta de la pausa" (Tarea 13): se muestra cuando el
 // participante termina la pausa activa (ver pantalla-pausa.js, Tarea 12).
 // Dos partes:
-// - Un panel de mensaje con el texto literal armado por
-//   `formatearTextoVuelta` (js/common/temporizador-pausa.js, Tarea 11).
+// - Un panel de mensaje con las 3 líneas armadas por `armarLineasVuelta`
+//   (js/common/temporizador-pausa.js, Tarea 11).
 // - Dos botones ("Seguir con la clase" / "Ver un resumen rápido"), con el
 //   mismo mecanismo de selección único del proyecto (`enEventoSeleccion`,
 //   ver interaccion.js) y el mismo patrón de raycasting que
 //   pantalla-menu.js.
+//
+// El panel de mensaje dibuja 3 bloques de tamaños distintos (saludo grande
+// en negrita, minutos en pausa mediano, temas guardados chico en ámbar) --
+// a pedido del dueño del proyecto, mismo estilo que pantalla-bienvenida.js
+// (3 líneas separadas, no una sola oración larga unida con "·"). A
+// diferencia de bienvenida.js, acá el contenido cambia en caliente (los
+// minutos/temas reales recién se conocen cuando termina la pausa), así que
+// el dibujado vive en una función que se puede volver a llamar
+// (`dibujarMensaje`), igual que la versión anterior de este archivo.
 //
 // Como el resto de las pantallas, ésta se crea una sola vez al arrancar la
 // app (ver main.js): los minutos/temas a mostrar no se conocen en ese
@@ -21,23 +30,42 @@
 
 import * as THREE from '../../../vendor/three/three.module.js';
 import { crearPanelTexto } from './panel-texto.js';
-import { formatearTextoVuelta } from '../../common/temporizador-pausa.js';
+import { armarLineasVuelta } from '../../common/temporizador-pausa.js';
 import { enEventoSeleccion } from '../interaccion.js';
-import { dibujarFondoPanel, COLOR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
+import { dibujarFondoPanel, COLOR_TEXTO, COLOR_AMBAR, FUENTE_PRINCIPAL } from '../tema-visual.js';
 
 const ANCHO_CANVAS = 1024;
 const ALTO_CANVAS = 512;
 
-// Margen horizontal (en px de canvas) que el texto nunca debe invadir.
+// Margen horizontal (en px de canvas) que ningún bloque de texto debe
+// invadir -- mismo criterio que pantalla-bienvenida.js.
 const MARGEN_HORIZONTAL = 40;
-const TAMANO_FUENTE_MENSAJE = 40;
+const ANCHO_DISPONIBLE = ANCHO_CANVAS - MARGEN_HORIZONTAL * 2;
+
+// 3 tamaños de fuente distintos, de mayor a menor -- mismos valores que
+// pantalla-bienvenida.js, para que ambas pantallas de "bloques apilados" se
+// vean consistentes entre sí.
+const TAMANO_FUENTE_SALUDO = 72;
+const TAMANO_FUENTE_MINUTOS = 42;
+const TAMANO_FUENTE_TEMAS = 30;
+
+// Posición vertical de cada bloque, como fracción de ALTO_CANVAS -- mismos
+// valores que pantalla-bienvenida.js.
+const Y_FRACCION_SALUDO = 0.22;
+const Y_FRACCION_MINUTOS = 0.5;
+const Y_FRACCION_TEMAS = 0.78;
 
 // Tamaños y posiciones físicas (metros, RA). Todo por debajo de la altura
 // típica de los ojos (~1.6 m) y repartido en dos filas (mensaje arriba,
 // botones abajo) para que, igual que el resto de las pantallas del
-// proyecto, nunca cubran el centro del campo visual.
+// proyecto, nunca cubran el centro del campo visual. ALTO_PANEL_MENSAJE
+// sube de 0.35 a 0.45 (misma proporción 2:1 que ANCHO_PANEL_MENSAJE/
+// ANCHO_CANVAS·ALTO_CANVAS) para que los 3 bloques apilados no se vean
+// verticalmente comprimidos -- con el 0.35 anterior (pensado para una sola
+// línea) el panel era más chato que el canvas, así que el texto se veía
+// más bajo/aplastado de lo que mide en el canvas.
 const ANCHO_PANEL_MENSAJE = 0.9;
-const ALTO_PANEL_MENSAJE = 0.35;
+const ALTO_PANEL_MENSAJE = 0.45;
 const POSICION_MENSAJE = { x: 0, y: 1.3, z: -1.8 };
 
 const ANCHO_BOTON = 0.6;
@@ -56,51 +84,73 @@ const raycaster = new THREE.Raycaster();
 const vectorOrigen = new THREE.Vector3();
 const vectorDireccion = new THREE.Vector3();
 
-// Parte un texto largo en líneas que entren en el ancho disponible del
-// canvas (corta por palabra). No reutiliza panel-texto.js para este panel
-// -- igual que pantalla-pausa.js (ver su comentario sobre por qué), este
-// panel necesita redibujarse en caliente cuando cambian los datos de la
-// pausa, así que arma su propio canvas en vez de uno fijo creado una sola
-// vez.
-function partirEnLineas(contexto, texto, tamanoFuente) {
-  contexto.font = `${tamanoFuente}px ${FUENTE_PRINCIPAL}`;
-  const anchoDisponible = ANCHO_CANVAS - MARGEN_HORIZONTAL * 2;
-  const palabras = texto.split(' ');
-  const lineas = [];
-  let lineaEnCurso = '';
-
-  palabras.forEach((palabra) => {
-    const propuesta = lineaEnCurso ? `${lineaEnCurso} ${palabra}` : palabra;
-    if (contexto.measureText(propuesta).width <= anchoDisponible) {
-      lineaEnCurso = propuesta;
-    } else {
-      if (lineaEnCurso) lineas.push(lineaEnCurso);
-      lineaEnCurso = palabra;
-    }
-  });
-  if (lineaEnCurso) lineas.push(lineaEnCurso);
-  return lineas;
+// Si un bloque no entra en ANCHO_DISPONIBLE con su tamaño de fuente pedido,
+// se reduce SÓLO ese bloque hasta que entre -- mismo criterio que
+// pantalla-bienvenida.js (cada bloque tiene su propio tamaño independiente,
+// a diferencia de panel-texto.js, que ajusta todas las líneas a un tamaño
+// compartido según la más larga). Recibe `fuenteCss` (y no un `px` fijo)
+// para medir con el MISMO estilo (negrita o normal) con el que después se
+// dibuja ese bloque -- el saludo se dibuja en negrita, que es más ancha que
+// la versión normal al mismo tamaño; medir siempre en normal haría que el
+// saludo en negrita se pasara del margen aunque la medición dijera que
+// entraba.
+function calcularTamanoFuenteAjustado(contexto, texto, tamanoFuente, fuenteCss) {
+  contexto.font = fuenteCss(tamanoFuente);
+  const ancho = contexto.measureText(texto).width;
+  if (ancho <= ANCHO_DISPONIBLE) return tamanoFuente;
+  return tamanoFuente * (ANCHO_DISPONIBLE / ancho);
 }
 
-function dibujarMensaje(contexto, texto) {
+// Dibuja los 3 bloques (`lineas` siempre tiene exactamente 3 elementos, ver
+// `armarLineasVuelta`): saludo grande en negrita, minutos en pausa mediano,
+// temas guardados chico en ámbar (mismo acento que el tip de
+// pantalla-bienvenida.js, acá resaltando que el contenido quedó guardado).
+// No reutiliza panel-texto.js para este panel -- igual que
+// pantalla-pausa.js (ver su comentario sobre por qué), este panel necesita
+// redibujarse en caliente cuando cambian los datos de la pausa, así que
+// arma su propio canvas en vez de uno fijo creado una sola vez.
+function dibujarMensaje(contexto, lineas) {
+  const [saludo, minutos, temas] = lineas;
+
   contexto.clearRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
 
   dibujarFondoPanel(contexto, ANCHO_CANVAS, ALTO_CANVAS);
 
-  contexto.fillStyle = COLOR_TEXTO;
   contexto.textAlign = 'center';
   contexto.textBaseline = 'middle';
 
-  const lineas = partirEnLineas(contexto, texto, TAMANO_FUENTE_MENSAJE);
-  const interlineado = TAMANO_FUENTE_MENSAJE * 1.4;
-  const altoTotal = interlineado * lineas.length;
-  let y = ALTO_CANVAS / 2 - altoTotal / 2 + interlineado / 2;
+  const fuenteBoldCss = (tamano) => `bold ${tamano}px ${FUENTE_PRINCIPAL}`;
+  const fuenteNormalCss = (tamano) => `${tamano}px ${FUENTE_PRINCIPAL}`;
 
-  contexto.font = `${TAMANO_FUENTE_MENSAJE}px ${FUENTE_PRINCIPAL}`;
-  lineas.forEach((linea) => {
-    contexto.fillText(linea, ANCHO_CANVAS / 2, y);
-    y += interlineado;
-  });
+  const tamanoSaludo = calcularTamanoFuenteAjustado(
+    contexto,
+    saludo,
+    TAMANO_FUENTE_SALUDO,
+    fuenteBoldCss
+  );
+  contexto.font = fuenteBoldCss(tamanoSaludo);
+  contexto.fillStyle = COLOR_TEXTO;
+  contexto.fillText(saludo, ANCHO_CANVAS / 2, ALTO_CANVAS * Y_FRACCION_SALUDO);
+
+  const tamanoMinutos = calcularTamanoFuenteAjustado(
+    contexto,
+    minutos,
+    TAMANO_FUENTE_MINUTOS,
+    fuenteNormalCss
+  );
+  contexto.font = fuenteNormalCss(tamanoMinutos);
+  contexto.fillStyle = COLOR_TEXTO;
+  contexto.fillText(minutos, ANCHO_CANVAS / 2, ALTO_CANVAS * Y_FRACCION_MINUTOS);
+
+  const tamanoTemas = calcularTamanoFuenteAjustado(
+    contexto,
+    temas,
+    TAMANO_FUENTE_TEMAS,
+    fuenteNormalCss
+  );
+  contexto.font = fuenteNormalCss(tamanoTemas);
+  contexto.fillStyle = COLOR_AMBAR;
+  contexto.fillText(temas, ANCHO_CANVAS / 2, ALTO_CANVAS * Y_FRACCION_TEMAS);
 }
 
 /**
@@ -117,7 +167,7 @@ function dibujarMensaje(contexto, texto) {
  * @param {() => void} onVerResumen llamado al tocar "Ver un resumen rápido"
  * @returns {THREE.Object3D} grupo con un método agregado:
  *   - `actualizarDatos(minutos:number, temas:number)`: redibuja el panel
- *     de mensaje con `formatearTextoVuelta(minutos, temas)`. La llama
+ *     de mensaje con `armarLineasVuelta(minutos, temas)`. La llama
  *     `main.js` dentro de `aplicarComandoYActualizar` (Tarea 17) al entrar
  *     de verdad a esta pantalla -- desde la Tarea 26 siempre con
  *     `MINUTOS_PAUSA_FIJOS` (ver main.js), nunca con la duración real de la
@@ -148,11 +198,11 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
   panelMensaje.position.set(POSICION_MENSAJE.x, POSICION_MENSAJE.y, POSICION_MENSAJE.z);
   grupo.add(panelMensaje);
 
-  dibujarMensaje(contexto, formatearTextoVuelta(0, 0));
+  dibujarMensaje(contexto, armarLineasVuelta(0, 0));
   textura.needsUpdate = true;
 
   grupo.actualizarDatos = function actualizarDatosPantallaVuelta(minutos, temas) {
-    dibujarMensaje(contexto, formatearTextoVuelta(minutos, temas));
+    dibujarMensaje(contexto, armarLineasVuelta(minutos, temas));
     textura.needsUpdate = true;
   };
 

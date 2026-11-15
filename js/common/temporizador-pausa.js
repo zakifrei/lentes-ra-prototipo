@@ -26,14 +26,22 @@ function saneaNumeroNoNegativo(valor) {
 }
 
 /**
- * Arma el texto literal de bienvenida de vuelta. Sanea `minutos`/`temas` no
- * numéricos o negativos a 0 antes de interpolar.
+ * Arma las 3 líneas de bienvenida de vuelta, en orden (saludo, minutos en
+ * pausa, temas guardados) -- a pedido del dueño del proyecto, ya no es un
+ * único texto con las 3 frases unidas por "·" (eso se veía como una sola
+ * oración larga); ahora son 3 líneas separadas, mismo criterio que
+ * pantalla-bienvenida.js. Sanea `minutos`/`temas` no numéricos o negativos a
+ * 0 antes de interpolar.
  * @param {number} minutos
  * @param {number} temas
- * @returns {string}
+ * @returns {[string, string, string]}
  */
-export function formatearTextoVuelta(minutos, temas) {
+export function armarLineasVuelta(minutos, temas) {
   const minutosSaneados = saneaNumeroNoNegativo(minutos);
   const temasSaneados = saneaNumeroNoNegativo(temas);
-  return `Bienvenida de vuelta · Estuviste ${minutosSaneados} min en pausa · Se guardaron ${temasSaneados} temas`;
+  return [
+    '¡Bienvenida de vuelta!',
+    `Estuviste ${minutosSaneados} min en pausa`,
+    `Se guardaron ${temasSaneados} temas en tu notebook`,
+  ];
 }
