@@ -127,10 +127,14 @@ export function dibujarFondoPanel(contexto, ancho, alto) {
   // de nuevo, pero con un degradé vertical como `strokeStyle` en vez de un
   // color sólido -- opaco en y=0 y transparente a partir de la mitad del
   // panel. Como el degradé se desvanece con la altura (no con la posición
-  // a lo largo del borde), el resultado es que sólo el borde de ARRIBA
-  // (arcos de las esquinas superiores incluidos, porque son parte del
-  // mismo path) se ve brillante, y los otros 3 lados quedan invisibles --
-  // sin necesidad de dibujar arcos a mano ni de un `clip()` aparte.
+  // a lo largo del borde), el resultado es que el borde de ARRIBA (arcos
+  // de las esquinas superiores incluidos, porque son parte del mismo path)
+  // se ve brillante, con un brillo decreciente en el primer tramo de los
+  // lados izquierdo/derecho (hasta donde el degradé todavía no llegó a
+  // alpha 0) -- un efecto de "destello" de vidrio normal, sin necesidad de
+  // dibujar arcos a mano ni de un `clip()` aparte. El borde inferior sí
+  // queda invisible en todos los tamaños de canvas reales del proyecto
+  // (el degradé llega a alpha 0 bastante antes de esa altura).
   const gradienteBrilloSuperior = contexto.createLinearGradient(0, 0, 0, alto * 0.55);
   gradienteBrilloSuperior.addColorStop(0, COLOR_BRILLO_SUPERIOR);
   gradienteBrilloSuperior.addColorStop(1, 'rgba(255, 238, 210, 0)');
