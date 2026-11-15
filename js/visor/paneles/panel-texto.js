@@ -11,6 +11,7 @@
 
 import * as THREE from '../../../vendor/three/three.module.js';
 import { dibujarFondoPanel, COLOR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
+import { dibujarIcono } from '../iconos.js';
 
 const ANCHO_CANVAS = 1024;
 const ALTO_CANVAS = 512;
@@ -44,7 +45,13 @@ function calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente) {
   return tamanoFuente * (anchoDisponible / anchoMaximo);
 }
 
-function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente) {
+// Diámetro del ícono opcional (fracción del alto del canvas) y espacio
+// entre el ícono y el texto cuando ambos se dibujan juntos como una sola
+// unidad centrada -- ver `dibujarLineasEnCanvas`.
+const DIAMETRO_ICONO = ALTO_CANVAS * 0.4;
+const ESPACIO_ICONO_TEXTO = 20;
+
+function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono) {
   contexto.clearRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
 
   dibujarFondoPanel(contexto, ANCHO_CANVAS, ALTO_CANVAS);
@@ -55,6 +62,28 @@ function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente) {
 
   const tamanoFuenteAjustado = calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente);
   contexto.font = `${tamanoFuenteAjustado}px ${FUENTE_PRINCIPAL}`;
+
+  // Ícono opcional: sólo para etiquetas de una sola línea (regla explícita
+  // del Review Focus del plan -- nunca se dibuja ícono sobre un panel de
+  // varias líneas, donde no hay un único renglón con el que formar una
+  // unidad centrada). Si no aplica, el dibujo sigue siendo IDÉNTICO al de
+  // antes de esta tarea.
+  if (icono && lineas.length === 1) {
+    const linea = lineas[0];
+    const anchoTexto = contexto.measureText(linea).width;
+    const radioIcono = DIAMETRO_ICONO / 2;
+    const anchoTotal = DIAMETRO_ICONO + ESPACIO_ICONO_TEXTO + anchoTexto;
+    const xInicio = ANCHO_CANVAS / 2 - anchoTotal / 2;
+    const cxIcono = xInicio + radioIcono;
+    const xTexto = xInicio + DIAMETRO_ICONO + ESPACIO_ICONO_TEXTO;
+
+    contexto.strokeStyle = COLOR_TEXTO;
+    dibujarIcono(icono, contexto, cxIcono, ALTO_CANVAS / 2, radioIcono);
+
+    contexto.textAlign = 'left';
+    contexto.fillText(linea, xTexto, ALTO_CANVAS / 2);
+    return;
+  }
 
   const interlineado = tamanoFuenteAjustado * 1.4;
   const altoTotal = interlineado * lineas.length;
@@ -75,7 +104,14 @@ function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente) {
  *   alto?: number,
  *   tamanoFuente?: number,
  *   nombre?: string,
- * }} [opciones]
+ *   icono?: string,
+ * }} [opciones] `icono` es opcional, uno de los nombres soportados por
+ *   `dibujarIcono` (ver `iconos.js`): 'subtitulos', 'imagenes', 'mapa',
+ *   'pausa', 'aceptar', 'rechazar', 'reiniciar', 'menu', 'flecha'. Sólo
+ *   tiene efecto cuando `lineas` tiene una única línea -- en un panel de
+ *   varias líneas se ignora y el panel se dibuja igual que sin `icono`,
+ *   porque no hay un único renglón con el que formar una unidad
+ *   ícono+texto centrada.
  * @returns {THREE.Object3D}
  */
 export function crearPanelTexto(lineas, opciones = {}) {
@@ -85,6 +121,7 @@ export function crearPanelTexto(lineas, opciones = {}) {
     alto = ALTO_PANEL_POR_DEFECTO,
     tamanoFuente = TAMANO_FUENTE_POR_DEFECTO,
     nombre = 'panel-texto',
+    icono,
   } = opciones;
 
   const canvas = document.createElement('canvas');
@@ -92,7 +129,7 @@ export function crearPanelTexto(lineas, opciones = {}) {
   canvas.height = ALTO_CANVAS;
 
   const contexto = canvas.getContext('2d');
-  dibujarLineasEnCanvas(contexto, lineas, tamanoFuente);
+  dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono);
 
   const textura = new THREE.CanvasTexture(canvas);
 
