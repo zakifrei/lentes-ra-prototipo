@@ -16,7 +16,7 @@ import { MAPA_CONCEPTUAL } from '../../../assets/mapa-conceptual/contenido-mapa.
 // de los ojos, así las tres columnas -- igual que cualquier otro panel del
 // proyecto -- nunca cubren el centro del campo visual.
 const ALTURA_Y = 1.1;
-const PROFUNDIDAD_Z = -1.2;
+const PROFUNDIDAD_Z = -1.8;
 
 const ANCHO_COLUMNA = 0.6;
 const ALTO_COLUMNA = 0.55;

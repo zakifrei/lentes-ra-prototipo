@@ -29,7 +29,7 @@ const ALTO_PANEL_POR_DEFECTO = 0.4;
 // borde superior queda a ~0.3 m por debajo de la altura de ojos asumida
 // -- así alcanza incluso para usuarios con los ojos bastante más bajos
 // que 1.6 m.
-const POSICION_POR_DEFECTO = { x: 0, y: 1.1, z: -1.2 };
+const POSICION_POR_DEFECTO = { x: 0, y: 1.1, z: -1.8 };
 
 const TAMANO_FUENTE_POR_DEFECTO = 48;
 

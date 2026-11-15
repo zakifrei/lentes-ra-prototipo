@@ -38,12 +38,12 @@ const TAMANO_FUENTE_MENSAJE = 40;
 // proyecto, nunca cubran el centro del campo visual.
 const ANCHO_PANEL_MENSAJE = 0.9;
 const ALTO_PANEL_MENSAJE = 0.35;
-const POSICION_MENSAJE = { x: 0, y: 1.3, z: -1.2 };
+const POSICION_MENSAJE = { x: 0, y: 1.3, z: -1.8 };
 
 const ANCHO_BOTON = 0.6;
 const ALTO_BOTON = 0.3;
 const ALTURA_Y_BOTONES = 0.88;
-const PROFUNDIDAD_Z_BOTONES = -1.2;
+const PROFUNDIDAD_Z_BOTONES = -1.8;
 // Separación horizontal entre centros de botones: con ANCHO_BOTON = 0.6
 // deja ~0.1 m de aire entre bordes (mismo criterio que pantalla-menu.js),
 // para que no se puedan tocar por error.

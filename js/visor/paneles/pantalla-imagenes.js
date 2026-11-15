@@ -61,7 +61,7 @@ const POSICIONES_GRILLA = [
   { x: -0.6, y: 1.2 },
   { x: 0.6, y: 1.2 },
 ];
-const Z_POR_DEFECTO = -1.3;
+const Z_POR_DEFECTO = -1.9;
 
 // Tarea de ajuste UX (feedback en vivo del Quest real): ángulo de rotación
 // "en ángulo" (toe-in) de cada imagen hacia el centro, ver el comentario
@@ -74,7 +74,7 @@ const ANGULO_TOE_IN = Math.PI / 7; // ~25.7°
 const LIMITES_ARRASTRE = {
   x: [-1.2, 1.2],
   y: [0.5, 1.9],
-  z: [-2.5, -0.6],
+  z: [-3.1, -1.2],
 };
 
 // ANCHO_BOTON_ESCALA/ALTO_BOTON_ESCALA crecieron de 0.1 a 0.18 a raíz de

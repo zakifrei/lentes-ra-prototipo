@@ -38,7 +38,7 @@ const MARGEN_HORIZONTAL = 40;
 // del campo visual, más abajo que la altura típica de los ojos).
 const ANCHO_PANEL = 0.8;
 const ALTO_PANEL = 0.4;
-const POSICION_PANEL = { x: 0, y: 1.1, z: -1.2 };
+const POSICION_PANEL = { x: 0, y: 1.1, z: -1.8 };
 
 const TAMANO_FUENTE_TEXTO = 36;
 const TAMANO_FUENTE_CONTADOR = 48;

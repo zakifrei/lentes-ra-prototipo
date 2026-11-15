@@ -33,11 +33,11 @@ const TAMANO_FUENTE_MENSAJE = 28;
 // nunca cubran el centro del campo visual.
 const ANCHO_PANEL_MENSAJE = 0.9;
 const ALTO_PANEL_MENSAJE = 0.5;
-const POSICION_MENSAJE = { x: 0, y: 1.25, z: -1.2 };
+const POSICION_MENSAJE = { x: 0, y: 1.25, z: -1.8 };
 
 const ANCHO_BOTON = 0.6;
 const ALTO_BOTON = 0.25;
-const POSICION_BOTON = { x: 0, y: 0.8, z: -1.2 };
+const POSICION_BOTON = { x: 0, y: 0.8, z: -1.8 };
 
 const TEXTO_BOTON_VOLVER = 'Volver a la clase';
 

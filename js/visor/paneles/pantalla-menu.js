@@ -15,7 +15,7 @@ import { enEventoSeleccion } from '../interaccion.js';
 // típica de los ojos, así los tres botones -- igual que cualquier otro
 // panel del proyecto -- nunca cubren el centro del campo visual.
 const ALTURA_Y = 1.1;
-const PROFUNDIDAD_Z = -1.2;
+const PROFUNDIDAD_Z = -1.8;
 
 const ANCHO_BOTON = 0.5;
 const ALTO_BOTON = 0.35;

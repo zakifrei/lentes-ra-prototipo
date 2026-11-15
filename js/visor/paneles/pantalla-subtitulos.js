@@ -65,7 +65,7 @@ const ALTO_PANEL = 0.175;
 // notar esto del todo, porque no simula el campo visual angosto de un
 // casco real). 0.75 lo deja claramente en la mitad inferior, sin quedar
 // tan abajo que incomode leerlo.
-const POSICION_SUBTITULO = { x: 0, y: 0.75, z: -1 };
+const POSICION_SUBTITULO = { x: 0, y: 0.75, z: -1.6 };
 
 // Tamaño de fuente (px de canvas) para el factor de escala 1 (el mínimo).
 // Bajó de 40 a 16: con ANCHO_CANVAS ensanchado (ver más arriba) un valor
@@ -110,7 +110,7 @@ const Y_BOTONES = POSICION_SUBTITULO.y - ALTO_PANEL / 2 - 0.15;
 const LIMITES_ARRASTRE = {
   x: [-0.6, 0.6],
   y: [0.4, 1.5],
-  z: [-2.2, -0.6],
+  z: [-2.8, -1.2],
 };
 
 // Cada cuánto se revisa si hay que avanzar de línea (no hace falta
