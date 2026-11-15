@@ -162,13 +162,18 @@ const pantallasPorNombre = {
   // romano de Occidente, ver assets/mapa-conceptual/contenido-mapa.js):
   // pantalla estática, sin interacción ni persistencia propia.
   mapa: crearPantallaMapa(),
-  // Aviso de atención (Tarea 11): sin opción de "no" todavía -- aceptar
-  // (botón del lente: gatillo o pellizco) pasa a la pantalla de pausa, a
-  // través del mismo `cambiarPantalla` centralizado que usa el resto del
-  // visor.
-  aviso: crearPantallaAviso(renderizador, () => {
-    cambiarPantalla('pausa');
-  }),
+  // Aviso de atención (Tarea 11, con botón de rechazo real desde la Tarea
+  // 24): "Sí, pausar" pasa a la pantalla de pausa; "Seguir sin pausar"
+  // vuelve a la pantalla donde estaba el usuario antes del aviso, mismo
+  // mecanismo de retorno que "Seguir con la clase"/"Volver a la clase" de
+  // las pantallas de vuelta/resumen (`pantallaAntesDeAviso`, ver más
+  // arriba). Ambos pasan por el mismo `cambiarPantalla` centralizado que
+  // usa el resto del visor.
+  aviso: crearPantallaAviso(
+    renderizador,
+    () => cambiarPantalla('pausa'),
+    () => cambiarPantalla(pantallaAntesDeAviso ?? 'menu')
+  ),
   // Pausa activa (Tarea 12): contador en vivo de minutos transcurridos
   // desde que se entró de verdad a esta pantalla (ver `alEntrar` en
   // pantalla-pausa.js). El refresco del contador no usa un `setInterval`
