@@ -148,6 +148,62 @@ let estadoActual = estadoPorDefecto();
 // transición real hacia 'aviso' (ver ahí abajo).
 let pantallaAntesDeAviso = null;
 
+// Animación de entrada por pantalla (Tarea 31, pulido visual ámbar-neón):
+// decisión tomada con el dueño del proyecto para simplificar al máximo y
+// bajar el riesgo -- anima SÓLO `grupo.scale` (nunca opacidad/materiales),
+// porque cada pantalla es un `THREE.Group` con varios meshes hijos, cada
+// uno con su PROPIO material (ver por ejemplo los 3 botones de
+// `pantalla-menu.js`): animar opacidad exigiría recorrer recursivamente
+// todos los materiales de cada pantalla, mucha más superficie de riesgo
+// para un efecto de prioridad baja. `Map<THREE.Group, inicioMs>` en vez de
+// una propiedad metida a mano en cada grupo: permite tener más de una
+// animación en curso a la vez (por ejemplo, si el usuario cambia de
+// pantalla varias veces seguidas muy rápido) sin pisarse, y sacar cada
+// entrada apenas termina (ver `actualizarAnimacionesDeEntrada`) para no
+// seguir calculando algo ya terminado.
+const animacionesDeEntrada = new Map();
+const ESCALA_INICIAL_ANIMACION_ENTRADA = 0.85;
+const DURACION_ANIMACION_ENTRADA_MS = 220;
+
+// Arranca (o reinicia, si ya había una en curso para este mismo `grupo` --
+// por ejemplo, volver a entrar a la misma pantalla antes de que termine su
+// animación anterior) el pop-in de esta pantalla: la deja en la escala
+// chica de entrada y guarda el momento de inicio para que
+// `actualizarAnimacionesDeEntrada` la vaya interpolando cuadro a cuadro.
+// `Date.now()`, no `performance.now()`, para ser consistente con el resto
+// de `main.js` (ver `actualizarPantallaPausaSiCorresponde`, más abajo, que
+// ya le pasa `Date.now()` a `pantalla-pausa.js`).
+function iniciarAnimacionDeEntrada(grupo) {
+  if (!grupo) return;
+  grupo.scale.setScalar(ESCALA_INICIAL_ANIMACION_ENTRADA);
+  animacionesDeEntrada.set(grupo, Date.now());
+}
+
+// Se llama una vez por cuadro desde `renderizador.setAnimationLoop` (ver
+// más abajo), igual que `actualizarPantallaPausaSiCorresponde`: recorre
+// las animaciones en curso, calcula cuánto creció la escala según el
+// tiempo transcurrido (con un ease-out cuadrático simple, nada más
+// elaborado -- efecto de prioridad baja) y, apenas una animación llega a
+// progreso 1, fija la escala final exacta en 1 y la saca del `Map` para
+// no seguir iterándola en cuadros futuros.
+function actualizarAnimacionesDeEntrada(ahoraMs) {
+  animacionesDeEntrada.forEach((inicioMs, grupo) => {
+    const progresoLineal = Math.min(
+      (ahoraMs - inicioMs) / DURACION_ANIMACION_ENTRADA_MS,
+      1
+    );
+    const progresoSuavizado = 1 - (1 - progresoLineal) ** 2; // ease-out cuadrático
+    const escala =
+      ESCALA_INICIAL_ANIMACION_ENTRADA +
+      (1 - ESCALA_INICIAL_ANIMACION_ENTRADA) * progresoSuavizado;
+    grupo.scale.setScalar(escala);
+    if (progresoLineal >= 1) {
+      grupo.scale.setScalar(1);
+      animacionesDeEntrada.delete(grupo);
+    }
+  });
+}
+
 const pantallasPorNombre = {
   reconocimiento: crearPantallaReconocimiento(),
   bienvenida: crearPantallaBienvenida(),
@@ -309,7 +365,7 @@ function aplicarComandoYActualizar(comando, { esPrimeraSincronizacion = false } 
     pantallaAntesDeAviso = null;
     Object.values(pantallasPorNombre).forEach((pantalla) => pantalla.alReiniciarTodo?.());
     actualizarPantallaVisible();
-    pantallasPorNombre[estadoActual.pantalla]?.alEntrar?.();
+    entrarAPantalla(estadoActual.pantalla);
     return;
   }
 
@@ -347,8 +403,19 @@ function aplicarComandoYActualizar(comando, { esPrimeraSincronizacion = false } 
   actualizarPantallaVisible();
 
   if (estadoActual.pantalla !== pantallaAnterior) {
-    pantallasPorNombre[estadoActual.pantalla]?.alEntrar?.();
+    entrarAPantalla(estadoActual.pantalla);
   }
+}
+
+// Factoriza los dos call-sites de arriba que, ante una transición real de
+// pantalla, necesitan tanto el `alEntrar?.()` ya existente como el pop-in
+// nuevo de la Tarea 31 -- evita duplicar la llamada a la animación en dos
+// lugares. No cambia nada del comportamiento ya existente de `alEntrar`
+// (sigue siendo opcional, con el mismo `?.()`).
+function entrarAPantalla(nombrePantalla) {
+  const pantalla = pantallasPorNombre[nombrePantalla];
+  pantalla?.alEntrar?.();
+  iniciarAnimacionDeEntrada(pantalla);
 }
 
 // Atajo para el caso simple "cambiar a esta pantalla por nombre": lo que
@@ -415,5 +482,6 @@ function actualizarPantallaPausaSiCorresponde() {
 renderizador.setAnimationLoop(() => {
   controlesVistaPrevia.update();
   actualizarPantallaPausaSiCorresponde();
+  actualizarAnimacionesDeEntrada(Date.now());
   renderizador.render(escena, camara);
 });
