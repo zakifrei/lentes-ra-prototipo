@@ -32,30 +32,34 @@ const TEXTO_BOTON = 'Menú';
 
 // Coordenadas LOCALES a la cámara (no del mundo): +X a la derecha, +Y hacia
 // arriba, -Z hacia adelante (misma convención que usa Three.js para
-// cualquier cámara). z=-0.5 (medio metro) en vez de los -1.6 a -1.9 m en los
-// que viven el resto de los paneles del proyecto -- a propósito, para que el
-// botón quede "pegado" a la esquina sin competir con el contenido
-// principal. Por la misma razón, el tamaño físico de abajo es bastante más
-// chico que el de los botones normales (ANCHO_BOTON/ALTO_BOTON = 0.6x0.3 a
-// z=-1.8 en pantalla-aviso.js/pantalla-vuelta.js): a esta distancia mucho
-// más corta, ese mismo tamaño físico tapiaría buena parte del campo visual
-// (el campo visual cubierto por un panel de tamaño fijo crece cuanto más
-// cerca está de la cámara).
+// cualquier cámara).
 //
-// `y` NEGATIVO a propósito (feedback en vivo del Quest real): todo el
-// resto del contenido del proyecto vive por DEBAJO de la altura de ojos
-// (ver panel-texto.js/POSICION_POR_DEFECTO.y=1.1 con los ojos a ~1.6m, a
-// 1.8m de distancia: un ángulo de atan(0.5/1.8)≈15.5° bajo la mirada al
-// frente) -- con `y` positivo acá, este botón quedaba arriba del centro,
-// en la dirección contraria a donde aparece todo lo demás, y se sentía
-// "muy encima" del usuario aunque el valor en metros fuera chico. El
-// valor final (y=-0.12 a z=-0.5, ≈13.5° hacia abajo) salió de ajustar a
-// ojo en el Quest real, no de aplicar la fórmula exacta -- queda cerca
-// del mismo ángulo que el resto de los paneles, sin pretender igualarlo
-// al grado.
-const POSICION_LOCAL = { x: 0.18, y: -0.12, z: -0.5 };
-const ANCHO_BOTON = 0.18;
-const ALTO_BOTON = 0.09;
+// Posición en la esquina (x positivo, y positivo = arriba a la derecha):
+// esto SIEMPRE estuvo bien (feedback en vivo del Quest real, confirmado dos
+// veces) -- lo que se sentía mal no era la altura en pantalla, era que el
+// botón quedaba demasiado CERCA de la cara (z=-0.5, medio metro) comparado
+// con los 1.6-1.9m en los que vive el resto del contenido del proyecto, y
+// esa cercanía exagerada se percibía como algo plantado "encima" del
+// usuario. La fórmula anterior intentó arreglar esto moviendo `y` a
+// negativo (abajo), pero el problema nunca fue la altura: era la
+// profundidad. Ahora z pasa a -1.8 (misma profundidad que
+// panel-texto.js/POSICION_POR_DEFECTO y el resto de las pantallas), y para
+// que el botón siga viéndose en el MISMO lugar de la pantalla y con el
+// MISMO tamaño aparente que antes (no más chico por estar más lejos), x/y
+// y todas las medidas físicas de abajo se escalan por el mismo factor que
+// la profundidad (1.8 / 0.5 = 3.6x): más lejos, pero ocupando el mismo
+// ángulo de visión que antes, sólo que ahora a una distancia cómoda como el
+// resto del contenido. El tamaño de fuente (en píxeles de canvas, ver
+// panel-texto.js) no necesita tocarse: al escalar posición y tamaño físico
+// por el mismo factor, la nitidez en pantalla queda igual.
+const FACTOR_ESCALA_PROFUNDIDAD = 3.6; // 1.8m / 0.5m
+const POSICION_LOCAL = {
+  x: 0.18 * FACTOR_ESCALA_PROFUNDIDAD,
+  y: 0.13 * FACTOR_ESCALA_PROFUNDIDAD,
+  z: -1.8,
+};
+const ANCHO_BOTON = 0.18 * FACTOR_ESCALA_PROFUNDIDAD;
+const ALTO_BOTON = 0.09 * FACTOR_ESCALA_PROFUNDIDAD;
 // Más grande que el TAMANO_FUENTE_POR_DEFECTO (48) de panel-texto.js: el
 // texto "Menú" es corto y el panel chico, así que conviene aprovechar el
 // espacio disponible del canvas para que siga siendo legible aun con el
@@ -77,12 +81,14 @@ const OPCIONES = [
 // principal de esa pantalla) -- este desplegable vive pegado al HUD, a la
 // misma distancia corta (z) que el botón principal, y no debe tapar el
 // centro.
-const ANCHO_BOTON_OPCION = 0.3;
-const ALTO_BOTON_OPCION = 0.1;
+const ANCHO_BOTON_OPCION = 0.3 * FACTOR_ESCALA_PROFUNDIDAD;
+const ALTO_BOTON_OPCION = 0.1 * FACTOR_ESCALA_PROFUNDIDAD;
 const TAMANO_FUENTE_OPCION = 36;
 // Separación vertical entre el borde de un botón y el siguiente (principal
 // incluido): nunca pegados entre sí, para no tocar el de al lado por error.
-const MARGEN_VERTICAL = 0.02;
+// También escalada por FACTOR_ESCALA_PROFUNDIDAD, por la misma razón que
+// el resto de las medidas físicas de este archivo.
+const MARGEN_VERTICAL = 0.02 * FACTOR_ESCALA_PROFUNDIDAD;
 
 const raycaster = new THREE.Raycaster();
 const vectorOrigen = new THREE.Vector3();
@@ -123,21 +129,20 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
   // abierto la próxima vez que el botón vuelva a mostrarse.
   let desplegado = false;
 
-  // Apilados verticalmente ARRIBA del botón principal (no debajo), en
-  // coordenadas locales de cámara (mismo x/z que el botón principal).
-  // Desde que `POSICION_LOCAL.y` pasó a ser negativo (el botón bajó para
-  // quedar "a la altura" del resto del contenido, ver el comentario junto
-  // a esa constante), abrir el desplegable hacia abajo sacaría al tercer
-  // botón fuera del campo visual (a z=-0.5, el semi-alto visible es de
-  // apenas ~0.35m) -- hacia arriba, en cambio, hay margen de sobra hasta
-  // el centro de la vista. Arrancan ocultos: sólo se muestran mientras
-  // `desplegado` es true.
+  // Apilados verticalmente debajo del botón principal, en coordenadas
+  // locales de cámara (mismo x/z que el botón principal, para que el
+  // desplegable quede justo debajo de él). Ahora que la profundidad pasó
+  // de z=-0.5 a z=-1.8 (ver el comentario junto a POSICION_LOCAL), el
+  // semi-alto visible en ese plano es mucho mayor que antes, así que abrir
+  // hacia abajo (como en el diseño original de este botón) ya no corre
+  // riesgo de sacar al tercer botón del campo visual. Arrancan ocultos:
+  // sólo se muestran mientras `desplegado` es true.
   const botonesOpcion = OPCIONES.map(({ opcion, texto }, indice) => {
     const y =
-      POSICION_LOCAL.y +
-      ALTO_BOTON / 2 +
-      MARGEN_VERTICAL +
-      ALTO_BOTON_OPCION / 2 +
+      POSICION_LOCAL.y -
+      ALTO_BOTON / 2 -
+      MARGEN_VERTICAL -
+      ALTO_BOTON_OPCION / 2 -
       indice * (ALTO_BOTON_OPCION + MARGEN_VERTICAL);
 
     const botonOpcion = crearPanelTexto([texto], {
