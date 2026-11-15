@@ -41,3 +41,59 @@ node --test test/
   `three.module.js`, `three.core.js` (del que depende el anterior) y el addon
   `OrbitControls.js`.
 - `test/` — tests ejecutados con `node --test`.
+
+## Instrucciones para el día de la prueba
+
+### URLs
+
+- Visor (lo que se abre en el Quest): `https://zakifrei.github.io/lentes-ra-prototipo/`
+- Panel del observador (lo que se abre en el celular): `https://zakifrei.github.io/lentes-ra-prototipo/panel.html`
+
+**Conviene abrir la URL del visor en el Quest por mail o mensaje (no
+tipeándola a mano).** Es un bug ya resuelto de este proyecto: el teclado
+virtual del navegador del Quest autocorrige los guiones (`-`) a guiones
+largos al tipear, lo que rompe la URL. Mandarse el link por mail/chat al
+propio usuario y abrirlo desde ahí evita el problema.
+
+### Entrar a la sesión de RA en el Quest
+
+1. Abrir la URL del visor (idealmente desde un link, no tipeada).
+2. Tocar el botón **"Entrar a RA"**.
+3. Aceptar los permisos de passthrough/cámara que pida el navegador.
+
+### Orden sugerido de botones del panel (para seguir el guion completo)
+
+1. **Reconocimiento**
+2. **Bienvenida**
+3. **Menú**
+4. **Subtítulos** / **Imágenes** / **Mapa conceptual** (en el orden que
+   prefiera el observador)
+5. **Disparar aviso**
+6. *(el usuario, desde dentro del casco, elige "Sí, pausar" o "Seguir sin
+   pausar")*
+7. Si el usuario aceptó la pausa: **Iniciar pausa**
+8. **Terminar pausa**
+9. *(el usuario, desde dentro del casco, elige "Seguir con la clase" o
+   "Ver un resumen rápido")*
+10. **Reiniciar todo** (entre cada participante de la prueba)
+
+### Dónde abrir el panel
+
+El panel (`panel.html`) se abre normalmente desde un celular, en la misma
+red o con datos móviles — no es necesario que esté en la misma wifi que el
+Quest, porque Firebase es la conexión real entre ambos.
+
+### Navegación directa desde el casco
+
+En casi todas las pantallas hay un botón de menú flotante (arriba a la
+derecha) con el que el propio usuario puede navegar sin depender 100% del
+panel del observador. No aparece en las pantallas de "aviso" ni "pausa" a
+propósito, para no interrumpir esos momentos que el observador controla.
+
+### Repaso visual pendiente
+
+El repaso visual de cada pantalla **en el Quest real** queda pendiente: el
+dueño del proyecto tiene acceso al casco físico para hacerlo. Lo que sí se
+verificó para este task es que los textos literales exigidos por el guion
+coinciden carácter por carácter en el código (ver `task-20-report.md` en
+`.superpowers/sdd/2026-11-13-lentes-ra-prototipo/` para el detalle).
