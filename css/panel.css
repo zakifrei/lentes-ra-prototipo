@@ -18,7 +18,7 @@
 :root {
   color-scheme: dark;
   --fondo: #1c1008;
-  --superficie: #2b1a0e;
+  --superficie: rgba(43, 26, 14, 0.92);
   --superficie-vidrio: rgba(43, 26, 14, 0.55);
   --ambar: #ffb454;
   --ambar-fuerte: #ff8c32;
@@ -57,10 +57,12 @@ h2 {
 }
 
 section {
-  /* Respaldo sólido (siempre aplicado, base): si el navegador no soporta
-     backdrop-filter, el panel queda con este fondo opaco de la Tarea 19 en
-     vez de quedar transparente-sin-blur (ilegible). El bloque @supports de
-     abajo lo reemplaza por el vidrio esmerilado real donde es viable. */
+  /* Respaldo semitransparente (siempre aplicado, base): si el navegador no
+     soporta backdrop-filter, el panel queda con este fondo oscuro casi
+     opaco (alpha alto, pero no 1) en vez de quedar completamente opaco o
+     transparente-sin-blur (ambos casos que el plan pide evitar). El bloque
+     @supports de abajo lo reemplaza por el vidrio esmerilado real -- más
+     transparente, con blur -- donde es viable. */
   background: var(--superficie);
   border: 1px solid rgba(255, 180, 84, 0.25);
   border-radius: 12px;
