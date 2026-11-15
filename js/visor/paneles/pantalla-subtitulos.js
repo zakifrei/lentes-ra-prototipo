@@ -57,14 +57,15 @@ const ANCHO_PANEL = 1.05;
 const ALTO_PANEL = 0.175;
 
 // Misma zona que el panel de subtítulos original: debajo de la altura
-// típica de los ojos (~1.6 m), fuera del centro del campo visual. `y`
-// bajó de 1.2 a 0.95 a raíz de la primera prueba en un casco Meta Quest
-// real (Etapa 6): a 1.2 el panel quedaba demasiado central en el campo
-// visual real (la vista previa de escritorio no deja notar esto, porque
-// no simula el campo visual angosto de un casco real) -- 0.95 lo deja en
-// una altura más parecida a los subtítulos de un video real, claramente
-// por debajo del centro.
-const POSICION_SUBTITULO = { x: 0, y: 0.95, z: -1 };
+// típica de los ojos (~1.6 m), fuera del centro del campo visual. `y` ya
+// había bajado de 1.2 a 0.95 (Tarea 21, primera prueba en un casco Meta
+// Quest real) y, probado de nuevo en vivo en el Quest real, el dueño del
+// proyecto pidió bajarlo todavía más: a 0.95 seguía "ocupando mucho del
+// medio" del campo visual real (la vista previa de escritorio no deja
+// notar esto del todo, porque no simula el campo visual angosto de un
+// casco real). 0.75 lo deja claramente en la mitad inferior, sin quedar
+// tan abajo que incomode leerlo.
+const POSICION_SUBTITULO = { x: 0, y: 0.75, z: -1 };
 
 // Tamaño de fuente (px de canvas) para el factor de escala 1 (el mínimo).
 // Bajó de 40 a 16: con ANCHO_CANVAS ensanchado (ver más arriba) un valor

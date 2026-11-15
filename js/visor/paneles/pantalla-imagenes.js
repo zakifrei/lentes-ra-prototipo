@@ -63,6 +63,11 @@ const POSICIONES_GRILLA = [
 ];
 const Z_POR_DEFECTO = -1.3;
 
+// Tarea de ajuste UX (feedback en vivo del Quest real): ángulo de rotación
+// "en ángulo" (toe-in) de cada imagen hacia el centro, ver el comentario
+// grande junto a `meshImagen.rotation.y` más abajo.
+const ANGULO_TOE_IN = Math.PI / 7; // ~25.7°
+
 // Volumen en el que se puede arrastrar cualquier imagen: alcanzable, pero
 // sin poder llevarla detrás de la cabeza, demasiado lejos o pegada a la
 // cara (mismo criterio que usó la Task 4 para el panel de subtítulos).
@@ -162,6 +167,19 @@ export function crearPantallaImagenes(
     const meshImagen = new THREE.Mesh(geometria, material);
     meshImagen.name = `pantalla-imagenes-imagen-${idImagen}`;
     meshImagen.position.set(posicionInicial.x, posicionInicial.y, posicionInicial.z);
+
+    // Tarea de ajuste UX (feedback en vivo del Quest real): cada imagen rota
+    // levemente hacia el centro ("en ángulo", como un tríptico), para que se
+    // vea más de frente al mirarla desde el costado en vez de "de refilón".
+    // Con la convención de THREE.PlaneGeometry (normal por defecto hacia +Z) y
+    // la regla de la mano derecha, rotar en +Y gira esa normal hacia +X -- por
+    // eso la imagen de la IZQUIERDA (x negativo) necesita rotación POSITIVA
+    // (para girar su cara hacia +X, o sea hacia el centro) y la de la DERECHA
+    // necesita la rotación opuesta. El ángulo persiste aunque se arrastre la
+    // imagen a otra posición (`habilitarArrastre` sólo toca `.position`, nunca
+    // `.rotation`) -- es intencional: la imagen conserva su ángulo "de origen"
+    // sin importar dónde termine.
+    meshImagen.rotation.y = posicionInicial.x < 0 ? ANGULO_TOE_IN : -ANGULO_TOE_IN;
 
     const estadoImagen = {
       idImagen,

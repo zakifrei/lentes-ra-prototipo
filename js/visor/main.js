@@ -237,7 +237,7 @@ Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 // `escena.add(camara)`, más arriba, y boton-menu-flotante.js). Por eso no
 // vive en `pantallasPorNombre` ni se recorre junto con el resto en
 // `actualizarPantallaVisible`, más abajo -- necesita su propia línea.
-const botonMenuFlotante = crearBotonMenuFlotante(renderizador, () => cambiarPantalla('menu'));
+const botonMenuFlotante = crearBotonMenuFlotante(renderizador, (opcion) => cambiarPantalla(opcion));
 camara.add(botonMenuFlotante);
 
 function actualizarPantallaVisible() {
@@ -250,6 +250,12 @@ function actualizarPantallaVisible() {
   // el aviso, terminar la pausa), no distraerse con un acceso directo al
   // menú.
   botonMenuFlotante.visible = !['aviso', 'pausa'].includes(estadoActual.pantalla);
+  // Tarea de ajuste UX (feedback en vivo del Quest real): si el observador
+  // navega a cualquier pantalla desde su panel mientras el desplegable del
+  // botón flotante estaba abierto, se cierra solo -- ver el comentario
+  // junto a `cerrarMenu` en boton-menu-flotante.js sobre por qué no alcanza
+  // con el toggle de `.visible` de arriba.
+  botonMenuFlotante.cerrarMenu?.();
 }
 actualizarPantallaVisible();
 
