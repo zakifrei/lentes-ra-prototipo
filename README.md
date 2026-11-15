@@ -27,10 +27,12 @@ sólo sirve para verificar la escena base en una computadora de escritorio.
 ### Correr los tests
 
 Los módulos puros (sin DOM ni WebGL) se prueban con el runner de tests nativo
-de Node (≥18):
+de Node (≥18). En versiones recientes de Node, `node --test` no expande un
+directorio como glob por sí solo, así que conviene pasarle los archivos
+explícitamente:
 
 ```bash
-node --test test/
+node --test test/*.test.mjs
 ```
 
 ## Estructura
