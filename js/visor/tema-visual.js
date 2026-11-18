@@ -19,10 +19,11 @@
 // del sistema ya cumple "tipografía limpia" sin ese riesgo.
 //
 // Tarea 27 (pulido "ámbar-neón", cápsulas + bisel + brillo intensificado):
-// todo lo demás de este módulo queda igual que la Tarea 19 -- paleta,
-// tipografía y la firma de `dibujarFondoPanel(contexto, ancho, alto)`, que
-// ningún archivo que la llama necesita tocar (ver comentario grande sobre
-// esa función, más abajo).
+// todo lo demás de este módulo queda igual que la Tarea 19 -- paleta y
+// tipografía. La firma de `dibujarFondoPanel` ganó un 4° parámetro
+// opcional (`interactivo`) en un pulido visual posterior -- ver comentario
+// grande sobre esa función, más abajo -- así que ningún archivo que ya la
+// llamaba sin ese parámetro necesitó tocarse.
 export const COLOR_FONDO_PANEL = 'rgba(28, 16, 8, 0.74)';
 export const COLOR_TEXTO = '#fff3e0';
 export const COLOR_AMBAR = '#ffb454';
@@ -60,7 +61,7 @@ const COLOR_FONDO_PANEL_OSCURO = 'rgba(14, 7, 3, 0.36)';
 // saturada en ámbar y notablemente MÁS opaca que un cartel fijo -- a
 // pedido del dueño del proyecto, para que un elemento tocable se note como
 // tal a simple vista, en vez de verse igual que un cartel de sólo lectura.
-// La uso cualquier pantalla con botones reales (pasando `interactivo: true`
+// La usa cualquier pantalla con botones reales (pasando `interactivo: true`
 // a `crearPanelTexto`, ver panel-texto.js) menos pantalla-finalizada.js,
 // que a propósito no tiene ningún botón.
 const COLOR_FONDO_BOTON_CLARO = 'rgba(120, 62, 18, 0.68)';

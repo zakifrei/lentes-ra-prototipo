@@ -17,8 +17,25 @@ import { RESUMEN_CLASE } from '../../common/resumen-clase.js';
 import { enEventoSeleccion } from '../interaccion.js';
 import { dibujarFondoPanel, COLOR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
 
+// Tamaños y posiciones físicas (metros, RA). Igual que el resto de las
+// pantallas del proyecto: todo por debajo de la altura típica de los ojos
+// (~1.6 m) y repartido en dos filas (mensaje arriba, botón abajo), para que
+// nunca cubran el centro del campo visual.
+const ANCHO_PANEL_MENSAJE = 0.9;
+const ALTO_PANEL_MENSAJE = 0.5;
+const POSICION_MENSAJE = { x: 0, y: 1.25, z: -1.8 };
+
+// ANCHO_CANVAS fijo (resolución, no proporción) y ALTO_CANVAS calculado a
+// partir de la proporción FÍSICA real del panel (ANCHO_PANEL_MENSAJE /
+// ALTO_PANEL_MENSAJE = 1.8:1, no 2:1) -- mismo criterio que
+// `calcularResolucionCanvas` de panel-texto.js (pulido visual): antes este
+// archivo usaba un ALTO_CANVAS=512 fijo (2:1) sobre un panel 1.8:1, lo que
+// achataba levemente el párrafo dibujado. De paso, el canvas más alto
+// (569 en vez de 512) le da más margen vertical al párrafo, que no tiene
+// ningún ajuste automático de alto (ver comentario de TAMANO_FUENTE_MENSAJE
+// más abajo).
 const ANCHO_CANVAS = 1024;
-const ALTO_CANVAS = 512;
+const ALTO_CANVAS = Math.round(ANCHO_CANVAS * (ALTO_PANEL_MENSAJE / ANCHO_PANEL_MENSAJE));
 
 // Margen horizontal (en px de canvas) que el texto nunca debe invadir.
 const MARGEN_HORIZONTAL = 40;
@@ -31,14 +48,6 @@ const MARGEN_HORIZONTAL = 40;
 // (ver `partirEnLineas`, más abajo) que lo proteja de desbordar verticalmente
 // si se agranda de más.
 const TAMANO_FUENTE_MENSAJE = 30;
-
-// Tamaños y posiciones físicas (metros, RA). Igual que el resto de las
-// pantallas del proyecto: todo por debajo de la altura típica de los ojos
-// (~1.6 m) y repartido en dos filas (mensaje arriba, botón abajo), para que
-// nunca cubran el centro del campo visual.
-const ANCHO_PANEL_MENSAJE = 0.9;
-const ALTO_PANEL_MENSAJE = 0.5;
-const POSICION_MENSAJE = { x: 0, y: 1.25, z: -1.8 };
 
 const ANCHO_BOTON = 0.6;
 const ALTO_BOTON = 0.25;
