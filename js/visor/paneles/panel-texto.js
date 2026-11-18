@@ -138,9 +138,10 @@ function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanva
  *   porque no hay un único renglón con el que formar una unidad
  *   ícono+texto centrada. `interactivo` (default `false`) marca este panel
  *   como un botón tocable -- ver el comentario grande sobre la variante
- *   "botón" en `dibujarFondoPanel` (tema-visual.js): sólo cambia el color
- *   de fondo, para que se note a simple vista qué es tocable y qué es un
- *   cartel fijo de sólo lectura.
+ *   "botón" en `dibujarFondoPanel` (tema-visual.js): cambia el color de
+ *   fondo Y la forma (esquinas redondeadas en vez de rectangulares), para
+ *   que se note a simple vista qué es tocable y qué es un cartel fijo de
+ *   sólo lectura.
  * @returns {THREE.Object3D}
  */
 export function crearPanelTexto(lineas, opciones = {}) {

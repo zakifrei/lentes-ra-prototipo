@@ -49,8 +49,10 @@ const MARGEN_HORIZONTAL = 40;
 // si se agranda de más.
 const TAMANO_FUENTE_MENSAJE = 30;
 
-const ANCHO_BOTON = 0.6;
-const ALTO_BOTON = 0.25;
+// Achicados de 0.6x0.25 a 0.5x0.21 (pulido visual, a pedido del dueño del
+// proyecto: se veía "gigante") -- misma proporción (~2.4:1) de antes.
+const ANCHO_BOTON = 0.5;
+const ALTO_BOTON = 0.21;
 const POSICION_BOTON = { x: 0, y: 0.8, z: -1.8 };
 
 const TEXTO_BOTON_VOLVER = 'Volver a la clase';

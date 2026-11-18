@@ -94,7 +94,14 @@ const OPCIONES = [
 // del panel, así que igualarlo al botón principal no lo pone en riesgo.
 const ANCHO_BOTON_OPCION = ANCHO_BOTON;
 const ALTO_BOTON_OPCION = ALTO_BOTON;
-const TAMANO_FUENTE_OPCION = 36;
+// Subido de 36 a 44 (pulido visual, a pedido del dueño del proyecto: se
+// leía muy chico comparado con el resto de los botones del visor).
+// "Mapa conceptual" -- la opción más larga -- medía ~747-787px a 36px (el
+// margen de ~157-197px del comentario de arriba, restado de los 944px de
+// presupuesto); escalado a 44px da ~913-962px, todavía mayormente dentro
+// del presupuesto -- en el peor caso, `calcularTamanoFuenteAjustado` la
+// recorta un par de puntos, imperceptible.
+const TAMANO_FUENTE_OPCION = 44;
 // Separación vertical entre el borde de un botón y el siguiente (principal
 // incluido): nunca pegados entre sí, para no tocar el de al lado por error.
 // También escalada por FACTOR_ESCALA_PROFUNDIDAD y FACTOR_ACHICAR_BOTON,

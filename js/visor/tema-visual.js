@@ -46,16 +46,18 @@ export const FUENTE_PRINCIPAL = "'Segoe UI', Arial, sans-serif";
 // fondo plano -- simula una fuente de luz desde arriba-izquierda, sin
 // cambiar el tono general del panel.
 //
-// Opacidad bajada de 0.78/0.74 a 0.4/0.36 (pulido visual, a pedido del
-// dueño del proyecto con una imagen de referencia tipo "HUD de anteojos
-// RA real": vidrio bien transparente, se ve claramente lo que hay detrás
-// del cartel, no un panel casi opaco). Se mantiene el mismo degradé/bisel y
+// Opacidad bajada de 0.78/0.74 a 0.4/0.36 en un pulido visual anterior (a
+// pedido del dueño del proyecto con una imagen de referencia tipo "HUD de
+// anteojos RA real"), y subida de nuevo a 0.55/0.5 en este pulido: ese
+// 0.4/0.36 quedó "demasiado" transparente en la prueba real -- este valor
+// intermedio se queda bastante más transparente que el 0.78/0.74
+// original, pero ya no tan al límite. Se mantiene el mismo degradé/bisel y
 // el mismo COLOR_TEXTO para el texto (pensado para leerse sobre fondos
 // oscuros/claros variados, no sólo sobre este panel), así que la
 // legibilidad no se resiente: lo que cambia es cuánto del entorno real se
 // filtra a través del cartel.
-const COLOR_FONDO_PANEL_CLARO = 'rgba(46, 27, 13, 0.4)';
-const COLOR_FONDO_PANEL_OSCURO = 'rgba(14, 7, 3, 0.36)';
+const COLOR_FONDO_PANEL_CLARO = 'rgba(46, 27, 13, 0.55)';
+const COLOR_FONDO_PANEL_OSCURO = 'rgba(14, 7, 3, 0.5)';
 
 // Variante "botón" (pulido visual): mismo degradé de vidrio, pero más
 // saturada en ámbar y notablemente MÁS opaca que un cartel fijo -- a
@@ -85,9 +87,16 @@ const COLOR_BRILLO_SUPERIOR = 'rgba(255, 238, 210, 0.95)';
 // `Math.min(ancho/2, alto/2)`: mismo criterio de seguridad que ya existía
 // en la Tarea 19, para que nunca pueda "romper" un panel (quedar con un
 // radio mayor que la mitad de un lado).
+//
+// Sólo se aplica a la variante "botón" (pulido visual, a pedido del dueño
+// del proyecto): un cartel fijo ahora es rectangular (radio 0), para que
+// la forma en sí ya distinga "esto se toca" (cápsula redondeada) de "esto
+// es sólo para leer" (rectángulo), además de la diferencia de color que ya
+// aportaba `dibujarFondoPanel`.
 const FRACCION_RADIO_ESQUINAS = 0.4;
 
-function calcularRadioEsquinas(ancho, alto) {
+function calcularRadioEsquinas(ancho, alto, interactivo) {
+  if (!interactivo) return 0;
   const radioDeseado = Math.min(ancho, alto) * FRACCION_RADIO_ESQUINAS;
   return Math.min(radioDeseado, ancho / 2, alto / 2);
 }
@@ -102,13 +111,14 @@ function calcularRadioEsquinas(ancho, alto) {
  * @param {CanvasRenderingContext2D} contexto
  * @param {number} ancho
  * @param {number} alto
- * @param {boolean} [interactivo] `true` para la variante "botón" (más
- *   opaca y saturada en ámbar, ver `COLOR_FONDO_BOTON_CLARO`/`_OSCURO` más
- *   arriba); `false` (default) para la variante "cartel fijo", bien
- *   transparente.
+ * @param {boolean} [interactivo] `true` para la variante "botón": esquinas
+ *   redondeadas (cápsula, ver `calcularRadioEsquinas`) y fondo más opaco y
+ *   saturado en ámbar (ver `COLOR_FONDO_BOTON_CLARO`/`_OSCURO` más arriba);
+ *   `false` (default) para la variante "cartel fijo": rectangular (sin
+ *   esquinas redondeadas) y más transparente.
  */
 export function dibujarFondoPanel(contexto, ancho, alto, interactivo = false) {
-  const radio = calcularRadioEsquinas(ancho, alto);
+  const radio = calcularRadioEsquinas(ancho, alto, interactivo);
   const colorClaro = interactivo ? COLOR_FONDO_BOTON_CLARO : COLOR_FONDO_PANEL_CLARO;
   const colorOscuro = interactivo ? COLOR_FONDO_BOTON_OSCURO : COLOR_FONDO_PANEL_OSCURO;
 

@@ -68,13 +68,17 @@ const ANCHO_PANEL_MENSAJE = 0.9;
 const ALTO_PANEL_MENSAJE = 0.45;
 const POSICION_MENSAJE = { x: 0, y: 1.3, z: -1.8 };
 
-const ANCHO_BOTON = 0.6;
-const ALTO_BOTON = 0.3;
+// Achicados de 0.6x0.3 a 0.5x0.25 (pulido visual, a pedido del dueño del
+// proyecto: se veían "gigantes") -- misma proporción 2:1 de antes, mismo
+// criterio que pantalla-aviso.js.
+const ANCHO_BOTON = 0.5;
+const ALTO_BOTON = 0.25;
 const ALTURA_Y_BOTONES = 0.88;
 const PROFUNDIDAD_Z_BOTONES = -1.8;
-// Separación horizontal entre centros de botones: con ANCHO_BOTON = 0.6
-// deja ~0.1 m de aire entre bordes (mismo criterio que pantalla-menu.js),
-// para que no se puedan tocar por error.
+// Separación horizontal entre centros de botones: con el ANCHO_BOTON = 0.5
+// de arriba deja ~0.2 m de aire entre bordes (más que antes, porque el
+// botón se achicó y esta separación no se tocó), para que no se puedan
+// tocar por error.
 const SEPARACION_X = 0.35;
 
 const TEXTO_BOTON_SEGUIR = 'Seguir con la clase';
