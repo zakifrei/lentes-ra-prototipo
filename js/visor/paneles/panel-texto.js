@@ -13,11 +13,34 @@ import * as THREE from '../../../vendor/three/three.module.js';
 import { dibujarFondoPanel, COLOR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
 import { dibujarIcono } from '../iconos.js';
 
-const ANCHO_CANVAS = 1024;
-const ALTO_CANVAS = 512;
+// Ancho de canvas de referencia (resolución, no proporción): el alto real
+// se calcula por llamada a partir del ancho/alto FÍSICO (metros) que pida
+// cada pantalla -- ver `calcularResolucionCanvas` más abajo. Antes era un
+// ALTO_CANVAS fijo de 512 (proporción 2:1) para cualquier panel, lo que
+// deformaba el texto/ícono de cualquier botón que no fuera 2:1: los
+// botones "+"/"-" cuadrados de pantalla-subtitulos.js/pantalla-imagenes.js
+// quedaban con la textura 2:1 aplastada sobre un plano cuadrado, así que la
+// raya vertical del "+" se veía más larga que la horizontal (bug
+// reportado). Lo mismo afectaba, en menor grado, a pantalla-menu.js,
+// pantalla-mapa.js y varios botones de texto (ninguno es exactamente 2:1).
+const ANCHO_CANVAS_BASE = 1024;
 
-// Margen horizontal (en px de canvas) que el texto nunca debe invadir.
+// Margen horizontal (en px de canvas) que el texto nunca debe invadir. Se
+// mide siempre contra ANCHO_CANVAS_BASE (el ancho de canvas nunca cambia
+// entre llamadas, sólo el alto), así que sigue siendo válido para
+// cualquier proporción de panel.
 const MARGEN_HORIZONTAL = 40;
+
+// Calcula la resolución de canvas que respeta la proporción FÍSICA
+// (ancho/alto en metros) del panel pedido, mantenido el mismo ancho base
+// de siempre para no perder nitidez. Con la proporción por defecto (2:1)
+// da exactamente 1024x512, igual que antes -- ningún panel que ya fuera
+// 2:1 cambia de comportamiento.
+function calcularResolucionCanvas(ancho, alto) {
+  const anchoCanvas = ANCHO_CANVAS_BASE;
+  const altoCanvas = Math.round(ANCHO_CANVAS_BASE * (alto / ancho));
+  return { anchoCanvas, altoCanvas };
+}
 
 // Tamaño físico por defecto del panel en metros (RA): ancho x alto. Misma
 // proporción 2:1 que el canvas, para que el texto no se deforme.
@@ -37,30 +60,30 @@ const TAMANO_FUENTE_POR_DEFECTO = 48;
 // Si la línea más larga no entra en el ancho disponible del canvas con el
 // tamaño de fuente pedido, se reduce ese tamaño (igual para todas las
 // líneas, para no dejar tamaños dispares) hasta que entre con margen.
-function calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente) {
+function calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente, anchoCanvas) {
   contexto.font = `${tamanoFuente}px ${FUENTE_PRINCIPAL}`;
-  const anchoDisponible = ANCHO_CANVAS - MARGEN_HORIZONTAL * 2;
+  const anchoDisponible = anchoCanvas - MARGEN_HORIZONTAL * 2;
   const anchoMaximo = Math.max(...lineas.map((linea) => contexto.measureText(linea).width));
   if (anchoMaximo <= anchoDisponible) return tamanoFuente;
   return tamanoFuente * (anchoDisponible / anchoMaximo);
 }
 
-// Diámetro del ícono opcional (fracción del alto del canvas) y espacio
-// entre el ícono y el texto cuando ambos se dibujan juntos como una sola
-// unidad centrada -- ver `dibujarLineasEnCanvas`.
-const DIAMETRO_ICONO = ALTO_CANVAS * 0.4;
+// Espacio entre el ícono y el texto cuando ambos se dibujan juntos como una
+// sola unidad centrada -- ver `dibujarLineasEnCanvas`. El diámetro del
+// ícono ya no es una constante (dependía de ALTO_CANVAS, que ahora varía
+// por llamada): se calcula adentro de `dibujarLineasEnCanvas`.
 const ESPACIO_ICONO_TEXTO = 20;
 
-function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono) {
-  contexto.clearRect(0, 0, ANCHO_CANVAS, ALTO_CANVAS);
+function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanvas, altoCanvas, interactivo) {
+  contexto.clearRect(0, 0, anchoCanvas, altoCanvas);
 
-  dibujarFondoPanel(contexto, ANCHO_CANVAS, ALTO_CANVAS);
+  dibujarFondoPanel(contexto, anchoCanvas, altoCanvas, interactivo);
 
   contexto.fillStyle = COLOR_TEXTO;
   contexto.textAlign = 'center';
   contexto.textBaseline = 'middle';
 
-  const tamanoFuenteAjustado = calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente);
+  const tamanoFuenteAjustado = calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente, anchoCanvas);
   contexto.font = `${tamanoFuenteAjustado}px ${FUENTE_PRINCIPAL}`;
 
   // Ícono opcional: sólo para etiquetas de una sola línea (regla explícita
@@ -69,28 +92,29 @@ function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono) {
   // unidad centrada). Si no aplica, el dibujo sigue siendo IDÉNTICO al de
   // antes de esta tarea.
   if (icono && lineas.length === 1) {
+    const diametroIcono = altoCanvas * 0.4;
     const linea = lineas[0];
     const anchoTexto = contexto.measureText(linea).width;
-    const radioIcono = DIAMETRO_ICONO / 2;
-    const anchoTotal = DIAMETRO_ICONO + ESPACIO_ICONO_TEXTO + anchoTexto;
-    const xInicio = ANCHO_CANVAS / 2 - anchoTotal / 2;
+    const radioIcono = diametroIcono / 2;
+    const anchoTotal = diametroIcono + ESPACIO_ICONO_TEXTO + anchoTexto;
+    const xInicio = anchoCanvas / 2 - anchoTotal / 2;
     const cxIcono = xInicio + radioIcono;
-    const xTexto = xInicio + DIAMETRO_ICONO + ESPACIO_ICONO_TEXTO;
+    const xTexto = xInicio + diametroIcono + ESPACIO_ICONO_TEXTO;
 
     contexto.strokeStyle = COLOR_TEXTO;
-    dibujarIcono(icono, contexto, cxIcono, ALTO_CANVAS / 2, radioIcono);
+    dibujarIcono(icono, contexto, cxIcono, altoCanvas / 2, radioIcono);
 
     contexto.textAlign = 'left';
-    contexto.fillText(linea, xTexto, ALTO_CANVAS / 2);
+    contexto.fillText(linea, xTexto, altoCanvas / 2);
     return;
   }
 
   const interlineado = tamanoFuenteAjustado * 1.4;
   const altoTotal = interlineado * lineas.length;
-  const yInicial = ALTO_CANVAS / 2 - altoTotal / 2 + interlineado / 2;
+  const yInicial = altoCanvas / 2 - altoTotal / 2 + interlineado / 2;
 
   lineas.forEach((linea, indice) => {
-    contexto.fillText(linea, ANCHO_CANVAS / 2, yInicial + indice * interlineado);
+    contexto.fillText(linea, anchoCanvas / 2, yInicial + indice * interlineado);
   });
 }
 
@@ -105,13 +129,18 @@ function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono) {
  *   tamanoFuente?: number,
  *   nombre?: string,
  *   icono?: string,
+ *   interactivo?: boolean,
  * }} [opciones] `icono` es opcional, uno de los nombres soportados por
  *   `dibujarIcono` (ver `iconos.js`): 'subtitulos', 'imagenes', 'mapa',
  *   'pausa', 'aceptar', 'rechazar', 'reiniciar', 'menu', 'flecha'. Sólo
  *   tiene efecto cuando `lineas` tiene una única línea -- en un panel de
  *   varias líneas se ignora y el panel se dibuja igual que sin `icono`,
  *   porque no hay un único renglón con el que formar una unidad
- *   ícono+texto centrada.
+ *   ícono+texto centrada. `interactivo` (default `false`) marca este panel
+ *   como un botón tocable -- ver el comentario grande sobre la variante
+ *   "botón" en `dibujarFondoPanel` (tema-visual.js): sólo cambia el color
+ *   de fondo, para que se note a simple vista qué es tocable y qué es un
+ *   cartel fijo de sólo lectura.
  * @returns {THREE.Object3D}
  */
 export function crearPanelTexto(lineas, opciones = {}) {
@@ -122,14 +151,17 @@ export function crearPanelTexto(lineas, opciones = {}) {
     tamanoFuente = TAMANO_FUENTE_POR_DEFECTO,
     nombre = 'panel-texto',
     icono,
+    interactivo = false,
   } = opciones;
 
+  const { anchoCanvas, altoCanvas } = calcularResolucionCanvas(ancho, alto);
+
   const canvas = document.createElement('canvas');
-  canvas.width = ANCHO_CANVAS;
-  canvas.height = ALTO_CANVAS;
+  canvas.width = anchoCanvas;
+  canvas.height = altoCanvas;
 
   const contexto = canvas.getContext('2d');
-  dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono);
+  dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanvas, altoCanvas, interactivo);
 
   const textura = new THREE.CanvasTexture(canvas);
 
