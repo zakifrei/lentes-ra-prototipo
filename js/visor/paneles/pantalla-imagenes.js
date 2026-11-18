@@ -228,6 +228,7 @@ export function crearPantallaImagenes(
       alto: ALTO_BOTON_ESCALA,
       tamanoFuente: TAMANO_FUENTE_BOTON_ESCALA,
       nombre: `pantalla-imagenes-boton-mas-${idImagen}`,
+      interactivo: true,
     });
     botonMas.userData.idImagen = idImagen;
     botonMas.userData.delta = 1;
@@ -237,6 +238,7 @@ export function crearPantallaImagenes(
       alto: ALTO_BOTON_ESCALA,
       tamanoFuente: TAMANO_FUENTE_BOTON_ESCALA,
       nombre: `pantalla-imagenes-boton-menos-${idImagen}`,
+      interactivo: true,
     });
     botonMenos.userData.idImagen = idImagen;
     botonMenos.userData.delta = -1;
@@ -303,6 +305,7 @@ export function crearPantallaImagenes(
     alto: ALTO_BOTON_VER_MAS,
     nombre: 'pantalla-imagenes-boton-ver-mas',
     icono: 'flecha',
+    interactivo: true,
   });
   grupo.add(botonVerMas);
 

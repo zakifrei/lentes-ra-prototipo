@@ -130,6 +130,7 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
     tamanoFuente: TAMANO_FUENTE,
     nombre: 'boton-menu-flotante-principal',
     icono: 'menu',
+    interactivo: true,
   });
   grupo.add(botonPrincipal);
 
@@ -164,6 +165,7 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
       tamanoFuente: TAMANO_FUENTE_OPCION,
       nombre: `boton-menu-flotante-opcion-${opcion}`,
       icono: opcion,
+      interactivo: true,
     });
     botonOpcion.userData.opcion = opcion;
     botonOpcion.visible = false;

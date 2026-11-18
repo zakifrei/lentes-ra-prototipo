@@ -24,8 +24,13 @@ const ALTO_CANVAS = 512;
 const MARGEN_HORIZONTAL = 40;
 // Más chico que pantalla-vuelta.js (40px): `RESUMEN_CLASE` es un párrafo de
 // varias oraciones, no un mensaje corto, así que necesita más líneas y un
-// tamaño de fuente menor para entrar con margen en el mismo panel.
-const TAMANO_FUENTE_MENSAJE = 28;
+// tamaño de fuente menor para entrar con margen en el mismo panel. Subido
+// de 28 a 30 (pulido visual, "un poco" más grande a pedido del dueño del
+// proyecto): un salto chico a propósito, porque este párrafo ya ocupa la
+// mayor parte del alto del panel y no hay un ajuste automático de alto acá
+// (ver `partirEnLineas`, más abajo) que lo proteja de desbordar verticalmente
+// si se agranda de más.
+const TAMANO_FUENTE_MENSAJE = 30;
 
 // Tamaños y posiciones físicas (metros, RA). Igual que el resto de las
 // pantallas del proyecto: todo por debajo de la altura típica de los ojos
@@ -136,6 +141,7 @@ export function crearPantallaResumen(renderer, onVolverClase) {
     alto: ALTO_BOTON,
     nombre: 'pantalla-resumen-boton-volver',
     icono: 'flecha',
+    interactivo: true,
   });
   grupo.add(botonVolver);
 

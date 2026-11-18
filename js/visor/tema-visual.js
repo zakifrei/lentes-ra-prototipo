@@ -43,11 +43,28 @@ export const FUENTE_PRINCIPAL = "'Segoe UI', Arial, sans-serif";
 // del mismo `COLOR_FONDO_PANEL` de arriba, usadas como extremos de un
 // `CanvasGradient` lineal (ver `dibujarFondoPanel`) en vez de un color de
 // fondo plano -- simula una fuente de luz desde arriba-izquierda, sin
-// cambiar el tono general ni la opacidad promedio del panel (la
-// legibilidad del texto, que se dibuja encima en cada pantalla, no se ve
-// afectada).
-const COLOR_FONDO_PANEL_CLARO = 'rgba(46, 27, 13, 0.78)';
-const COLOR_FONDO_PANEL_OSCURO = 'rgba(14, 7, 3, 0.74)';
+// cambiar el tono general del panel.
+//
+// Opacidad bajada de 0.78/0.74 a 0.4/0.36 (pulido visual, a pedido del
+// dueño del proyecto con una imagen de referencia tipo "HUD de anteojos
+// RA real": vidrio bien transparente, se ve claramente lo que hay detrás
+// del cartel, no un panel casi opaco). Se mantiene el mismo degradé/bisel y
+// el mismo COLOR_TEXTO para el texto (pensado para leerse sobre fondos
+// oscuros/claros variados, no sólo sobre este panel), así que la
+// legibilidad no se resiente: lo que cambia es cuánto del entorno real se
+// filtra a través del cartel.
+const COLOR_FONDO_PANEL_CLARO = 'rgba(46, 27, 13, 0.4)';
+const COLOR_FONDO_PANEL_OSCURO = 'rgba(14, 7, 3, 0.36)';
+
+// Variante "botón" (pulido visual): mismo degradé de vidrio, pero más
+// saturada en ámbar y notablemente MÁS opaca que un cartel fijo -- a
+// pedido del dueño del proyecto, para que un elemento tocable se note como
+// tal a simple vista, en vez de verse igual que un cartel de sólo lectura.
+// La uso cualquier pantalla con botones reales (pasando `interactivo: true`
+// a `crearPanelTexto`, ver panel-texto.js) menos pantalla-finalizada.js,
+// que a propósito no tiene ningún botón.
+const COLOR_FONDO_BOTON_CLARO = 'rgba(120, 62, 18, 0.68)';
+const COLOR_FONDO_BOTON_OSCURO = 'rgba(77, 36, 8, 0.64)';
 
 // Highlight del borde superior ("vidrio recibiendo luz"): blanco cálido
 // casi opaco arriba, que se usa como extremo de un degradé vertical (ver
@@ -84,9 +101,15 @@ function calcularRadioEsquinas(ancho, alto) {
  * @param {CanvasRenderingContext2D} contexto
  * @param {number} ancho
  * @param {number} alto
+ * @param {boolean} [interactivo] `true` para la variante "botón" (más
+ *   opaca y saturada en ámbar, ver `COLOR_FONDO_BOTON_CLARO`/`_OSCURO` más
+ *   arriba); `false` (default) para la variante "cartel fijo", bien
+ *   transparente.
  */
-export function dibujarFondoPanel(contexto, ancho, alto) {
+export function dibujarFondoPanel(contexto, ancho, alto, interactivo = false) {
   const radio = calcularRadioEsquinas(ancho, alto);
+  const colorClaro = interactivo ? COLOR_FONDO_BOTON_CLARO : COLOR_FONDO_PANEL_CLARO;
+  const colorOscuro = interactivo ? COLOR_FONDO_BOTON_OSCURO : COLOR_FONDO_PANEL_OSCURO;
 
   function trazarRectanguloRedondeado(x, y, w, h, r) {
     contexto.beginPath();
@@ -108,8 +131,8 @@ export function dibujarFondoPanel(contexto, ancho, alto) {
   contexto.shadowColor = COLOR_BRILLO;
   contexto.shadowBlur = DESENFOQUE_BRILLO;
   const gradienteFondo = contexto.createLinearGradient(0, 0, ancho, alto);
-  gradienteFondo.addColorStop(0, COLOR_FONDO_PANEL_CLARO);
-  gradienteFondo.addColorStop(1, COLOR_FONDO_PANEL_OSCURO);
+  gradienteFondo.addColorStop(0, colorClaro);
+  gradienteFondo.addColorStop(1, colorOscuro);
   contexto.fillStyle = gradienteFondo;
   trazarRectanguloRedondeado(0, 0, ancho, alto, radio);
   contexto.fill();

@@ -256,6 +256,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
     alto: ALTO_BOTON,
     tamanoFuente: TAMANO_FUENTE_BOTON,
     nombre: 'pantalla-subtitulos-boton-mas',
+    interactivo: true,
   });
   botonMas.userData.delta = 1;
 
@@ -265,6 +266,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
     alto: ALTO_BOTON,
     tamanoFuente: TAMANO_FUENTE_BOTON,
     nombre: 'pantalla-subtitulos-boton-menos',
+    interactivo: true,
   });
   botonMenos.userData.delta = -1;
 

@@ -15,6 +15,11 @@ import { crearPanelTexto } from './panel-texto.js';
 
 const TEXTO_FINALIZADA = 'Clase finalizada: ya te podés sacar los lentes';
 
+// Un poco más grande que el default de panel-texto.js (48): pulido visual,
+// a pedido del dueño del proyecto, para que los carteles de texto se lean
+// mejor -- mismo criterio que pantalla-reconocimiento.js.
+const TAMANO_FUENTE = 54;
+
 /**
  * Crea la pantalla de clase finalizada.
  * @returns {THREE.Object3D}
@@ -22,5 +27,6 @@ const TEXTO_FINALIZADA = 'Clase finalizada: ya te podés sacar los lentes';
 export function crearPantallaFinalizada() {
   return crearPanelTexto([TEXTO_FINALIZADA], {
     nombre: 'pantalla-finalizada',
+    tamanoFuente: TAMANO_FUENTE,
   });
 }

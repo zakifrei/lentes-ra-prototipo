@@ -54,10 +54,14 @@ const TEXTO_TIP = 'Tip: Te recomiendo usar imágenes';
 
 // 3 tamaños de fuente distintos, de mayor a menor -- el saludo es el
 // elemento principal de la pantalla, el anuncio de la clase es secundario,
-// y el tip es una recomendación chica, casi al pie.
-const TAMANO_FUENTE_SALUDO = 72;
-const TAMANO_FUENTE_CLASE = 42;
-const TAMANO_FUENTE_TIP = 30;
+// y el tip es una recomendación chica, casi al pie. Agrandados "un poco"
+// (pulido visual, a pedido del dueño del proyecto) respecto a los valores
+// originales de la Tarea 19 (72/42/30): el ajuste automático por bloque
+// (`calcularTamanoFuenteAjustado`, más abajo) sigue protegiendo contra
+// desbordes horizontales igual que antes.
+const TAMANO_FUENTE_SALUDO = 80;
+const TAMANO_FUENTE_CLASE = 46;
+const TAMANO_FUENTE_TIP = 34;
 
 // Posición vertical de cada bloque, como fracción de ALTO_CANVAS -- con
 // aire entre ellos para que no se vean apretados.

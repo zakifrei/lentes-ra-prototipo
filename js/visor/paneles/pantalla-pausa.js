@@ -40,8 +40,12 @@ const ANCHO_PANEL = 0.8;
 const ALTO_PANEL = 0.4;
 const POSICION_PANEL = { x: 0, y: 1.1, z: -1.8 };
 
-const TAMANO_FUENTE_TEXTO = 36;
-const TAMANO_FUENTE_CONTADOR = 48;
+// Agrandados "un poco" (pulido visual, a pedido del dueño del proyecto)
+// respecto a los valores originales (36/48): el texto completo sigue
+// entrando con margen de sobra sobre el alto del panel (ver cálculo
+// dinámico de `altoTotal` en `dibujarPausa`, más abajo).
+const TAMANO_FUENTE_TEXTO = 40;
+const TAMANO_FUENTE_CONTADOR = 54;
 
 // Texto literal exacto pedido por la tarea -- no parafrasear ni cambiar
 // comillas/apóstrofes.

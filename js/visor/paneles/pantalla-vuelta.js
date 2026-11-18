@@ -43,11 +43,11 @@ const MARGEN_HORIZONTAL = 40;
 const ANCHO_DISPONIBLE = ANCHO_CANVAS - MARGEN_HORIZONTAL * 2;
 
 // 3 tamaños de fuente distintos, de mayor a menor -- mismos valores que
-// pantalla-bienvenida.js, para que ambas pantallas de "bloques apilados" se
-// vean consistentes entre sí.
-const TAMANO_FUENTE_SALUDO = 72;
-const TAMANO_FUENTE_MINUTOS = 42;
-const TAMANO_FUENTE_TEMAS = 30;
+// pantalla-bienvenida.js (incluido el agrandado "un poco" de pulido visual),
+// para que ambas pantallas de "bloques apilados" se vean consistentes entre sí.
+const TAMANO_FUENTE_SALUDO = 80;
+const TAMANO_FUENTE_MINUTOS = 46;
+const TAMANO_FUENTE_TEMAS = 34;
 
 // Posición vertical de cada bloque, como fracción de ALTO_CANVAS -- mismos
 // valores que pantalla-bienvenida.js.
@@ -215,6 +215,7 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     alto: ALTO_BOTON,
     nombre: 'pantalla-vuelta-boton-seguir',
     icono: 'flecha',
+    interactivo: true,
   });
   botonSeguir.userData.accion = 'seguir';
   grupo.add(botonSeguir);
@@ -225,6 +226,7 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     alto: ALTO_BOTON,
     nombre: 'pantalla-vuelta-boton-resumen',
     icono: 'flecha',
+    interactivo: true,
   });
   botonResumen.userData.accion = 'resumen';
   grupo.add(botonResumen);

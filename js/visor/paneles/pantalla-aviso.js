@@ -13,6 +13,11 @@ import { enEventoSeleccion } from '../interaccion.js';
 
 const TEXTO_AVISO = 'Notamos que tus niveles de atención disminuyeron. ¿Querés ayuda?';
 
+// Un poco más grande que el default de panel-texto.js (48): pulido visual,
+// a pedido del dueño del proyecto, para que los carteles de texto se lean
+// mejor -- igual criterio que pantalla-reconocimiento.js/pantalla-finalizada.js.
+const TAMANO_FUENTE_MENSAJE = 54;
+
 const TEXTO_BOTON_ACEPTAR = 'Sí, pausar';
 const TEXTO_BOTON_RECHAZAR = 'Seguir sin pausar';
 
@@ -51,7 +56,10 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
   const grupo = new THREE.Group();
   grupo.name = 'pantalla-aviso';
 
-  const panelMensaje = crearPanelTexto([TEXTO_AVISO], { nombre: 'pantalla-aviso-mensaje' });
+  const panelMensaje = crearPanelTexto([TEXTO_AVISO], {
+    nombre: 'pantalla-aviso-mensaje',
+    tamanoFuente: TAMANO_FUENTE_MENSAJE,
+  });
   grupo.add(panelMensaje);
 
   const botonAceptar = crearPanelTexto([TEXTO_BOTON_ACEPTAR], {
@@ -60,6 +68,7 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
     alto: ALTO_BOTON,
     nombre: 'pantalla-aviso-boton-aceptar',
     icono: 'aceptar',
+    interactivo: true,
   });
   botonAceptar.userData.accion = 'aceptar';
   grupo.add(botonAceptar);
@@ -70,6 +79,7 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
     alto: ALTO_BOTON,
     nombre: 'pantalla-aviso-boton-rechazar',
     icono: 'rechazar',
+    interactivo: true,
   });
   botonRechazar.userData.accion = 'rechazar';
   grupo.add(botonRechazar);

@@ -11,6 +11,11 @@ import { crearPanelTexto } from './panel-texto.js';
 
 const TEXTO_RECONOCIMIENTO = 'Mirá al frente: te estamos reconociendo';
 
+// Un poco más grande que el default de panel-texto.js (48): pulido visual,
+// a pedido del dueño del proyecto, para que los carteles de texto se lean
+// mejor.
+const TAMANO_FUENTE = 54;
+
 /**
  * Crea la pantalla de reconocimiento.
  * @returns {THREE.Object3D}
@@ -18,5 +23,6 @@ const TEXTO_RECONOCIMIENTO = 'Mirá al frente: te estamos reconociendo';
 export function crearPantallaReconocimiento() {
   return crearPanelTexto([TEXTO_RECONOCIMIENTO], {
     nombre: 'pantalla-reconocimiento',
+    tamanoFuente: TAMANO_FUENTE,
   });
 }

@@ -55,6 +55,7 @@ export function crearPantallaMenu(renderer, onSeleccionar) {
       alto: ALTO_BOTON,
       nombre: `pantalla-menu-boton-${opcion}`,
       icono: opcion,
+      interactivo: true,
     });
     boton.userData.opcion = opcion;
     grupo.add(boton);

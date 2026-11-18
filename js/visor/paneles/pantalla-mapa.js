@@ -25,8 +25,13 @@ const ALTO_COLUMNA = 0.55;
 // tiene cuatro líneas (título + 3 datos) en vez de una o dos, así que
 // arranca más chico para que entren cómodas antes de que el ajuste
 // automático por ancho (ver calcularTamanoFuenteAjustado en
-// panel-texto.js) tenga que reducirlo más de la cuenta.
-const TAMANO_FUENTE_COLUMNA = 36;
+// panel-texto.js) tenga que reducirlo más de la cuenta. Agrandado "un
+// poco" (pulido visual, a pedido del dueño del proyecto) de 36 a 40: con
+// la corrección de proporción de panel-texto.js (ver su comentario sobre
+// `calcularResolucionCanvas`), el canvas de estas columnas pasó a ser casi
+// cuadrado (antes 2:1 fijo), lo que de por sí dejó mucho más aire
+// vertical -- este agrandado no corre riesgo de desbordar.
+const TAMANO_FUENTE_COLUMNA = 40;
 
 // Separación horizontal entre centros de columna: con ANCHO_COLUMNA = 0.6
 // deja ~0.1 m de aire entre bordes (mismo criterio que pantalla-menu.js),
