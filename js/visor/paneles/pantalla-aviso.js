@@ -24,13 +24,14 @@ const TEXTO_BOTON_RECHAZAR = 'Seguir sin pausar';
 // Tamaños y posición física de los botones (metros, RA). El panel de
 // mensaje usa la posición/tamaño por defecto de panel-texto.js
 // (POSICION_POR_DEFECTO = {x:0,y:1.1,z:-1.8}, 0.8m x 0.4m), así que ocupa
-// de y=0.9 a y=1.3 -- los botones van debajo, centrados en y=0.65 (0.5 a
-// 0.8), dejando ~0.1 m de aire contra el borde inferior del mensaje (mismo
-// criterio de separación que pantalla-vuelta.js). ANCHO_BOTON/ALTO_BOTON
-// achicados de 0.6x0.3 a 0.5x0.25 (pulido visual, a pedido del dueño del
-// proyecto: se veían "gigantes") -- misma proporción 2:1 de antes, así que
-// el ajuste automático de fuente de crearPanelTexto no cambia de
-// comportamiento, sólo el tamaño físico del botón.
+// de y=0.9 a y=1.3 -- los botones van debajo, centrados en y=0.65. Con el
+// ALTO_BOTON=0.25 de abajo ocupan de y=0.525 a y=0.775, dejando ~0.125 m
+// de aire contra el borde inferior del mensaje (mismo criterio de
+// separación que pantalla-vuelta.js). ANCHO_BOTON/ALTO_BOTON achicados de
+// 0.6x0.3 a 0.5x0.25 (pulido visual, a pedido del dueño del proyecto: se
+// veían "gigantes") -- misma proporción 2:1 de antes, así que el ajuste
+// automático de fuente de crearPanelTexto no cambia de comportamiento,
+// sólo el tamaño físico del botón.
 const ANCHO_BOTON = 0.5;
 const ALTO_BOTON = 0.25;
 const ALTURA_Y_BOTONES = 0.65;
