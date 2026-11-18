@@ -16,6 +16,12 @@ export const PANTALLAS = Object.freeze([
   'pausa',
   'vuelta',
   'resumen',
+  // Fin de la clase (a pedido del dueño del proyecto): sólo la dispara el
+  // observador desde el panel externo, nunca el propio usuario -- por eso
+  // esta pantalla no tiene ningún botón propio (ver
+  // pantalla-finalizada.js) y el botón de menú flotante se oculta en ella
+  // (ver actualizarPantallaVisible en main.js), igual que en 'aviso'/'pausa'.
+  'finalizada',
 ]);
 
 // Campos que un comando puede traer y validador de cada uno.

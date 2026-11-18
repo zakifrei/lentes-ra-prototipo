@@ -16,6 +16,7 @@ import { crearPantallaAviso } from './paneles/pantalla-aviso.js';
 import { crearPantallaPausa } from './paneles/pantalla-pausa.js';
 import { crearPantallaVuelta } from './paneles/pantalla-vuelta.js';
 import { crearPantallaResumen } from './paneles/pantalla-resumen.js';
+import { crearPantallaFinalizada } from './paneles/pantalla-finalizada.js';
 import { crearBotonMenuFlotante } from './paneles/boton-menu-flotante.js';
 import { escucharEstadoFirebase } from './firebase-cliente.js';
 import { establecerCamaraVistaPrevia, crearIndicadorDeApuntado } from './interaccion.js';
@@ -282,6 +283,11 @@ const pantallasPorNombre = {
   resumen: crearPantallaResumen(renderizador, () =>
     cambiarPantalla(pantallaAntesDeAviso ?? 'menu')
   ),
+  // Clase finalizada: a pedido del dueño del proyecto, sin botones ni
+  // mecanismo de selección propio (ver el comentario de
+  // pantalla-finalizada.js) -- la dispara únicamente el observador desde
+  // el panel externo.
+  finalizada: crearPantallaFinalizada(),
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 
@@ -300,12 +306,14 @@ function actualizarPantallaVisible() {
   Object.entries(pantallasPorNombre).forEach(([nombre, objeto]) => {
     objeto.visible = nombre === estadoActual.pantalla;
   });
-  // Visible en todas las pantallas MENOS 'aviso' y 'pausa' (decisión ya
-  // tomada con el dueño del proyecto): en ambas, lo que el usuario necesita
-  // tocar es uno de los botones propios de esa pantalla (aceptar/rechazar
-  // el aviso, terminar la pausa), no distraerse con un acceso directo al
-  // menú.
-  botonMenuFlotante.visible = !['aviso', 'pausa'].includes(estadoActual.pantalla);
+  // Visible en todas las pantallas MENOS 'aviso', 'pausa' y 'finalizada'
+  // (decisión ya tomada con el dueño del proyecto): en las dos primeras, lo
+  // que el usuario necesita tocar es uno de los botones propios de esa
+  // pantalla (aceptar/rechazar el aviso, terminar la pausa), no distraerse
+  // con un acceso directo al menú; en 'finalizada' directamente no hay nada
+  // que navegar -- la clase terminó, y esta pantalla a propósito no tiene
+  // ningún control para que el usuario toque (ver pantalla-finalizada.js).
+  botonMenuFlotante.visible = !['aviso', 'pausa', 'finalizada'].includes(estadoActual.pantalla);
   // Tarea de ajuste UX (feedback en vivo del Quest real): si el observador
   // navega a cualquier pantalla desde su panel mientras el desplegable del
   // botón flotante estaba abierto, se cierra solo -- ver el comentario

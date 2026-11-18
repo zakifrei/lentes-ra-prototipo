@@ -33,6 +33,7 @@ const ETIQUETAS_PANTALLA = {
   pausa: 'Iniciar pausa',
   vuelta: 'Terminar pausa',
   resumen: 'Resumen rápido',
+  finalizada: 'Clase finalizada',
 };
 
 const app = initializeApp(firebaseConfig);

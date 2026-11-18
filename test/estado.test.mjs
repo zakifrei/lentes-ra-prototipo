@@ -29,3 +29,9 @@ test('aplicarComando aplica los campos validos e ignora los invalidos del mismo 
   const estado = aplicarComando(estadoPorDefecto(), { pantalla: 'menu', campoLegacySinValidador: 3 });
   assert.equal(estado.pantalla, 'menu');
 });
+
+test('PANTALLAS incluye "finalizada" y aplicarComando la acepta', () => {
+  assert.ok(PANTALLAS.includes('finalizada'));
+  const estado = aplicarComando(estadoPorDefecto(), { pantalla: 'finalizada' });
+  assert.equal(estado.pantalla, 'finalizada');
+});

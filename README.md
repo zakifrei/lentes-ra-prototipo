@@ -77,7 +77,11 @@ propio usuario y abrirlo desde ahí evita el problema.
 8. **Terminar pausa**
 9. *(el usuario, desde dentro del casco, elige "Seguir con la clase" o
    "Ver un resumen rápido")*
-10. **Reiniciar todo** (entre cada participante de la prueba)
+10. **Clase finalizada** (al terminar, para avisarle al usuario que ya
+    puede sacarse los lentes -- a diferencia del resto de los botones, éste
+    es exclusivo del observador: el usuario no tiene forma de llegar solo a
+    esta pantalla desde dentro del casco)
+11. **Reiniciar todo** (entre cada participante de la prueba)
 
 ### Dónde abrir el panel
 
@@ -89,8 +93,10 @@ Quest, porque Firebase es la conexión real entre ambos.
 
 En casi todas las pantallas hay un botón de menú flotante (arriba a la
 derecha) con el que el propio usuario puede navegar sin depender 100% del
-panel del observador. No aparece en las pantallas de "aviso" ni "pausa" a
-propósito, para no interrumpir esos momentos que el observador controla.
+panel del observador. No aparece en las pantallas de "aviso", "pausa" ni
+"finalizada" a propósito: en las dos primeras, para no interrumpir esos
+momentos que el observador controla; en "finalizada", porque la clase ya
+terminó y esa pantalla no tiene nada para navegar.
 
 ### Repaso visual pendiente
 
