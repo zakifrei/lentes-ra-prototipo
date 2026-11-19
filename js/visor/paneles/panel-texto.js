@@ -60,8 +60,12 @@ const TAMANO_FUENTE_POR_DEFECTO = 48;
 // Si la línea más larga no entra en el ancho disponible del canvas con el
 // tamaño de fuente pedido, se reduce ese tamaño (igual para todas las
 // líneas, para no dejar tamaños dispares) hasta que entre con margen.
-function calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente, anchoCanvas) {
-  contexto.font = `${tamanoFuente}px ${FUENTE_PRINCIPAL}`;
+// `negrita` tiene que reflejar la MISMA variante que se va a dibujar
+// después (ver `dibujarLineasEnCanvas`): el texto en negrita mide distinto
+// (más ancho) que el mismo texto en peso normal al mismo tamaño, así que
+// medir con el peso equivocado daría un ajuste incorrecto.
+function calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente, anchoCanvas, negrita) {
+  contexto.font = `${negrita ? 'bold ' : ''}${tamanoFuente}px ${FUENTE_PRINCIPAL}`;
   const anchoDisponible = anchoCanvas - MARGEN_HORIZONTAL * 2;
   const anchoMaximo = Math.max(...lineas.map((linea) => contexto.measureText(linea).width));
   if (anchoMaximo <= anchoDisponible) return tamanoFuente;
@@ -74,7 +78,7 @@ function calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente, anchoCanva
 // por llamada): se calcula adentro de `dibujarLineasEnCanvas`.
 const ESPACIO_ICONO_TEXTO = 20;
 
-function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanvas, altoCanvas, interactivo) {
+function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanvas, altoCanvas, interactivo, negrita) {
   contexto.clearRect(0, 0, anchoCanvas, altoCanvas);
 
   dibujarFondoPanel(contexto, anchoCanvas, altoCanvas, interactivo);
@@ -83,8 +87,9 @@ function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanva
   contexto.textAlign = 'center';
   contexto.textBaseline = 'middle';
 
-  const tamanoFuenteAjustado = calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente, anchoCanvas);
-  contexto.font = `${tamanoFuenteAjustado}px ${FUENTE_PRINCIPAL}`;
+  const tamanoFuenteAjustado = calcularTamanoFuenteAjustado(contexto, lineas, tamanoFuente, anchoCanvas, negrita);
+  const prefijoPeso = negrita ? 'bold ' : '';
+  contexto.font = `${prefijoPeso}${tamanoFuenteAjustado}px ${FUENTE_PRINCIPAL}`;
 
   // Ícono opcional: sólo para etiquetas de una sola línea (regla explícita
   // del Review Focus del plan -- nunca se dibuja ícono sobre un panel de
@@ -140,6 +145,7 @@ function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanva
  *   nombre?: string,
  *   icono?: string,
  *   interactivo?: boolean,
+ *   negrita?: boolean,
  * }} [opciones] `icono` es opcional, uno de los nombres soportados por
  *   `dibujarIcono` (ver `iconos.js`): 'subtitulos', 'imagenes', 'mapa',
  *   'pausa', 'aceptar', 'rechazar', 'reiniciar', 'menu', 'flecha'. Sólo
@@ -151,7 +157,12 @@ function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanva
  *   "botón" en `dibujarFondoPanel` (tema-visual.js): cambia el color de
  *   fondo Y la forma (esquinas redondeadas en vez de rectangulares), para
  *   que se note a simple vista qué es tocable y qué es un cartel fijo de
- *   sólo lectura.
+ *   sólo lectura. `negrita` (default `false`) dibuja el texto en negrita --
+ *   guía de diseño VR (hz-immersive-designer, referencia de "Spatial
+ *   Layout"): evitar fuentes finas, que "pueden desaparecer o titilar" en
+ *   las pantallas de un casco VR. Pensado para un único botón "cabecera"
+ *   que deba notarse más pesado que el resto (ver boton-menu-flotante.js),
+ *   no para aplicarse a todo el proyecto de una sola vez.
  * @returns {THREE.Object3D}
  */
 export function crearPanelTexto(lineas, opciones = {}) {
@@ -163,6 +174,7 @@ export function crearPanelTexto(lineas, opciones = {}) {
     nombre = 'panel-texto',
     icono,
     interactivo = false,
+    negrita = false,
   } = opciones;
 
   const { anchoCanvas, altoCanvas } = calcularResolucionCanvas(ancho, alto);
@@ -172,7 +184,7 @@ export function crearPanelTexto(lineas, opciones = {}) {
   canvas.height = altoCanvas;
 
   const contexto = canvas.getContext('2d');
-  dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanvas, altoCanvas, interactivo);
+  dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanvas, altoCanvas, interactivo, negrita);
 
   const textura = new THREE.CanvasTexture(canvas);
 

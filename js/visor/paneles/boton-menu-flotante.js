@@ -93,11 +93,17 @@ const POSICION_LOCAL = {
 const FACTOR_ACHICAR_BOTON = 0.8;
 const ANCHO_BOTON = 0.18 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
 const ALTO_BOTON = 0.09 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
-// Más grande que el TAMANO_FUENTE_POR_DEFECTO (48) de panel-texto.js: el
-// texto "Menú" es corto y el panel chico, así que conviene aprovechar el
-// espacio disponible del canvas para que siga siendo legible aun con el
-// panel reducido de arriba.
-const TAMANO_FUENTE = 64;
+// Subido de 64 a 84 (segunda vuelta de la revisión de diseño VR: la
+// primera pasada sólo había verificado el PISO de legibilidad de Meta (~1°
+// de arco visual) -- la referencia de "Spatial Layout" de
+// hz-immersive-designer pide bastante más para texto que se lee de corrido:
+// ~1.5°, ~42 mm físicos a 1.6 m (Z_LOCAL de este archivo). A 64px daba
+// ~32.4 mm -- pasaba el piso, pero bastante por debajo del tamaño
+// "cómodo" que pide esa referencia, y es justo lo que seguía viéndose
+// chico en una captura real). 84px da ~42.5 mm, confirmado con
+// `measureText` en el navegador real que "Menú" + ícono sigue entrando
+// sin achicarse (mide ~382px de 944px de presupuesto, con margen de sobra).
+const TAMANO_FUENTE = 84;
 
 // Mismas 3 opciones/textos que pantalla-menu.js (mismo contrato
 // `onSeleccionarOpcion`) -- no se reinventa ese listado acá.
@@ -120,14 +126,15 @@ const OPCIONES = [
 // del panel, así que igualarlo al botón principal no lo pone en riesgo.
 const ANCHO_BOTON_OPCION = ANCHO_BOTON;
 const ALTO_BOTON_OPCION = ALTO_BOTON;
-// Mismo tamaño de fuente que TAMANO_FUENTE (el botón principal), subido de
-// 44 (revisión de diseño, feedback sobre una captura real: el texto de las
-// 3 opciones se veía chico contra la caja que lo contiene, comparado con
-// "Menú" en la misma fila de botones). "Mapa conceptual" con ícono entra
-// sin achicarse a 64px (mide ~616px de 944px de presupuesto, confirmado con
-// `measureText` en el navegador real), y a este ancho de panel (~0.52 m) da
-// ~32 mm físicos de alto de letra -- sobre el mínimo de legibilidad de Meta
-// para VR, igual que el botón principal.
+// Mismo tamaño de fuente que TAMANO_FUENTE (el botón principal) -- sigue
+// subiendo junto con él (ver el comentario grande de esa constante). Mismo
+// tamaño, no negrita: la diferencia entre "Menú" y estas 3 opciones ahora
+// es de PESO tipográfico (ver `negrita: true` en `botonPrincipal`, más
+// abajo), no de tamaño -- las opciones quedan igual de legibles que el
+// botón que las revela, sin dejar de leerse como su contenido, no como un
+// botón hermano del mismo nivel. "Mapa conceptual" con ícono entra sin
+// achicarse a 84px (mide ~802px de 944px de presupuesto, confirmado con
+// `measureText` en el navegador real).
 const TAMANO_FUENTE_OPCION = TAMANO_FUENTE;
 // Separación vertical ENTRE OPCIONES (no entre "Menú" y la primera opción,
 // ver MARGEN_GRUPO más abajo): nunca pegadas entre sí, para no tocar la de
@@ -193,6 +200,12 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
     nombre: 'boton-menu-flotante-principal',
     icono: 'menu',
     interactivo: true,
+    // Negrita (ver el JSDoc de `negrita` en panel-texto.js): es la señal de
+    // jerarquía entre "Menú" y las 3 opciones que abre -- mismo tamaño de
+    // fuente que ellas (TAMANO_FUENTE_OPCION = TAMANO_FUENTE), pero más
+    // pesada, para que se lea como la cabecera/el control que las revela,
+    // no como una cuarta opción igual a las demás.
+    negrita: true,
   });
   // `depthWrite:true` (crearPanelTexto deja el resto de los paneles del
   // proyecto en `false`, ver su JSDoc): este botón SÍ necesita que el GPU
