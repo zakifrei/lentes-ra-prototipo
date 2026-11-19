@@ -6,6 +6,7 @@
 import * as THREE from '../../vendor/three/three.module.js';
 import { iniciarBotonXR } from './xr-sesion.js';
 import { activarVistaPrevia } from '../vista-previa/control-mouse.js';
+import { crearEntornoPreview } from '../vista-previa/entorno-preview.js';
 import { crearPantallaReconocimiento } from './paneles/pantalla-reconocimiento.js';
 import { crearPantallaBienvenida } from './paneles/pantalla-bienvenida.js';
 import { crearPantallaMenu } from './paneles/pantalla-menu.js';
@@ -123,6 +124,19 @@ escena.add(luzAmbiental);
 const indicadorApuntado = crearIndicadorDeApuntado(renderizador);
 indicadorApuntado.visible = false;
 escena.add(indicadorApuntado);
+
+// Entorno de referencia (piso + pared + una silueta simple "como si fuera
+// la profesora en el medio") SOLO para la vista previa de escritorio -- a
+// pedido de la profesora a cargo de la prueba, para que orbitar con el
+// mouse no se sienta como paneles flotando en un vacío negro. Nunca debe
+// verse en una sesión RA real (ahí el passthrough ya muestra el aula real
+// con la profesora real adentro -- ver el comentario grande en
+// entorno-preview.js). Visible desde el arranque (todavía no hay sesión
+// activa); se oculta/muestra con los mismos eventos 'sessionstart'/
+// 'sessionend' que ya usa el resto de los elementos exclusivos de esta
+// vista, más abajo.
+const entornoPreview = crearEntornoPreview();
+escena.add(entornoPreview);
 
 // Estado persistente de preferencias del usuario (por ahora, sólo el
 // tamaño de subtítulos): vive acá, igual que `estadoActual`, y se
@@ -471,11 +485,13 @@ renderizador.xr.addEventListener('sessionstart', () => {
   controlesVistaPrevia.enabled = false;
   if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = true;
   indicadorApuntado.visible = true;
+  entornoPreview.visible = false;
 });
 renderizador.xr.addEventListener('sessionend', () => {
   controlesVistaPrevia.enabled = true;
   if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = false;
   indicadorApuntado.visible = false;
+  entornoPreview.visible = true;
 });
 
 // Refresco en vivo del contador de pausa: sólo mientras esa pantalla está
