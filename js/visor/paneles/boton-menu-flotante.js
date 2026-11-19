@@ -53,10 +53,25 @@ const TEXTO_BOTON = 'Menú';
 // panel-texto.js) no necesita tocarse: al escalar posición y tamaño físico
 // por el mismo factor, la nitidez en pantalla queda igual.
 const FACTOR_ESCALA_PROFUNDIDAD = 3.6; // 1.8m / 0.5m
+// z propio, un poco más cerca que el resto del contenido del mundo (-1.8,
+// ver POSICION_POR_DEFECTO en panel-texto.js): revisión de diseño
+// 2026-11-18 -- con el mismo z que las pantallas de fondo (p. ej. las 3
+// columnas de pantalla-mapa.js), el desplegable y el contenido detrás
+// terminaban a la MISMA profundidad, y como ambos usan material
+// transparent+depthWrite:false (ver dibujarFondoPanel), el GPU no tenía con
+// qué decidir cuál tapa a cuál: se veían mezclados/traslúcidos en vez de que
+// el desplegable tape limpiamente lo de atrás (confirmado con una captura
+// real sobre pantalla-mapa.js). 0.2 m más cerca alcanza para desambiguar sin
+// cambiar `FACTOR_ESCALA_PROFUNDIDAD` (que fija x/y/tamaños a partir de la
+// proporción 1.8/0.5): el tamaño aparente crece un ~12% nada más, imperceptible
+// al lado de desambiguar la profundidad -- ver también `depthWrite = true`
+// más abajo, necesario además de este z para que el GPU realmente descarte
+// los píxeles de atrás en vez de mezclarlos.
+const Z_LOCAL = -1.6;
 const POSICION_LOCAL = {
   x: 0.18 * FACTOR_ESCALA_PROFUNDIDAD,
   y: 0.13 * FACTOR_ESCALA_PROFUNDIDAD,
-  z: -1.8,
+  z: Z_LOCAL,
 };
 // Reducción adicional (independiente de la profundidad de arriba) para que
 // el botón pase más desapercibido en la esquina -- feedback en vivo del
@@ -139,6 +154,12 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
     icono: 'menu',
     interactivo: true,
   });
+  // `depthWrite:true` (crearPanelTexto deja el resto de los paneles del
+  // proyecto en `false`, ver su JSDoc): este botón SÍ necesita que el GPU
+  // registre su profundidad real, para que tape limpiamente -- en vez de
+  // mezclarse con -- el contenido de mundo que pueda estar detrás a una
+  // profundidad similar (ver el comentario de `Z_LOCAL`, más arriba).
+  botonPrincipal.material.depthWrite = true;
   grupo.add(botonPrincipal);
 
   // Estado del desplegable: no alcanza con mirar `.visible` de los botones
@@ -176,6 +197,11 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
     });
     botonOpcion.userData.opcion = opcion;
     botonOpcion.visible = false;
+    // Mismo motivo que `botonPrincipal.material.depthWrite` más arriba: sin
+    // esto, abrir el desplegable sobre una pantalla con contenido a una
+    // profundidad similar (p. ej. pantalla-mapa.js) dejaba ambos mezclados
+    // en vez de que la opción del desplegable tape limpiamente lo de atrás.
+    botonOpcion.material.depthWrite = true;
     grupo.add(botonOpcion);
     return botonOpcion;
   });

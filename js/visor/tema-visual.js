@@ -29,6 +29,16 @@ export const COLOR_TEXTO = '#fff3e0';
 export const COLOR_AMBAR = '#ffb454';
 export const COLOR_AMBAR_FUERTE = '#ff8c32';
 
+// Variante clara de acento (revisión de diseño 2026-11-18): COLOR_AMBAR, al
+// pintar texto chico de highlight (tip de pantalla-bienvenida.js, "temas
+// guardados" de pantalla-vuelta.js) sobre COLOR_FONDO_PANEL_CLARO/_OSCURO,
+// medía ~3.2:1 de contraste (bajo el 4.5:1 de WCAG AA para texto normal,
+// confirmado con una captura real). Esta variante, más clara pero todavía
+// dentro de la misma familia ámbar (no tan blanca como COLOR_TEXTO, para
+// seguir leyéndose como acento y no como texto normal), mide ~4.7:1 contra
+// ese mismo fondo.
+export const COLOR_AMBAR_TEXTO = '#ffe6c2';
+
 // Brillo intensificado (Tarea 27): de 0.6 a 0.85 de opacidad y de 16 a
 // 26px de desenfoque respecto a la Tarea 19 -- un salto que se nota como
 // "neón" de verdad en los paneles grandes. Calibrado a ojo (arnés de QA

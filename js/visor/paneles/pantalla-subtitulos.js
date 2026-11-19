@@ -68,16 +68,21 @@ const ALTO_PANEL = 0.175;
 const POSICION_SUBTITULO = { x: 0, y: 0.75, z: -1.6 };
 
 // Tamaño de fuente (px de canvas) para el factor de escala 1 (el mínimo).
-// Bajó de 40 a 16: con ANCHO_CANVAS ensanchado (ver más arriba) un valor
-// chico acá es justamente lo que le da margen real al factor de escala para
-// crecer -- a este tamaño, incluso la línea más larga del guion entra sin
-// achicarse (ver comentario de ANCHO_CANVAS). Con TAMANO_MIN=1/TAMANO_MAX=3
-// (persistencia.js) el resultado medido con el guion real
-// (GUION_SUBTITULOS) es: factor 1 -> 16px, factor 2 -> 32px siempre sin
-// achicar, factor 3 -> 48px para la mayoría de las líneas y ~41-46px (sigue
-// siendo más grande que en el factor 2) para las tres líneas más largas,
-// que son las únicas que todavía activan `calcularTamanoFuenteAjustado`.
-const TAMANO_FUENTE_BASE = 16;
+// Subido de 16 a 24 (revisión de diseño 2026-11-18): a 16px el subtítulo
+// quedaba como una franja de texto minúscula perdida en un panel ancho --
+// el peor caso de "letra desproporcionada a su bloque" de toda la revisión,
+// y ocurría en el estado POR DEFECTO (antes de que el usuario toque "+"),
+// no en un caso límite. 24px sigue dejando margen real de sobra respecto al
+// punto de quiebre ya identificado (40px, con el que hasta la línea más
+// larga del guion dejaba de entrar sin achicarse -- ver ANCHO_CANVAS más
+// arriba): la línea más larga de GUION_SUBTITULOS (77 caracteres) mide
+// ~960px estimados a 24px, bien por debajo del ancho disponible de 1456px
+// (ANCHO_CANVAS - MARGEN_HORIZONTAL*2). Con TAMANO_MIN=1/TAMANO_MAX=3
+// (persistencia.js) el resultado antes de cualquier achique por
+// `calcularTamanoFuenteAjustado` es: factor 1 -> 24px, factor 2 -> 48px,
+// factor 3 -> 72px (este último sí fuerza el achique en las líneas más
+// largas, igual que antes pasaba a partir del factor 3 con la base vieja).
+const TAMANO_FUENTE_BASE = 24;
 
 // ANCHO_BOTON/ALTO_BOTON crecieron de 0.12 a 0.2 a raíz de la misma prueba
 // en el Quest real: a 0.12 el botón era casi invisible/intocable con la

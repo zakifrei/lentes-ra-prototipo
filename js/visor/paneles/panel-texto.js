@@ -92,7 +92,17 @@ function dibujarLineasEnCanvas(contexto, lineas, tamanoFuente, icono, anchoCanva
   // unidad centrada). Si no aplica, el dibujo sigue siendo IDÉNTICO al de
   // antes de esta tarea.
   if (icono && lineas.length === 1) {
-    const diametroIcono = altoCanvas * 0.4;
+    // Proporcional al tamaño de fuente YA ajustado (no a `altoCanvas`, como
+    // antes): revisión de diseño 2026-11-18 -- con un ícono fijo en el 40%
+    // del alto de canvas, el ícono terminaba 4-6 veces más grande que la
+    // etiqueta de texto en los botones con panel más alto (p. ej. "Mapa
+    // conceptual" en pantalla-menu.js), tapando la jerarquía: lo que
+    // distingue a cada botón es el texto, no el ícono. 1.7x el tamaño de
+    // fuente da un ícono claramente más grande que el texto (sigue leyéndose
+    // como el elemento principal) sin devorarlo. Clampado contra el alto del
+    // canvas por seguridad (nunca más que el 90% del panel), igual criterio
+    // que el `Math.min` de `calcularRadioEsquinas` en tema-visual.js.
+    const diametroIcono = Math.min(tamanoFuenteAjustado * 1.7, altoCanvas * 0.9);
     const linea = lineas[0];
     const anchoTexto = contexto.measureText(linea).width;
     const radioIcono = diametroIcono / 2;

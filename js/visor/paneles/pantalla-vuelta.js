@@ -32,7 +32,7 @@ import * as THREE from '../../../vendor/three/three.module.js';
 import { crearPanelTexto } from './panel-texto.js';
 import { armarLineasVuelta } from '../../common/temporizador-pausa.js';
 import { enEventoSeleccion } from '../interaccion.js';
-import { dibujarFondoPanel, COLOR_TEXTO, COLOR_AMBAR, FUENTE_PRINCIPAL } from '../tema-visual.js';
+import { dibujarFondoPanel, COLOR_TEXTO, COLOR_AMBAR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
 
 const ANCHO_CANVAS = 1024;
 const ALTO_CANVAS = 512;
@@ -47,7 +47,7 @@ const ANCHO_DISPONIBLE = ANCHO_CANVAS - MARGEN_HORIZONTAL * 2;
 // para que ambas pantallas de "bloques apilados" se vean consistentes entre sí.
 const TAMANO_FUENTE_SALUDO = 80;
 const TAMANO_FUENTE_MINUTOS = 46;
-const TAMANO_FUENTE_TEMAS = 34;
+const TAMANO_FUENTE_TEMAS = 38;
 
 // Posición vertical de cada bloque, como fracción de ALTO_CANVAS -- mismos
 // valores que pantalla-bienvenida.js.
@@ -153,7 +153,7 @@ function dibujarMensaje(contexto, lineas) {
     fuenteNormalCss
   );
   contexto.font = fuenteNormalCss(tamanoTemas);
-  contexto.fillStyle = COLOR_AMBAR;
+  contexto.fillStyle = COLOR_AMBAR_TEXTO;
   contexto.fillText(temas, ANCHO_CANVAS / 2, ALTO_CANVAS * Y_FRACCION_TEMAS);
 }
 

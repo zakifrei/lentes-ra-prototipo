@@ -19,7 +19,11 @@ const ALTURA_Y = 1.1;
 const PROFUNDIDAD_Z = -1.8;
 
 const ANCHO_COLUMNA = 0.6;
-const ALTO_COLUMNA = 0.55;
+// Bajado de 0.55 a 0.38 (revisión de diseño): con 0.55 las 4 líneas de cada
+// columna (título + 3 datos) quedaban centradas dejando ~40% de fondo vacío
+// arriba y abajo, confirmado en una captura real -- este valor achica el
+// canvas para que el texto ocupe la mayor parte del panel.
+const ALTO_COLUMNA = 0.38;
 
 // Tamaño de fuente menor al default de panel-texto.js (48): cada columna
 // tiene cuatro líneas (título + 3 datos) en vez de una o dos, así que
@@ -55,7 +59,12 @@ export function crearPantallaMapa() {
   const offsetInicial = -((cantidadColumnas - 1) / 2) * SEPARACION_X;
 
   MAPA_CONCEPTUAL.forEach(({ titulo, lineas }, indice) => {
-    const columna = crearPanelTexto([titulo.toUpperCase(), ...lineas], {
+    // Línea vacía como separador entre el título y los 3 datos (revisión de
+    // diseño): panel-texto.js no soporta un tamaño/peso distinto por línea
+    // (tocar eso afectaría a las ~10 pantallas que lo usan), así que el
+    // título y los datos se veían con el mismo peso visual, distinguidos
+    // sólo por la mayúscula -- este hueco los separa sin tocar panel-texto.js.
+    const columna = crearPanelTexto([titulo.toUpperCase(), '', ...lineas], {
       posicion: { x: offsetInicial + indice * SEPARACION_X, y: ALTURA_Y, z: PROFUNDIDAD_Z },
       ancho: ANCHO_COLUMNA,
       alto: ALTO_COLUMNA,

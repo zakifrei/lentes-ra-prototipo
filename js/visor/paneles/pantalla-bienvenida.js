@@ -24,7 +24,7 @@
 // builder).
 
 import * as THREE from '../../../vendor/three/three.module.js';
-import { dibujarFondoPanel, COLOR_TEXTO, COLOR_AMBAR, FUENTE_PRINCIPAL } from '../tema-visual.js';
+import { dibujarFondoPanel, COLOR_TEXTO, COLOR_AMBAR_TEXTO, FUENTE_PRINCIPAL } from '../tema-visual.js';
 
 const ANCHO_CANVAS = 1024;
 const ALTO_CANVAS = 512;
@@ -61,7 +61,7 @@ const TEXTO_TIP = 'Tip: Te recomiendo usar imágenes';
 // desbordes horizontales igual que antes.
 const TAMANO_FUENTE_SALUDO = 80;
 const TAMANO_FUENTE_CLASE = 46;
-const TAMANO_FUENTE_TIP = 34;
+const TAMANO_FUENTE_TIP = 38;
 
 // Posición vertical de cada bloque, como fracción de ALTO_CANVAS -- con
 // aire entre ellos para que no se vean apretados.
@@ -116,9 +116,10 @@ function dibujarBienvenida(contexto) {
   contexto.fillStyle = COLOR_TEXTO;
   contexto.fillText(TEXTO_CLASE, ANCHO_CANVAS / 2, ALTO_CANVAS * Y_FRACCION_CLASE);
 
-  // Tip: chico, en COLOR_AMBAR (en vez de COLOR_TEXTO) para que se note
-  // como una recomendación/highlight y no como texto normal -- mismo color
-  // de acento que ya usa el resto del visor (tema-visual.js).
+  // Tip: chico, en COLOR_AMBAR_TEXTO (en vez de COLOR_TEXTO) para que se
+  // note como una recomendación/highlight y no como texto normal -- variante
+  // clara de acento (tema-visual.js) con mejor contraste que COLOR_AMBAR
+  // para texto de este tamaño.
   const tamanoTip = calcularTamanoFuenteAjustado(
     contexto,
     TEXTO_TIP,
@@ -126,7 +127,7 @@ function dibujarBienvenida(contexto) {
     fuenteNormalCss
   );
   contexto.font = fuenteNormalCss(tamanoTip);
-  contexto.fillStyle = COLOR_AMBAR;
+  contexto.fillStyle = COLOR_AMBAR_TEXTO;
   contexto.fillText(TEXTO_TIP, ANCHO_CANVAS / 2, ALTO_CANVAS * Y_FRACCION_TIP);
 }
 
