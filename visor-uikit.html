@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lentes RA - Visor (uikit, spike)</title>
+  <style>
+    /* El canvas ocupa toda la pantalla, sin márgenes ni barras de scroll */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #escena {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Botón "Entrar a RA" (creado por js/visor/xr-sesion.js) e indicador de
+       vista previa de escritorio: ambos flotan sobre el canvas. */
+    .boton-flotante {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      font-family: sans-serif;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #000000;
+      z-index: 10;
+    }
+
+    #indicador-vista-previa {
+      position: fixed;
+      left: 50%;
+      top: 16px;
+      transform: translateX(-50%);
+      padding: 6px 14px;
+      font-family: sans-serif;
+      font-size: 14px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #ffffff;
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three/three.module.js",
+      "three/addons/loaders/SVGLoader.js": "https://esm.sh/three@0.187.0/examples/jsm/loaders/SVGLoader.js?external=three",
+      "@pmndrs/uikit": "https://esm.sh/@pmndrs/uikit@1.0.78?external=three",
+      "@pmndrs/pointer-events": "https://esm.sh/@pmndrs/pointer-events@6.6.32?external=three"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="escena"></canvas>
+  <!-- Visible mientras no hay una sesión WebXR activa: avisa que se está
+       viendo la escena en modo de vista previa de escritorio. -->
+  <div id="indicador-vista-previa">Vista previa (mouse): arrastrá para orbitar · scroll para acercar</div>
+  <script type="module" src="js/visor-uikit/main.js"></script>
+</body>
+</html>
