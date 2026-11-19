@@ -51,6 +51,63 @@ const TAMANO_FUENTE_POR_DEFECTO = 48;
 const ESPACIO_ICONO_TEXTO = 20;
 
 /**
+ * Crea sólo el "cascarón" de un panel -- fondo/borde/layout, sin texto --
+ * compartido por `crearPanelUikit` (una o más líneas, mismo tamaño de
+ * fuente) y las pantallas que necesitan bloques de texto con tamaños/
+ * pesos/colores DISTINTOS entre sí (ver pantalla-bienvenida.js/
+ * pantalla-vuelta.js/pantalla-pausa.js/pantalla-resumen.js -- en el
+ * visor viejo esas pantallas dibujaban su propio canvas a mano para
+ * esquivar esta misma limitación de `crearPanelTexto`; acá alcanza con
+ * agregar los `Text` propios al `Container` que devuelve esta función).
+ * @param {{
+ *   posicion?: {x:number,y:number,z:number},
+ *   ancho?: number,
+ *   alto?: number,
+ *   nombre?: string,
+ *   interactivo?: boolean,
+ *   flexDirection?: string,
+ *   justifyContent?: string,
+ *   gap?: number,
+ * }} [opciones]
+ * @returns {{ contenedor: Container, pixelSize: number, anchoCanvas: number, altoCanvas: number }}
+ */
+export function crearContenedorUikit(opciones = {}) {
+  const {
+    posicion = POSICION_POR_DEFECTO,
+    ancho = ANCHO_PANEL_POR_DEFECTO,
+    alto = ALTO_PANEL_POR_DEFECTO,
+    nombre = 'panel-uikit',
+    interactivo = false,
+    flexDirection = 'column',
+    justifyContent = 'center',
+    gap = 0,
+  } = opciones;
+
+  const anchoCanvas = ANCHO_CANVAS_BASE;
+  const altoCanvas = Math.round(ANCHO_CANVAS_BASE * (alto / ancho));
+  const pixelSize = ancho / anchoCanvas;
+
+  const contenedor = new Container({
+    pixelSize,
+    sizeX: ancho,
+    sizeY: alto,
+    paddingX: MARGEN_HORIZONTAL,
+    flexDirection,
+    justifyContent,
+    alignItems: 'center',
+    gap,
+    backgroundColor: interactivo ? COLOR_FONDO_BOTON : COLOR_FONDO_CARTEL,
+    borderWidth: 2,
+    borderColor: COLOR_AMBAR,
+    borderRadius: calcularRadioEsquinasUikit(anchoCanvas, altoCanvas, interactivo),
+  });
+  contenedor.name = nombre;
+  contenedor.position.set(posicion.x, posicion.y, posicion.z);
+
+  return { contenedor, pixelSize, anchoCanvas, altoCanvas };
+}
+
+/**
  * Crea un panel genérico con una o más líneas de texto, en componentes
  * reales de uikit (layout flexbox, no Canvas2D a mano). Mismas opciones
  * que `crearPanelTexto` (ver panel-texto.js) -- `icono` sólo tiene efecto
@@ -74,37 +131,12 @@ const ESPACIO_ICONO_TEXTO = 20;
  * @returns {Container}
  */
 export function crearPanelUikit(lineas, opciones = {}) {
-  const {
-    posicion = POSICION_POR_DEFECTO,
-    ancho = ANCHO_PANEL_POR_DEFECTO,
-    alto = ALTO_PANEL_POR_DEFECTO,
-    tamanoFuente = TAMANO_FUENTE_POR_DEFECTO,
-    nombre = 'panel-uikit',
-    icono,
-    interactivo = false,
-    negrita = false,
-  } = opciones;
+  const { tamanoFuente = TAMANO_FUENTE_POR_DEFECTO, icono, negrita = false } = opciones;
 
-  const anchoCanvas = ANCHO_CANVAS_BASE;
-  const altoCanvas = Math.round(ANCHO_CANVAS_BASE * (alto / ancho));
-  const pixelSize = ancho / anchoCanvas;
-
-  const panel = new Container({
-    pixelSize,
-    sizeX: ancho,
-    sizeY: alto,
-    paddingX: MARGEN_HORIZONTAL,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
+  const { contenedor: panel, pixelSize, altoCanvas } = crearContenedorUikit({
+    ...opciones,
     gap: tamanoFuente * 0.4,
-    backgroundColor: interactivo ? COLOR_FONDO_BOTON : COLOR_FONDO_CARTEL,
-    borderWidth: 2,
-    borderColor: COLOR_AMBAR,
-    borderRadius: calcularRadioEsquinasUikit(anchoCanvas, altoCanvas, interactivo),
   });
-  panel.name = nombre;
-  panel.position.set(posicion.x, posicion.y, posicion.z);
 
   const fontWeight = negrita ? 'bold' : 'normal';
 
