@@ -34,21 +34,58 @@ const URL_INTER_BOLD = 'vendor/fonts/Inter-Bold.ttf';
 
 let promesaCarga = null;
 
+// Reintentos -- hallazgo al cablear la Tarea 2: `TTFLoader.loadAsync`
+// hace un `import()` dinámico de `@zappar/msdf-generator` (la librería
+// real que genera el atlas MSDF) contra esm.sh, y ese import puntual
+// falla de forma intermitente (confirmado en vivo, varias veces en esta
+// sesión: a veces anda a la primera, a veces tira "Failed to fetch
+// dynamically imported module" con un 500 de esm.sh de por medio) --
+// parece ser flakiness real del CDN para ESE paquete puntual, no un bug
+// nuestro. Sin reintento, una sola falla dejaba el visor entero sin
+// ningún panel para siempre (la promesa quedaba rechazada sin `catch`).
+const REINTENTOS = 3;
+const ESPERA_ENTRE_REINTENTOS_MS = 800;
+
+function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function cargarConReintentos() {
+  let ultimoError;
+  for (let intento = 1; intento <= REINTENTOS; intento++) {
+    try {
+      return await new TTFLoader().loadAsync([
+        { url: URL_INTER_REGULAR, charset: CHARSET },
+        { url: URL_INTER_BOLD, charset: CHARSET },
+      ]);
+    } catch (error) {
+      ultimoError = error;
+      console.warn(
+        `cargarFuenteUikit: intento ${intento}/${REINTENTOS} falló (${error?.message ?? error}).`
+      );
+      if (intento < REINTENTOS) await esperar(ESPERA_ENTRE_REINTENTOS_MS);
+    }
+  }
+  throw ultimoError;
+}
+
 /**
  * Carga Inter (regular + bold) con el charset de arriba y la registra
  * como fuente por defecto de TODO el visor (`setGlobalProperties`) --
  * ningún panel necesita pasar `fontFamily`/`fontFamilies` a mano.
  * Memoizado: llamarla más de una vez devuelve la misma promesa, nunca
  * vuelve a pedir los .ttf.
+ *
+ * Degrada con gracia: si los 3 intentos fallan (ver REINTENTOS), NUNCA
+ * rechaza -- loguea el error y resuelve igual, dejando la fuente MSDF
+ * por defecto de uikit (sin tildes/ñ/¿¡, el problema original de la
+ * Tarea 1) antes que dejar el visor entero sin un solo panel para
+ * siempre por un hiccup de red.
  * @returns {Promise<void>}
  */
 export function cargarFuenteUikit() {
   if (!promesaCarga) {
-    promesaCarga = new TTFLoader()
-      .loadAsync([
-        { url: URL_INTER_REGULAR, charset: CHARSET },
-        { url: URL_INTER_BOLD, charset: CHARSET },
-      ])
+    promesaCarga = cargarConReintentos()
       .then((resultado) => {
         // Hallazgo (confirmado en vivo): cada .ttf registra su PROPIO
         // nombre de familia ("Inter Regular"/"Inter Bold", el nombre
@@ -67,6 +104,14 @@ export function cargarFuenteUikit() {
           fontFamily: 'inter',
           fontFamilies,
         });
+      })
+      .catch((error) => {
+        console.error(
+          'cargarFuenteUikit: no se pudo cargar la fuente en español después de ' +
+            `${REINTENTOS} intentos -- se sigue con la fuente MSDF por defecto ` +
+            '(sin tildes/ñ/¿¡).',
+          error
+        );
       });
   }
   return promesaCarga;
