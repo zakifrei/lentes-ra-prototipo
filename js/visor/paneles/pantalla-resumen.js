@@ -57,6 +57,17 @@ const POSICION_BOTON = { x: 0, y: 0.8, z: -1.8 };
 
 const TEXTO_BOTON_VOLVER = 'Volver a la clase';
 
+// Tamaño de fuente explícito (revisión de diseño VR, skill
+// hz-immersive-designer): sin esto, este botón quedaba en el default de
+// panel-texto.js (48px), que a este ancho de panel (0.5 m) renderiza el
+// texto a ~23.4 mm físicos de alto -- por debajo del mínimo de legibilidad
+// que documenta Meta para VR (~1° de arco visual, ~31.4 mm a los 1.8 m de
+// distancia a la que vive este panel). 76px da ~37 mm, con margen real
+// sobre ese mínimo, y sigue entrando con ícono sin que
+// `calcularTamanoFuenteAjustado` tenga que achicarlo (confirmado midiendo
+// con `measureText` en el navegador real del proyecto).
+const TAMANO_FUENTE_BOTON = 76;
+
 const raycaster = new THREE.Raycaster();
 const vectorOrigen = new THREE.Vector3();
 const vectorDireccion = new THREE.Vector3();
@@ -150,6 +161,7 @@ export function crearPantallaResumen(renderer, onVolverClase) {
     posicion: POSICION_BOTON,
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
+    tamanoFuente: TAMANO_FUENTE_BOTON,
     nombre: 'pantalla-resumen-boton-volver',
     icono: 'flecha',
     interactivo: true,

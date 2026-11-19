@@ -84,23 +84,6 @@ const camara = new THREE.PerspectiveCamera(
 // cámara de la vista previa de escritorio antes de orbitar con el mouse.
 camara.position.set(0, 1.6, 0.6);
 
-// Se agrega la cámara a la escena (Tarea 25, botón de menú flotante):
-// `WebGLRenderer.render(escena, camara)` sólo dibuja lo que encuentra
-// recorriendo `escena.children` (y sus descendientes) -- nunca recorre
-// `camara.children` de forma independiente. Sin esto, cualquier objeto
-// agregado como hijo de la cámara (como el botón de menú flotante, más
-// abajo) jamás se recorrería durante el render: quedaría invisible
-// siempre, sin ningún error en consola que lo delate. Es el patrón
-// estándar de Three.js para HUDs ("parent the camera to the scene, then
-// parent HUD elements to the camera") -- confirmado leyendo
-// `vendor/three/three.module.js` (WebGLRenderer.render actualiza
-// `scene.matrixWorld` recorriendo `escena.children`, y WebXRManager
-// sincroniza la pose trackeada del casco de vuelta a este mismo objeto
-// `camara` en cada cuadro de una sesión real, con `updateMatrixWorld(true)`
-// -- forzando también a sus hijos -- así que un HUD colgado de `camara`
-// sigue funcionando en RA real, no sólo en la vista previa de escritorio).
-escena.add(camara);
-
 // `interaccion.js` necesita la cámara para calcular el rayo del mouse en
 // la vista previa de escritorio (ver js/visor/interaccion.js).
 establecerCamaraVistaPrevia(camara);
@@ -305,16 +288,25 @@ const pantallasPorNombre = {
 };
 Object.values(pantallasPorNombre).forEach((pantalla) => escena.add(pantalla));
 
-// Botón de menú flotante (Tarea 25): a diferencia de TODAS las pantallas de
-// `pantallasPorNombre` arriba (fijas en el espacio del mundo, hijas de
-// `escena`), éste es un HUD real -- se agrega como hijo de la CÁMARA, no de
-// la escena, para que se vea siempre en la misma esquina de la vista sin
-// importar hacia dónde mire el usuario (ver el comentario junto a
-// `escena.add(camara)`, más arriba, y boton-menu-flotante.js). Por eso no
-// vive en `pantallasPorNombre` ni se recorre junto con el resto en
-// `actualizarPantallaVisible`, más abajo -- necesita su propia línea.
+// Botón de menú flotante (Tarea 25, revisado en la revisión de diseño VR
+// con hz-immersive-designer): a diferencia de TODAS las pantallas de
+// `pantallasPorNombre` arriba (fijas en el espacio del mundo), éste es un
+// HUD que seguiría siempre al usuario -- pero NO como hijo rígido de la
+// cámara (eso era un HUD "head-locked": se mueve exacto e instantáneo con
+// cada giro de cabeza, un anti-patrón de confort VR documentado -- causa
+// mareo y tapa la escena). En cambio se agrega a `escena`, con su propia
+// posición/rotación, y `actualizarSeguimiento` (ver boton-menu-flotante.js)
+// lo va acercando a la cámara cada cuadro con un suavizado exponencial: un
+// HUD "body-locked con lag" -- se sigue sintiendo siempre a mano, pero sin
+// saltar instantáneo con la cabeza. Arranca ya alineado con la cámara (en
+// vez de en el origen del mundo) para no "volar" hacia la esquina en el
+// primer cuadro. Por eso no vive en `pantallasPorNombre` ni se recorre
+// junto con el resto en `actualizarPantallaVisible`, más abajo -- necesita
+// su propia línea.
 const botonMenuFlotante = crearBotonMenuFlotante(renderizador, (opcion) => cambiarPantalla(opcion));
-camara.add(botonMenuFlotante);
+botonMenuFlotante.position.copy(camara.position);
+botonMenuFlotante.quaternion.copy(camara.quaternion);
+escena.add(botonMenuFlotante);
 
 function actualizarPantallaVisible() {
   Object.entries(pantallasPorNombre).forEach(([nombre, objeto]) => {
@@ -503,9 +495,23 @@ function actualizarPantallaPausaSiCorresponde() {
   pantallasPorNombre.pausa.actualizar(Date.now());
 }
 
+// Tiempo del cuadro anterior, para el `deltaSegundos` del seguimiento del
+// HUD de abajo (`actualizarSeguimiento` necesita avanzar menos en cuadros
+// cortos y más en cuadros largos para que el suavizado sea el mismo sin
+// importar el framerate -- ver boton-menu-flotante.js). `performance.now()`,
+// no `Date.now()`, porque acá sí importa la precisión submilisegundo entre
+// cuadros consecutivos (a diferencia de los timestamps "absolutos" que ya
+// usa el resto de este archivo).
+let ultimoCuadroMs = performance.now();
+
 renderizador.setAnimationLoop(() => {
+  const ahoraMs = performance.now();
+  const deltaSegundos = (ahoraMs - ultimoCuadroMs) / 1000;
+  ultimoCuadroMs = ahoraMs;
+
   controlesVistaPrevia.update();
   actualizarPantallaPausaSiCorresponde();
   actualizarAnimacionesDeEntrada(Date.now());
+  botonMenuFlotante.actualizarSeguimiento(camara, deltaSegundos);
   renderizador.render(escena, camara);
 });

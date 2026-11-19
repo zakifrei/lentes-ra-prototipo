@@ -1,12 +1,23 @@
 // Botón de menú flotante (Tarea 25): a diferencia de TODOS los demás
 // paneles del proyecto -- fijos en el espacio del MUNDO (world space), y que
 // por lo tanto quedan atrás si el usuario gira la cabeza -- éste es un HUD
-// real. Quien llama (`main.js`) debe agregarlo como hijo de la CÁMARA
-// (`camara.add(...)`), nunca de `escena`: así su posición se interpreta en
-// coordenadas LOCALES a la cámara y se mantiene siempre en la misma esquina
-// de la vista, sin importar hacia dónde mire el usuario. Surge de que el
-// dueño del proyecto probó el flujo real en el Quest y quiso poder volver al
-// menú desde cualquier pantalla sin depender de hacia dónde esté mirando.
+// que sigue siempre al usuario. Surge de que el dueño del proyecto probó el
+// flujo real en el Quest y quiso poder volver al menú desde cualquier
+// pantalla sin depender de hacia dónde esté mirando.
+//
+// Revisión de diseño VR (skill `hz-immersive-designer`): la primera versión
+// de este botón era hijo directo de la CÁMARA (`camara.add(...)`), un HUD
+// "head-locked" de libro -- se movía exacto e instantáneo con cada giro de
+// cabeza. Es un anti-patrón de confort documentado (puede marear y tapa la
+// escena detrás), así que ahora es "body-locked con lag": `main.js` lo
+// agrega a `escena` (coordenadas de MUNDO, no locales a la cámara) y llama a
+// `actualizarSeguimiento` una vez por cuadro para que su posición/rotación
+// vayan acercándose a las de la cámara con un suavizado exponencial, en vez
+// de copiarlas de forma rígida. `POSICION_LOCAL`/`Z_LOCAL`/etc. de más abajo
+// siguen siendo el offset de cada botón relativo al GRUPO (ya no a la
+// cámara), así que su significado ("a la derecha, arriba, a tal profundidad
+// de la cara") no cambió -- sólo cambió cómo el grupo en sí seguía a la
+// cámara.
 //
 // Reutiliza `crearPanelTexto` igual que el resto de los botones del
 // proyecto, y el mismo mecanismo único de selección de `interaccion.js`
@@ -124,6 +135,19 @@ const TAMANO_FUENTE_OPCION = 44;
 // (mantener la misma proporción visual del espaciado al achicar todo).
 const MARGEN_VERTICAL = 0.02 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
 
+// Velocidad del seguimiento "con lag" (revisión de diseño VR,
+// hz-immersive-designer -- ver el comentario grande al principio del
+// archivo): 1/segundos de la suavización exponencial de
+// `actualizarSeguimiento`, más abajo. Más alto = sigue la cabeza más rápido
+// (se acerca al comportamiento rígido de antes); más bajo = más lag, más
+// cómodo pero más notorio el rezago al girar rápido. 6 recorre ~95% de la
+// distancia a la cámara en medio segundo -- un punto de partida razonable
+// para un HUD "body-locked", sin la validación en el Quest real que sí
+// respalda el resto de los números físicos de este archivo: es el único
+// valor que haría falta ajustar si en una prueba real se siente con
+// demasiado lag (subirlo) o muy poco (bajarlo).
+const VELOCIDAD_SEGUIMIENTO = 6;
+
 const raycaster = new THREE.Raycaster();
 const vectorOrigen = new THREE.Vector3();
 const vectorDireccion = new THREE.Vector3();
@@ -137,9 +161,13 @@ const vectorDireccion = new THREE.Vector3();
  * vez y cierra el desplegable.
  * @param {THREE.WebGLRenderer} renderer
  * @param {(opcion: 'subtitulos'|'imagenes'|'mapa') => void} onSeleccionarOpcion
- * @returns {THREE.Group} quien llama debe agregarlo con `camara.add(...)`.
- *   Expone `grupo.cerrarMenu()` para que `main.js` pueda forzar el cierre
- *   del desplegable desde afuera (ver comentario junto a `cerrarMenu` abajo).
+ * @returns {THREE.Group} quien llama debe agregarlo con `escena.add(...)`
+ *   (coordenadas de MUNDO, no de la cámara) y llamar a
+ *   `grupo.actualizarSeguimiento(camara, deltaSegundos)` una vez por cuadro,
+ *   antes de `renderizador.render(...)`, para que lo siga con lag (ver el
+ *   comentario grande al principio del archivo). Expone `grupo.cerrarMenu()`
+ *   para que `main.js` pueda forzar el cierre del desplegable desde afuera
+ *   (ver comentario junto a `cerrarMenu` abajo).
  */
 export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
   const grupo = new THREE.Group();
@@ -253,6 +281,25 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
   });
 
   grupo.cerrarMenu = cerrarMenu;
+
+  // Seguimiento "con lag" (ver el comentario grande al principio del
+  // archivo): acerca la posición/rotación del grupo a las de la cámara con
+  // un suavizado exponencial -- `t` es la fracción de la distancia restante
+  // que se recorre en ESTE cuadro, calculada a partir de `deltaSegundos`
+  // (no un paso fijo) para que el resultado final no dependa del framerate:
+  // a mayor `deltaSegundos` (cuadro lento, o un hueco grande como una
+  // pestaña que estuvo en segundo plano), `t` se acerca a 1 solo, sin que
+  // haga falta un caso especial aparte para "overshoot". `grupo.position`/
+  // `grupo.quaternion` son de MUNDO (el grupo ya no es hijo de la cámara,
+  // ver más arriba) -- por eso `main.js` debe llamar a esto después de que
+  // `camara.position`/`camara.quaternion` ya reflejen la pose de este
+  // cuadro (la del mouse en la vista previa, o la trackeada del casco en
+  // una sesión XR real).
+  grupo.actualizarSeguimiento = function actualizarSeguimientoHud(camara, deltaSegundos) {
+    const t = 1 - Math.exp(-VELOCIDAD_SEGUIMIENTO * deltaSegundos);
+    grupo.position.lerp(camara.position, t);
+    grupo.quaternion.slerp(camara.quaternion, t);
+  };
 
   return grupo;
 }

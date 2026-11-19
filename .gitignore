@@ -4,3 +4,4 @@
 # base de datos, no ocultar este archivo. Sin commitearlo, GitHub Pages
 # no podría servirlo y el panel/visor no conectarían a Firebase en la URL
 # pública.
+.gstack/

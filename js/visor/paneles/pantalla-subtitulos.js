@@ -68,21 +68,27 @@ const ALTO_PANEL = 0.175;
 const POSICION_SUBTITULO = { x: 0, y: 0.75, z: -1.6 };
 
 // Tamaño de fuente (px de canvas) para el factor de escala 1 (el mínimo).
-// Subido de 16 a 24 (revisión de diseño 2026-11-18): a 16px el subtítulo
-// quedaba como una franja de texto minúscula perdida en un panel ancho --
-// el peor caso de "letra desproporcionada a su bloque" de toda la revisión,
-// y ocurría en el estado POR DEFECTO (antes de que el usuario toque "+"),
-// no en un caso límite. 24px sigue dejando margen real de sobra respecto al
-// punto de quiebre ya identificado (40px, con el que hasta la línea más
-// larga del guion dejaba de entrar sin achicarse -- ver ANCHO_CANVAS más
-// arriba): la línea más larga de GUION_SUBTITULOS (77 caracteres) mide
-// ~960px estimados a 24px, bien por debajo del ancho disponible de 1456px
-// (ANCHO_CANVAS - MARGEN_HORIZONTAL*2). Con TAMANO_MIN=1/TAMANO_MAX=3
-// (persistencia.js) el resultado antes de cualquier achique por
-// `calcularTamanoFuenteAjustado` es: factor 1 -> 24px, factor 2 -> 48px,
-// factor 3 -> 72px (este último sí fuerza el achique en las líneas más
-// largas, igual que antes pasaba a partir del factor 3 con la base vieja).
-const TAMANO_FUENTE_BASE = 24;
+// Subido de 24 a 40 (revisión de diseño VR, skill hz-immersive-designer):
+// a 24px el subtítulo medía ~16.4 mm físicos de alto -- 59% del mínimo de
+// legibilidad que documenta Meta para VR (~1° de arco visual, ~27.9 mm a
+// los 1.6 m de distancia de este panel), confirmado tanto por el cálculo
+// como mirando una captura real (franja de texto genuinamente diminuta).
+// Es el peor caso de todo el proyecto porque es el tamaño con el que
+// arranca CUALQUIERA que entre a esta pantalla, antes de tocar "+" -- no un
+// caso límite. 40px es prácticamente el máximo posible sin volver a pisar
+// el punto de quiebre de ANCHO_CANVAS (más arriba): la línea más larga del
+// guion ("El Imperio romano de Oriente sigue en pie: nace lo que hoy
+// llamamos Bizancio.", 79 caracteres) mide ~1412px a 40px, medido con
+// `measureText` en el navegador real del proyecto, contra un ancho
+// disponible de 1456px (ANCHO_CANVAS - MARGEN_HORIZONTAL*2) -- a 42px ya no
+// entraría sin achicarse. Con TAMANO_MIN=1/TAMANO_MAX=3 (persistencia.js)
+// el resultado antes de cualquier achique por `calcularTamanoFuenteAjustado`
+// es: factor 1 -> 40px (ahora ~28 mm, ya sobre el mínimo), factor 2 -> 80px,
+// factor 3 -> 120px (estos dos últimos siguen forzando el achique en las
+// líneas más largas para la mayoría de las líneas del guion, igual que ya
+// pasaba con la base vieja a partir del factor 2 -- no es un comportamiento
+// nuevo de este cambio, sólo el piso del factor 1 se corrigió).
+const TAMANO_FUENTE_BASE = 40;
 
 // ANCHO_BOTON/ALTO_BOTON crecieron de 0.12 a 0.2 a raíz de la misma prueba
 // en el Quest real: a 0.12 el botón era casi invisible/intocable con la

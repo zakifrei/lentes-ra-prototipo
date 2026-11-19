@@ -84,6 +84,19 @@ const SEPARACION_X = 0.35;
 const TEXTO_BOTON_SEGUIR = 'Seguir con la clase';
 const TEXTO_BOTON_RESUMEN = 'Ver un resumen rápido';
 
+// Tamaño de fuente explícito (revisión de diseño VR, skill
+// hz-immersive-designer): sin esto, estos botones quedaban en el default de
+// panel-texto.js (48px), que a este ancho de panel (0.5 m) renderiza el
+// texto a ~23.4 mm físicos de alto -- por debajo del mínimo de legibilidad
+// que documenta Meta para VR (~1° de arco visual, ~31.4 mm a los 1.8 m de
+// distancia a la que vive este panel). 76px da ~37 mm, con margen real
+// sobre ese mínimo; "Ver un resumen rápido" (el texto más largo de todo el
+// proyecto en un botón con ícono) sigue entrando sin que
+// `calcularTamanoFuenteAjustado` tenga que achicarla -- es, de hecho, el
+// caso que fija el techo de este valor (confirmado midiendo con
+// `measureText` en el navegador real del proyecto: a 78px ya no entra).
+const TAMANO_FUENTE_BOTON = 76;
+
 const raycaster = new THREE.Raycaster();
 const vectorOrigen = new THREE.Vector3();
 const vectorDireccion = new THREE.Vector3();
@@ -217,6 +230,7 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     posicion: { x: -SEPARACION_X, y: ALTURA_Y_BOTONES, z: PROFUNDIDAD_Z_BOTONES },
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
+    tamanoFuente: TAMANO_FUENTE_BOTON,
     nombre: 'pantalla-vuelta-boton-seguir',
     icono: 'flecha',
     interactivo: true,
@@ -228,6 +242,7 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     posicion: { x: SEPARACION_X, y: ALTURA_Y_BOTONES, z: PROFUNDIDAD_Z_BOTONES },
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
+    tamanoFuente: TAMANO_FUENTE_BOTON,
     nombre: 'pantalla-vuelta-boton-resumen',
     icono: 'flecha',
     interactivo: true,

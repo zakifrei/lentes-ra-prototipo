@@ -20,6 +20,18 @@ const PROFUNDIDAD_Z = -1.8;
 const ANCHO_BOTON = 0.5;
 const ALTO_BOTON = 0.35;
 
+// Tamaño de fuente explícito (revisión de diseño VR, skill
+// hz-immersive-designer): sin esto, estos botones quedaban en el default de
+// panel-texto.js (48px), que a este ancho de panel (0.5 m) renderiza el
+// texto a ~23.4 mm físicos de alto -- por debajo del mínimo de legibilidad
+// que documenta Meta para VR (~1° de arco visual, ~31.4 mm a los 1.8 m de
+// distancia a la que vive este panel). 76px da ~37 mm, con margen real
+// sobre ese mínimo, y "Mapa conceptual" (la opción más larga, con ícono)
+// sigue entrando sin que `calcularTamanoFuenteAjustado` tenga que
+// achicarla (mide ~728px de 944px de presupuesto disponible, confirmado
+// midiendo con `measureText` en el navegador real del proyecto).
+const TAMANO_FUENTE_BOTON = 76;
+
 // Separación horizontal entre centros de botones: con ANCHO_BOTON = 0.5
 // deja ~0.1 m de aire entre bordes, para que no se puedan tocar por error.
 const SEPARACION_X = 0.6;
@@ -53,6 +65,7 @@ export function crearPantallaMenu(renderer, onSeleccionar) {
       posicion: { x, y: ALTURA_Y, z: PROFUNDIDAD_Z },
       ancho: ANCHO_BOTON,
       alto: ALTO_BOTON,
+      tamanoFuente: TAMANO_FUENTE_BOTON,
       nombre: `pantalla-menu-boton-${opcion}`,
       icono: opcion,
       interactivo: true,
