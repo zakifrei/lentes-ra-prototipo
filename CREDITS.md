@@ -66,3 +66,17 @@ licencia y fuente de cada una.
 - **Autor:** Eduard Bendemann
 - **Licencia:** Dominio público
 - **Fuente:** https://commons.wikimedia.org/wiki/File:Alaric_deposed_Attalus_from_the_throne,_410_(E._Bendemann).jpg
+
+# Créditos de fuentes
+
+## vendor/fonts/Inter-Regular.ttf, vendor/fonts/Inter-Bold.ttf
+
+- **Descripción:** tipografía Inter (pesos regular y bold), usada por el
+  visor nuevo (`js/visor-uikit/`) para generar su fuente MSDF en tiempo de
+  carga con el charset de español que necesita (ver
+  `js/visor-uikit/ui-kit/fuente-uikit.js`) -- la fuente MSDF por defecto
+  de @pmndrs/uikit no incluye vocales acentuadas ni ñ/¿/¡.
+- **Autor:** Rasmus Andersson (The Inter Project Authors)
+- **Licencia:** SIL Open Font License 1.1
+- **Fuente:** https://github.com/rsms/inter (servida vía Google Fonts,
+  https://fonts.google.com/specimen/Inter)

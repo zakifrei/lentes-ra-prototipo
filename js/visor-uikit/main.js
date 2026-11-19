@@ -11,6 +11,7 @@ import { iniciarBotonXR } from '../visor/xr-sesion.js';
 import { activarVistaPrevia } from '../vista-previa/control-mouse.js';
 import { crearEntornoPreview } from '../vista-previa/entorno-preview.js';
 import { crearPanelUikit } from './ui-kit/panel-uikit.js';
+import { cargarFuenteUikit } from './ui-kit/fuente-uikit.js';
 
 const canvas = document.getElementById('escena');
 const indicadorVistaPrevia = document.getElementById('indicador-vista-previa');
@@ -49,28 +50,33 @@ escena.add(entornoPreview);
 // pantallas reales todavía (eso arranca en la Tarea 2) -- sólo para
 // comparar a ojo contra el panel viejo equivalente (panel-texto.js,
 // visible en index.html). Se reemplazan por pantallas reales en la
-// próxima tarea.
-const panelesDePrueba = [
-  crearPanelUikit(['Cartel de sólo lectura'], {
-    posicion: { x: -0.5, y: 1.3, z: -1.8 },
-    ancho: 0.8,
-    alto: 0.3,
-  }),
-  crearPanelUikit(['Menú'], {
-    posicion: { x: 0.5, y: 1.3, z: -1.8 },
-    ancho: 0.4,
-    alto: 0.25,
-    icono: 'menu',
-    interactivo: true,
-    negrita: true,
-  }),
-  crearPanelUikit(['Primera línea de ejemplo', 'Segunda línea de ejemplo'], {
-    posicion: { x: 0, y: 0.85, z: -1.8 },
-    ancho: 0.9,
-    alto: 0.35,
-  }),
-];
-panelesDePrueba.forEach((panel) => escena.add(panel));
+// próxima tarea. Esperan a `cargarFuenteUikit()` (ver ese módulo) antes
+// de crearse: la fuente con charset en español se registra como default
+// global ANTES de que exista el primer `Text`, no después.
+const panelesDePrueba = [];
+cargarFuenteUikit().then(() => {
+  panelesDePrueba.push(
+    crearPanelUikit(['Cartel de sólo lectura'], {
+      posicion: { x: -0.5, y: 1.3, z: -1.8 },
+      ancho: 0.8,
+      alto: 0.3,
+    }),
+    crearPanelUikit(['Menú'], {
+      posicion: { x: 0.5, y: 1.3, z: -1.8 },
+      ancho: 0.4,
+      alto: 0.25,
+      icono: 'menu',
+      interactivo: true,
+      negrita: true,
+    }),
+    crearPanelUikit(['Primera línea de ejemplo', 'Segunda línea de ejemplo'], {
+      posicion: { x: 0, y: 0.85, z: -1.8 },
+      ancho: 0.9,
+      alto: 0.35,
+    })
+  );
+  panelesDePrueba.forEach((panel) => escena.add(panel));
+});
 
 function alRedimensionar() {
   camara.aspect = window.innerWidth / window.innerHeight;
