@@ -1,14 +1,16 @@
-// Punto de entrada del visor nuevo (spike de la Tarea 0, ver
+// Punto de entrada del visor nuevo (ver
 // docs/superpowers/plans/2026-11-19-migracion-uikit.md): arranca igual que
 // js/visor/main.js (escena/cámara/renderer/XR/vista previa), reusando esos
-// módulos del visor viejo sin copiarlos — todavía sin ninguna pantalla real.
+// módulos del visor viejo sin copiarlos. Los 3 paneles de abajo son de
+// prueba (Tarea 1, capa compartida de diseño) -- se reemplazan por
+// pantallas reales a partir de la Tarea 2.
 
 import * as THREE from '../../vendor/three/three.module.js';
 import { reversePainterSortStable } from '@pmndrs/uikit';
 import { iniciarBotonXR } from '../visor/xr-sesion.js';
 import { activarVistaPrevia } from '../vista-previa/control-mouse.js';
 import { crearEntornoPreview } from '../vista-previa/entorno-preview.js';
-import { crearSpikeUikit } from './_spike.js';
+import { crearPanelUikit } from './ui-kit/panel-uikit.js';
 
 const canvas = document.getElementById('escena');
 const indicadorVistaPrevia = document.getElementById('indicador-vista-previa');
@@ -43,8 +45,32 @@ escena.add(luzAmbiental);
 const entornoPreview = crearEntornoPreview();
 escena.add(entornoPreview);
 
-const spikeUikit = crearSpikeUikit();
-escena.add(spikeUikit);
+// Paneles de prueba de la Tarea 1 (capa compartida de diseño): no son
+// pantallas reales todavía (eso arranca en la Tarea 2) -- sólo para
+// comparar a ojo contra el panel viejo equivalente (panel-texto.js,
+// visible en index.html). Se reemplazan por pantallas reales en la
+// próxima tarea.
+const panelesDePrueba = [
+  crearPanelUikit(['Cartel de sólo lectura'], {
+    posicion: { x: -0.5, y: 1.3, z: -1.8 },
+    ancho: 0.8,
+    alto: 0.3,
+  }),
+  crearPanelUikit(['Menú'], {
+    posicion: { x: 0.5, y: 1.3, z: -1.8 },
+    ancho: 0.4,
+    alto: 0.25,
+    icono: 'menu',
+    interactivo: true,
+    negrita: true,
+  }),
+  crearPanelUikit(['Primera línea de ejemplo', 'Segunda línea de ejemplo'], {
+    posicion: { x: 0, y: 0.85, z: -1.8 },
+    ancho: 0.9,
+    alto: 0.35,
+  }),
+];
+panelesDePrueba.forEach((panel) => escena.add(panel));
 
 function alRedimensionar() {
   camara.aspect = window.innerWidth / window.innerHeight;
@@ -77,6 +103,6 @@ renderizador.setAnimationLoop(() => {
   ultimoCuadroMs = ahoraMs;
 
   controlesVistaPrevia.update();
-  spikeUikit.update(deltaMs);
+  panelesDePrueba.forEach((panel) => panel.update(deltaMs));
   renderizador.render(escena, camara);
 });
