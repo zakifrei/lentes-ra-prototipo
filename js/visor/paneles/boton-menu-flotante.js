@@ -120,20 +120,32 @@ const OPCIONES = [
 // del panel, así que igualarlo al botón principal no lo pone en riesgo.
 const ANCHO_BOTON_OPCION = ANCHO_BOTON;
 const ALTO_BOTON_OPCION = ALTO_BOTON;
-// Subido de 36 a 44 (pulido visual, a pedido del dueño del proyecto: se
-// leía muy chico comparado con el resto de los botones del visor).
-// "Mapa conceptual" -- la opción más larga -- medía ~747-787px a 36px (el
-// margen de ~157-197px del comentario de arriba, restado de los 944px de
-// presupuesto); escalado a 44px da ~913-962px, todavía mayormente dentro
-// del presupuesto -- en el peor caso, `calcularTamanoFuenteAjustado` la
-// recorta un par de puntos, imperceptible.
-const TAMANO_FUENTE_OPCION = 44;
-// Separación vertical entre el borde de un botón y el siguiente (principal
-// incluido): nunca pegados entre sí, para no tocar el de al lado por error.
-// También escalada por FACTOR_ESCALA_PROFUNDIDAD y FACTOR_ACHICAR_BOTON,
-// por la misma razón que el resto de las medidas físicas de este archivo
-// (mantener la misma proporción visual del espaciado al achicar todo).
+// Mismo tamaño de fuente que TAMANO_FUENTE (el botón principal), subido de
+// 44 (revisión de diseño, feedback sobre una captura real: el texto de las
+// 3 opciones se veía chico contra la caja que lo contiene, comparado con
+// "Menú" en la misma fila de botones). "Mapa conceptual" con ícono entra
+// sin achicarse a 64px (mide ~616px de 944px de presupuesto, confirmado con
+// `measureText` en el navegador real), y a este ancho de panel (~0.52 m) da
+// ~32 mm físicos de alto de letra -- sobre el mínimo de legibilidad de Meta
+// para VR, igual que el botón principal.
+const TAMANO_FUENTE_OPCION = TAMANO_FUENTE;
+// Separación vertical ENTRE OPCIONES (no entre "Menú" y la primera opción,
+// ver MARGEN_GRUPO más abajo): nunca pegadas entre sí, para no tocar la de
+// al lado por error. También escalada por FACTOR_ESCALA_PROFUNDIDAD y
+// FACTOR_ACHICAR_BOTON, por la misma razón que el resto de las medidas
+// físicas de este archivo (mantener la misma proporción visual del
+// espaciado al achicar todo).
 const MARGEN_VERTICAL = 0.02 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
+// Separación entre "Menú" y el grupo de 3 opciones (revisión de diseño,
+// feedback sobre una captura real: con el mismo espaciado que entre
+// opciones, los 4 botones se leían como una sola lista pareja, sin dejar
+// claro que "Menú" es el que abre/contiene a los otros 3). Notablemente
+// más grande que MARGEN_VERTICAL -- el hueco más grande, por sí solo, basta
+// para que las 3 opciones se lean como un grupo propio "debajo de" Menú
+// (agrupamiento por proximidad), sin tener que inventar un color o forma
+// nuevos para un solo botón en un proyecto que ya usa la misma paleta ámbar
+// para todo lo tocable.
+const MARGEN_GRUPO = MARGEN_VERTICAL * 2.5;
 
 // Velocidad del seguimiento "con lag" (revisión de diseño VR,
 // hz-immersive-designer -- ver el comentario grande al principio del
@@ -207,10 +219,13 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
   // riesgo de sacar al tercer botón del campo visual. Arrancan ocultos:
   // sólo se muestran mientras `desplegado` es true.
   const botonesOpcion = OPCIONES.map(({ opcion, texto }, indice) => {
+    // El primer hueco (de "Menú" a la opción 0) usa MARGEN_GRUPO, más
+    // grande que el MARGEN_VERTICAL entre opciones -- ver el comentario
+    // grande junto a esas dos constantes, más arriba.
     const y =
       POSICION_LOCAL.y -
       ALTO_BOTON / 2 -
-      MARGEN_VERTICAL -
+      MARGEN_GRUPO -
       ALTO_BOTON_OPCION / 2 -
       indice * (ALTO_BOTON_OPCION + MARGEN_VERTICAL);
 
