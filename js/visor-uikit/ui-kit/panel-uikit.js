@@ -153,7 +153,7 @@ export function crearContenedorUikit(opciones = {}) {
 export function crearPanelUikit(lineas, opciones = {}) {
   const { tamanoFuente = TAMANO_FUENTE_POR_DEFECTO, icono, negrita = false } = opciones;
 
-  const { contenedor: panel, pixelSize, altoCanvas } = crearContenedorUikit({
+  const { contenedor: panel, altoCanvas } = crearContenedorUikit({
     ...opciones,
     gap: tamanoFuente * 0.4,
   });
@@ -171,9 +171,9 @@ export function crearPanelUikit(lineas, opciones = {}) {
       alignItems: 'center',
       gap: ESPACIO_ICONO_TEXTO,
     });
-    // crearIconoUikit espera unidades del mundo, no "píxeles" de
-    // contenido -- ver el comentario grande en icono-uikit.js.
-    fila.add(crearIconoUikit(icono, diametroIcono * pixelSize, COLOR_TEXTO));
+    // crearIconoUikit espera "píxeles" de contenido, igual que el resto
+    // de este módulo -- ver el comentario grande en icono-uikit.js.
+    fila.add(crearIconoUikit(icono, diametroIcono, COLOR_TEXTO));
     fila.add(new Text({ text: lineas[0], color: COLOR_TEXTO, fontSize: tamanoFuente, fontWeight }));
     panel.add(fila);
     return panel;
