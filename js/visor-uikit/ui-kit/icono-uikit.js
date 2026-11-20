@@ -56,6 +56,7 @@ import {
   RotateCcw,
   Menu,
   ArrowRight,
+  CircleAlert,
 } from '@pmndrs/uikit-lucide';
 
 const ICONOS_POR_NOMBRE = {
@@ -68,6 +69,8 @@ const ICONOS_POR_NOMBRE = {
   reiniciar: RotateCcw,
   menu: Menu,
   flecha: ArrowRight,
+  // Usado por pantalla-aviso.js (Alert de @pmndrs/uikit-default).
+  atencion: CircleAlert,
 };
 
 /**
