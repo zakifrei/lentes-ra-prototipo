@@ -12,6 +12,21 @@
 // acá es borde sólido + backgroundColor sólido, sin el glow. Si no
 // convence a ojo, decidir con el dueño del proyecto antes de seguir (tal
 // cual dice el Review Focus).
+//
+// Post-migración (pedido del dueño del proyecto): investigar un kit de
+// componentes real en vez de seguir a mano. `@pmndrs/uikit-horizon` (el
+// kit con la estética nativa de Meta Horizon OS) quedó descartado -- es
+// el Reality Labs Design System de Meta tal cual, con colores de marca
+// HARDCODEADOS adentro de dist/theme.js (ni un solo parámetro para
+// recolorear), así que no cumple el requisito explícito de poder
+// cambiarle el color a esta estética ámbar. `@pmndrs/uikit-default` (el
+// kit estilo shadcn/ui) sí: expone `setTheme(tema)` sobre un objeto de
+// colores semánticos (`primary`/`border`/etc.) pensado exactamente para
+// esto -- confirmado en vivo en el navegador con el tema de abajo,
+// aplicado a un `Button` real. Se usa sólo para los botones
+// (`interactivo: true` en panel-uikit.js) -- los carteles de sólo lectura
+// siguen con su Container a mano, fuera de alcance por ahora.
+import { setTheme } from '@pmndrs/uikit-default';
 
 export const COLOR_TEXTO = '#fff3e0';
 export const COLOR_AMBAR = '#ffb454';
@@ -41,4 +56,58 @@ export function calcularRadioEsquinasUikit(anchoPx, altoPx, interactivo) {
   if (!interactivo) return 0;
   const radioDeseado = Math.min(anchoPx, altoPx) * FRACCION_RADIO_ESQUINAS;
   return Math.min(radioDeseado, anchoPx / 2, altoPx / 2);
+}
+
+// Tema de @pmndrs/uikit-default recoloreado a la estética ámbar del
+// proyecto -- mismos valores que las constantes de arriba (ninguno
+// inventado). `primary`/`primaryForeground` son los que usa `Button` en
+// su variante por defecto (ver panel-uikit.js): fondo cápsula + texto,
+// mismo criterio visual que COLOR_FONDO_BOTON/COLOR_TEXTO de siempre.
+// `border` alimenta el borde de CUALQUIER componente del kit (vía
+// `componentDefaults.borderColor` del propio paquete) -- es el que
+// reemplaza a COLOR_AMBAR como borde. El resto de los campos (card/
+// popover/secondary/muted/accent/destructive/...) hay que completarlos
+// porque el objeto de tema es un `object` estricto (zod `.strict()` en
+// otros paquetes de uikit, confirmado con `Object.keys` en vivo) -- se
+// completan con los mismos 2-3 tonos ya existentes, no colores nuevos.
+export const TEMA_DISENO_AMBAR = {
+  radius: 24,
+  background: COLOR_FONDO_CARTEL,
+  foreground: COLOR_TEXTO,
+  card: COLOR_FONDO_CARTEL,
+  cardForeground: COLOR_TEXTO,
+  popover: COLOR_FONDO_CARTEL,
+  popoverForeground: COLOR_TEXTO,
+  primary: COLOR_FONDO_BOTON,
+  primaryForeground: COLOR_TEXTO,
+  secondary: COLOR_FONDO_CARTEL,
+  secondaryForeground: COLOR_TEXTO,
+  muted: 'rgba(28, 16, 8, 0.5)',
+  mutedForeground: COLOR_AMBAR_TEXTO,
+  accent: COLOR_FONDO_BOTON,
+  accentForeground: COLOR_TEXTO,
+  // Único color que no es parte de la paleta ámbar a propósito: es el
+  // mismo rojo de "rechazar"/destructivo que ya usa el resto del
+  // proyecto como color de alerta (ver COLOR_SILUETA* en
+  // entorno-preview.js para el mismo criterio de "no todo tiene que ser
+  // ámbar").
+  destructive: '#aa0a1e',
+  destructiveForeground: COLOR_TEXTO,
+  border: COLOR_AMBAR,
+  input: COLOR_AMBAR,
+  ring: COLOR_AMBAR,
+};
+
+let temaAplicado = false;
+
+/**
+ * Aplica `TEMA_DISENO_AMBAR` a @pmndrs/uikit-default -- hay que llamarla
+ * una sola vez, antes de crear el primer `Button` (panel-uikit.js la
+ * llama a nivel de módulo, ver más abajo). Memoizada: llamarla de nuevo
+ * no vuelve a aplicar nada.
+ */
+export function aplicarTemaDiseno() {
+  if (temaAplicado) return;
+  temaAplicado = true;
+  setTheme(TEMA_DISENO_AMBAR);
 }

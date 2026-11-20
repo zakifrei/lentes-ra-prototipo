@@ -19,22 +19,40 @@
 // estar a una escala absurda -- no era un bug de visibilidad, el panel
 // jamás tuvo el tamaño físico pedido).
 //
-// Por eso acá `sizeX`/`sizeY` del panel van directo en METROS (`ancho`/
-// `alto`, los mismos números físicos ya calibrados) y `pixelSize` se fija
-// aparte para que el CONTENIDO seccione calibrado en "píxeles" de canvas
-// (tamanoFuente=48 sobre ANCHO_CANVAS_BASE=1024, igual que
-// panel-texto.js::calcularResolucionCanvas) siga dando el mismo tamaño
-// relativo que antes: pixelSize = ancho(m) / ANCHO_CANVAS_BASE.
+// Por eso acá el panel fija su tamaño con `width`/`height` -- las mismas
+// propiedades de contenido "en píxeles" que fontSize/padding/etc., NO
+// `sizeX`/`sizeY` -- y `pixelSize` aparte, para que `width`×`pixelSize` dé
+// el ancho físico pedido (`ancho`/`alto`, los mismos números ya
+// calibrados): pixelSize = ancho(m) / ANCHO_CANVAS_BASE.
+//
+// Segundo hallazgo de unidades (post-migración, al sumar `Button` de
+// @pmndrs/uikit-default más abajo): `sizeX`/`sizeY` SÍ funcionaban como
+// unidades del mundo en un `Container` raíz liso (ver más arriba), pero
+// `Button` fija sus propios `height`/`width` por defecto (40px, en
+// píxeles de contenido, parte de su estilo de componente) -- eso bloquea
+// por completo a `sizeX`/`sizeY` (quedan ignorados sin error) salvo que
+// se les gane el pulso con `height`/`width` explícitos, que sí tienen
+// precedencia sobre el estilo del componente. En vez de tener una
+// conversión para `Container` y otra para `Button`, todo el módulo usa
+// `width`/`height` -- confirmado en vivo que da exactamente el mismo
+// tamaño físico que `sizeX`/`sizeY` para un `Container` raíz, así que no
+// cambia nada de lo que ya estaba verificado.
 
 import { Container, Text } from '@pmndrs/uikit';
+import { Button } from '@pmndrs/uikit-default';
 import {
   COLOR_TEXTO,
   COLOR_AMBAR,
   COLOR_FONDO_CARTEL,
-  COLOR_FONDO_BOTON,
   calcularRadioEsquinasUikit,
+  aplicarTemaDiseno,
 } from './tema-uikit.js';
 import { crearIconoUikit } from './icono-uikit.js';
+
+// Antes de crear el primer `Button`: registra la paleta ámbar del
+// proyecto en @pmndrs/uikit-default (ver el comentario grande en
+// tema-uikit.js sobre por qué este kit y no @pmndrs/uikit-horizon).
+aplicarTemaDiseno();
 
 // Mismo valor que ANCHO_CANVAS_BASE en panel-texto.js: resolución de
 // referencia a la que están calibrados tamanoFuente/diámetros de ícono
@@ -87,20 +105,31 @@ export function crearContenedorUikit(opciones = {}) {
   const altoCanvas = Math.round(ANCHO_CANVAS_BASE * (alto / ancho));
   const pixelSize = ancho / anchoCanvas;
 
-  const contenedor = new Container({
+  const propiedadesComunes = {
     pixelSize,
-    sizeX: ancho,
-    sizeY: alto,
+    width: anchoCanvas,
+    height: altoCanvas,
     paddingX: MARGEN_HORIZONTAL,
     flexDirection,
     justifyContent,
     alignItems: 'center',
     gap,
-    backgroundColor: interactivo ? COLOR_FONDO_BOTON : COLOR_FONDO_CARTEL,
-    borderWidth: 2,
-    borderColor: COLOR_AMBAR,
     borderRadius: calcularRadioEsquinasUikit(anchoCanvas, altoCanvas, interactivo),
-  });
+  };
+
+  // Interactivo: `Button` real de @pmndrs/uikit-default (variante
+  // "default", recoloreada a ámbar por `aplicarTemaDiseno()` -- ver el
+  // comentario grande de arriba) en vez de un `Container` pintado a
+  // mano. El cartel de sólo lectura sigue siendo un `Container` liso:
+  // está fuera de alcance de esta vuelta migrarlo al kit.
+  const contenedor = interactivo
+    ? new Button({ ...propiedadesComunes, variant: 'default', borderWidth: 2 })
+    : new Container({
+        ...propiedadesComunes,
+        backgroundColor: COLOR_FONDO_CARTEL,
+        borderWidth: 2,
+        borderColor: COLOR_AMBAR,
+      });
   contenedor.name = nombre;
   contenedor.position.set(posicion.x, posicion.y, posicion.z);
 
