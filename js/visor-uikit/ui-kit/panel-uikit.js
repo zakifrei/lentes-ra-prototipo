@@ -39,14 +39,8 @@
 // cambia nada de lo que ya estaba verificado.
 
 import { Container, Text } from '@pmndrs/uikit';
-import { Button } from '@pmndrs/uikit-default';
-import {
-  COLOR_TEXTO,
-  COLOR_AMBAR,
-  COLOR_FONDO_CARTEL,
-  calcularRadioEsquinasUikit,
-  aplicarTemaDiseno,
-} from './tema-uikit.js';
+import { Button, Card } from '@pmndrs/uikit-default';
+import { COLOR_TEXTO, calcularRadioEsquinasUikit, aplicarTemaDiseno } from './tema-uikit.js';
 import { crearIconoUikit } from './icono-uikit.js';
 
 // Antes de crear el primer `Button`: registra la paleta ámbar del
@@ -117,19 +111,16 @@ export function crearContenedorUikit(opciones = {}) {
     borderRadius: calcularRadioEsquinasUikit(anchoCanvas, altoCanvas, interactivo),
   };
 
-  // Interactivo: `Button` real de @pmndrs/uikit-default (variante
-  // "default", recoloreada a ámbar por `aplicarTemaDiseno()` -- ver el
-  // comentario grande de arriba) en vez de un `Container` pintado a
-  // mano. El cartel de sólo lectura sigue siendo un `Container` liso:
-  // está fuera de alcance de esta vuelta migrarlo al kit.
+  // Los dos, componentes reales de @pmndrs/uikit-default recoloreados a
+  // ámbar por `aplicarTemaDiseno()` (ver el comentario grande de
+  // arriba): `Button` (variante "default") para lo tocable, `Card` --
+  // ya trae fondo/borde/color de texto propios vía `colors.card`/
+  // `colors.cardForeground`/`colors.border`, los mismos tonos que
+  // `TEMA_DISENO_AMBAR` -- para el cartel de sólo lectura, en vez del
+  // `Container` pintado a mano de antes.
   const contenedor = interactivo
     ? new Button({ ...propiedadesComunes, variant: 'default', borderWidth: 2 })
-    : new Container({
-        ...propiedadesComunes,
-        backgroundColor: COLOR_FONDO_CARTEL,
-        borderWidth: 2,
-        borderColor: COLOR_AMBAR,
-      });
+    : new Card({ ...propiedadesComunes, borderWidth: 2 });
   contenedor.name = nombre;
   contenedor.position.set(posicion.x, posicion.y, posicion.z);
 

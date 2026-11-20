@@ -103,6 +103,20 @@ const pantallasUikit = [];
 let pantallasPorNombre = null;
 let botonMenuFlotante = null;
 
+// Se crea recién después de las pantallas (ver más abajo, al final de
+// `cargarFuenteUikit().then()`) -- no al nivel superior del módulo como en
+// js/visor/main.js -- porque `OrbitControls` registra su propio listener
+// de `pointerdown` apenas se instancia, y los paneles arrastrables
+// (`habilitarArrastre`, ver pantalla-subtitulos.js/pantalla-imagenes.js)
+// necesitan que SU listener de `pointerdown` quede registrado primero en
+// el mismo elemento: así, cuando el rayo sí toca un panel arrastrable,
+// `evento.stopImmediatePropagation()` llega a tiempo de frenar a
+// `OrbitControls` antes de que éste arranque una órbita de cámara con el
+// mismo gesto -- confirmado en vivo: con el orden viejo (OrbitControls
+// creado antes de que cargue la fuente), arrastrar el panel de
+// subtítulos orbitaba la cámara en vez de mover el panel.
+let controlesVistaPrevia = null;
+
 const PANTALLAS_TRANSITORIAS_DE_PAUSA = ['aviso', 'pausa', 'vuelta', 'resumen'];
 
 function actualizarPantallaVisible() {
@@ -204,6 +218,11 @@ cargarFuenteUikit().then(() => {
 
   actualizarPantallaVisible();
 
+  // Recién acá (ver el comentario grande junto a su declaración más
+  // arriba): todos los `habilitarArrastre` de las pantallas ya registraron
+  // su propio listener de `pointerdown` sobre `renderizador.domElement`.
+  controlesVistaPrevia = activarVistaPrevia(renderizador, camara, renderizador.domElement);
+
   let primeraSincronizacionFirebase = true;
   escucharEstadoFirebase((comando) => {
     aplicarComandoYActualizar(comando, { esPrimeraSincronizacion: primeraSincronizacionFirebase });
@@ -221,15 +240,13 @@ window.addEventListener('resize', alRedimensionar);
 const botonXR = iniciarBotonXR(renderizador, escena, camara);
 document.body.appendChild(botonXR);
 
-const controlesVistaPrevia = activarVistaPrevia(renderizador, camara, renderizador.domElement);
-
 renderizador.xr.addEventListener('sessionstart', () => {
-  controlesVistaPrevia.enabled = false;
+  if (controlesVistaPrevia) controlesVistaPrevia.enabled = false;
   if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = true;
   entornoPreview.visible = false;
 });
 renderizador.xr.addEventListener('sessionend', () => {
-  controlesVistaPrevia.enabled = true;
+  if (controlesVistaPrevia) controlesVistaPrevia.enabled = true;
   if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = false;
   entornoPreview.visible = true;
 });
@@ -246,7 +263,7 @@ renderizador.setAnimationLoop(() => {
   const deltaMs = ahoraMs - ultimoCuadroMs;
   ultimoCuadroMs = ahoraMs;
 
-  controlesVistaPrevia.update();
+  controlesVistaPrevia?.update();
   actualizarPantallaPausaSiCorresponde();
   pantallasUikit.forEach((pantalla) => pantalla.actualizarUikit(deltaMs));
   botonMenuFlotante?.actualizarSeguimiento(camara, deltaMs / 1000);
