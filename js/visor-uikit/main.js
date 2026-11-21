@@ -119,6 +119,44 @@ let controlesVistaPrevia = null;
 
 const PANTALLAS_TRANSITORIAS_DE_PAUSA = ['aviso', 'pausa', 'vuelta', 'resumen'];
 
+// Pop-in de escala al entrar a una pantalla (riesgo de /design-consultation,
+// ver DESIGN.md: "se siente acompañado", no un corte seco entre
+// pantallas) -- misma animación, mismos valores y mismo ease-out
+// cuadrático que `js/visor/main.js` (Tarea 31 del visor viejo, deliberada
+// y explícitamente dejada afuera de la migración en la Tarea 7 por no
+// haber sido pedida entonces -- ver el comentario grande de
+// js/visor-uikit/main.js de aquella tarea). Funciona igual acá porque
+// cada pantalla es, de raíz, un `THREE.Group`/`THREE.Object3D` normal:
+// escalar ESE grupo no depende de nada específico de uikit (ningún
+// panel necesita enterarse).
+const animacionesDeEntrada = new Map();
+const ESCALA_INICIAL_ANIMACION_ENTRADA = 0.85;
+const DURACION_ANIMACION_ENTRADA_MS = 220;
+
+function iniciarAnimacionDeEntrada(grupo) {
+  if (!grupo) return;
+  grupo.scale.setScalar(ESCALA_INICIAL_ANIMACION_ENTRADA);
+  animacionesDeEntrada.set(grupo, Date.now());
+}
+
+function actualizarAnimacionesDeEntrada(ahoraMs) {
+  animacionesDeEntrada.forEach((inicioMs, grupo) => {
+    const progresoLineal = Math.min(
+      (ahoraMs - inicioMs) / DURACION_ANIMACION_ENTRADA_MS,
+      1
+    );
+    const progresoSuavizado = 1 - (1 - progresoLineal) ** 2; // ease-out cuadrático
+    const escala =
+      ESCALA_INICIAL_ANIMACION_ENTRADA +
+      (1 - ESCALA_INICIAL_ANIMACION_ENTRADA) * progresoSuavizado;
+    grupo.scale.setScalar(escala);
+    if (progresoLineal >= 1) {
+      grupo.scale.setScalar(1);
+      animacionesDeEntrada.delete(grupo);
+    }
+  });
+}
+
 function actualizarPantallaVisible() {
   if (!pantallasPorNombre) return;
   Object.entries(pantallasPorNombre).forEach(([nombre, objeto]) => {
@@ -129,6 +167,7 @@ function actualizarPantallaVisible() {
 }
 
 function entrarAPantalla(nombrePantalla) {
+  iniciarAnimacionDeEntrada(pantallasPorNombre[nombrePantalla]);
   pantallasPorNombre[nombrePantalla]?.alEntrar?.();
 }
 
@@ -264,6 +303,7 @@ renderizador.setAnimationLoop(() => {
   ultimoCuadroMs = ahoraMs;
 
   controlesVistaPrevia?.update();
+  actualizarAnimacionesDeEntrada(Date.now());
   actualizarPantallaPausaSiCorresponde();
   pantallasUikit.forEach((pantalla) => pantalla.actualizarUikit(deltaMs));
   botonMenuFlotante?.actualizarSeguimiento(camara, deltaMs / 1000);
