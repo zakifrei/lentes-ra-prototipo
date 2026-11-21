@@ -26,7 +26,7 @@ import * as THREE from '../../../vendor/three/three.module.js';
 import { Text } from '@pmndrs/uikit';
 import { Alert, AlertIcon, AlertTitle, AlertDescription } from '@pmndrs/uikit-default';
 import { crearPanelUikit } from '../ui-kit/panel-uikit.js';
-import { COLOR_TEXTO } from '../ui-kit/tema-uikit.js';
+import { COLOR_TEXTO, crearFondoDegradadoCartel } from '../ui-kit/tema-uikit.js';
 import { crearIconoUikit } from '../ui-kit/icono-uikit.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
 
@@ -101,6 +101,11 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
     POSICION_PANEL_MENSAJE.y,
     POSICION_PANEL_MENSAJE.z
   );
+
+  // Degradé sutil (riesgo de /design-consultation, ver DESIGN.md) --
+  // mismo tratamiento que crearContenedorUikit le da al Card, encima de
+  // su fondo sólido.
+  panelMensaje.add(crearFondoDegradadoCartel());
 
   const filaIcono = new AlertIcon({ positionLeft: MARGEN_PANEL, positionTop: MARGEN_PANEL });
   filaIcono.add(crearIconoUikit('atencion', DIAMETRO_ICONO_AVISO, COLOR_TEXTO));

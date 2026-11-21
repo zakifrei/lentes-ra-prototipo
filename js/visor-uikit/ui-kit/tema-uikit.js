@@ -23,9 +23,11 @@
 // kit estilo shadcn/ui) sí: expone `setTheme(tema)` sobre un objeto de
 // colores semánticos (`primary`/`border`/etc.) pensado exactamente para
 // esto -- confirmado en vivo en el navegador con el tema de abajo,
-// aplicado a un `Button` real. Se usa sólo para los botones
-// (`interactivo: true` en panel-uikit.js) -- los carteles de sólo lectura
-// siguen con su Container a mano, fuera de alcance por ahora.
+// aplicado a un `Button` real. Los carteles de sólo lectura también
+// pasaron después a `Card`/`Alert` del mismo kit (ver panel-uikit.js/
+// pantalla-aviso.js) -- el degradé sutil de más abajo
+// (`crearFondoDegradadoCartel`) es aparte, encima de esos componentes.
+import * as THREE from '../../../vendor/three/three.module.js';
 import { setTheme } from '@pmndrs/uikit-default';
 
 export const COLOR_TEXTO = '#fff3e0';
@@ -110,4 +112,74 @@ export function aplicarTemaDiseno() {
   if (temaAplicado) return;
   temaAplicado = true;
   setTheme(TEMA_DISENO_AMBAR);
+}
+
+// Tercer riesgo de /design-consultation (ver DESIGN.md): un degradé sutil
+// en vez del fondo sólido plano de los carteles de lectura (Card/Alert),
+// más cerca de cómo se ven paneles reales de Horizon OS/visionOS
+// (investigado en la consulta) sin tocar la iluminación de la escena --
+// uikit no tiene forma directa de pedir un degradé en `backgroundColor`
+// (ver el comentario grande de arriba), así que esto dibuja uno chico a
+// mano en un canvas y lo usa como textura. Misma técnica que ya usaba
+// icono-uikit.js para los íconos (antes de migrar a @pmndrs/uikit-lucide)
+// -- un `Image` de uikit con una `THREE.CanvasTexture`.
+import { Image } from '@pmndrs/uikit';
+
+const ALTO_CANVAS_DEGRADADO = 256;
+// 1px de ancho alcanza: el degradé sólo varía en Y, uikit estira la
+// textura para llenar el `width`/`height` del panel (`keepAspectRatio:
+// false`, ver más abajo) sin importar su proporción real.
+const ANCHO_CANVAS_DEGRADADO = 1;
+
+// Mismo tono que COLOR_FONDO_CARTEL abajo (el ancla, sin cambiar nada de
+// lo ya verificado) -- arriba, un tono más cálido/claro de la misma
+// familia ámbar-umbra, no un color nuevo.
+const COLOR_DEGRADADO_ARRIBA = 'rgba(64, 40, 20, 0.74)';
+
+let texturaDegradadoCartel = null;
+
+function obtenerTexturaDegradadoCartel() {
+  if (texturaDegradadoCartel) return texturaDegradadoCartel;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = ANCHO_CANVAS_DEGRADADO;
+  canvas.height = ALTO_CANVAS_DEGRADADO;
+  const contexto = canvas.getContext('2d');
+  const gradiente = contexto.createLinearGradient(0, 0, 0, ALTO_CANVAS_DEGRADADO);
+  gradiente.addColorStop(0, COLOR_DEGRADADO_ARRIBA);
+  gradiente.addColorStop(1, COLOR_FONDO_CARTEL);
+  contexto.fillStyle = gradiente;
+  contexto.fillRect(0, 0, ANCHO_CANVAS_DEGRADADO, ALTO_CANVAS_DEGRADADO);
+
+  texturaDegradadoCartel = new THREE.CanvasTexture(canvas);
+  texturaDegradadoCartel.needsUpdate = true;
+  return texturaDegradadoCartel;
+}
+
+/**
+ * Crea una capa de degradé sutil (ámbar cálido arriba, COLOR_FONDO_CARTEL
+ * abajo) del tamaño completo del panel que la contiene -- agregarla como
+ * PRIMER hijo de un `Card`/`Alert` (antes que el ícono/texto), encima de
+ * su fondo sólido.
+ * @returns {import('@pmndrs/uikit').Image}
+ */
+export function crearFondoDegradadoCartel() {
+  return new Image({
+    src: obtenerTexturaDegradadoCartel(),
+    width: '100%',
+    height: '100%',
+    keepAspectRatio: false,
+    positionType: 'absolute',
+    positionTop: 0,
+    positionLeft: 0,
+    // Mismo motivo que ya documentaba icono-uikit.js para sus íconos:
+    // sin esto, esta capa queda en el mismo plano Z que el fondo sólido
+    // del panel y pierde el z-test contra él la mitad de las veces. Acá
+    // el renderOrder es bajo a propósito (sólo por encima del fondo
+    // sólido del panel) para quedar DETRÁS del ícono/texto, que usan
+    // 1000 -- confirmado en vivo que con este valor el degradé se ve
+    // detrás del texto, no lo tapa.
+    depthTest: false,
+    renderOrder: 1,
+  });
 }

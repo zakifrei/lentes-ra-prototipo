@@ -40,7 +40,12 @@
 
 import { Container, Text } from '@pmndrs/uikit';
 import { Button, Card } from '@pmndrs/uikit-default';
-import { COLOR_TEXTO, calcularRadioEsquinasUikit, aplicarTemaDiseno } from './tema-uikit.js';
+import {
+  COLOR_TEXTO,
+  calcularRadioEsquinasUikit,
+  aplicarTemaDiseno,
+  crearFondoDegradadoCartel,
+} from './tema-uikit.js';
 import { crearIconoUikit } from './icono-uikit.js';
 
 // Antes de crear el primer `Button`: registra la paleta ámbar del
@@ -123,6 +128,12 @@ export function crearContenedorUikit(opciones = {}) {
     : new Card({ ...propiedadesComunes, borderWidth: 2 });
   contenedor.name = nombre;
   contenedor.position.set(posicion.x, posicion.y, posicion.z);
+
+  // Degradé sutil (riesgo de /design-consultation, ver DESIGN.md) --
+  // sólo en el cartel de sólo lectura, encima de su fondo sólido.
+  if (!interactivo) {
+    contenedor.add(crearFondoDegradadoCartel());
+  }
 
   return { contenedor, pixelSize, anchoCanvas, altoCanvas };
 }
