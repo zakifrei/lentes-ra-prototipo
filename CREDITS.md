@@ -69,14 +69,35 @@ licencia y fuente de cada una.
 
 # Créditos de fuentes
 
-## vendor/fonts/Inter-Regular.ttf, vendor/fonts/Inter-Bold.ttf
+## vendor/fonts/PlusJakartaSans-Regular.ttf, vendor/fonts/PlusJakartaSans-Bold.ttf
 
-- **Descripción:** tipografía Inter (pesos regular y bold), usada por el
-  visor nuevo (`js/visor-uikit/`) para generar su fuente MSDF en tiempo de
-  carga con el charset de español que necesita (ver
-  `js/visor-uikit/ui-kit/fuente-uikit.js`) -- la fuente MSDF por defecto
-  de @pmndrs/uikit no incluye vocales acentuadas ni ñ/¿/¡.
-- **Autor:** Rasmus Andersson (The Inter Project Authors)
+- **Descripción:** tipografía Plus Jakarta Sans (pesos regular y bold),
+  usada por el visor nuevo (`js/visor-uikit/`) para cuerpo/botones/
+  subtítulos -- generada como fuente MSDF en tiempo de carga con el
+  charset de español que necesita (ver
+  `js/visor-uikit/ui-kit/fuente-uikit.js`). Reemplaza a Inter (pedido del
+  dueño del proyecto vía /design-consultation, ver DESIGN.md: reforzar la
+  calidez del visor en vez de una sans neutra). Instancias estáticas
+  (regular/bold) generadas con `fonttools varLib.instancer` a partir de
+  la fuente variable de Google Fonts -- la fuente original en sí no
+  cambió, sólo se fijó el eje de peso en dos instancias estáticas.
+- **Autor:** The Plus Jakarta Sans Project Authors (Tokotype)
 - **Licencia:** SIL Open Font License 1.1
-- **Fuente:** https://github.com/rsms/inter (servida vía Google Fonts,
-  https://fonts.google.com/specimen/Inter)
+- **Fuente:** https://github.com/tokotype/PlusJakartaSans (servida vía
+  Google Fonts, https://fonts.google.com/specimen/Plus+Jakarta+Sans)
+
+## vendor/fonts/Fraunces-Bold.ttf
+
+- **Descripción:** tipografía Fraunces (sólo peso bold, óptico 72pt,
+  softness 40), usada por el visor nuevo (`js/visor-uikit/`) sólo para
+  los títulos en negrita de las pantallas de lectura (bienvenida/vuelta/
+  aviso/resumen) -- una serif editorial elegida por su calidez, distinta
+  de Plus Jakarta Sans (el cuerpo/botones). Generada como fuente MSDF en
+  tiempo de carga con el charset de español que necesita (ver
+  `js/visor-uikit/ui-kit/fuente-uikit.js`). Instancia estática generada
+  con `fonttools varLib.instancer` (wght=700, opsz=72, SOFT=40, WONK=0) a
+  partir de la fuente variable de Google Fonts.
+- **Autor:** The Fraunces Project Authors (Schick Toikka / Undercase Type)
+- **Licencia:** SIL Open Font License 1.1
+- **Fuente:** https://github.com/undercasetype/Fraunces (servida vía
+  Google Fonts, https://fonts.google.com/specimen/Fraunces)

@@ -1,9 +1,9 @@
-// Carga la fuente MSDF real del visor nuevo (Inter, vendorizada en
-// vendor/fonts/ -- misma licencia OFL que ya consideraba tema-visual.js
-// como candidata) con un charset que SÍ incluye español.
+// Carga las fuentes MSDF reales del visor nuevo (vendorizadas en
+// vendor/fonts/ -- OFL igual que Inter antes) con un charset que SÍ
+// incluye español.
 //
 // Hallazgo post-Tarea 1 (no estaba en el plan): la fuente MSDF por
-// defecto que trae @pmndrs/uikit (Inter, pre-generada adentro de
+// defecto que trae @pmndrs/uikit (pre-generada adentro de
 // @pmndrs/msdfonts) sólo cubre Basic Latin -- cualquier vocal acentuada o
 // ñ/¿/¡ sale como "Missing glyph info" (confirmado en vivo en el
 // navegador, Tarea 1). La única forma de elegir el charset es generar la
@@ -13,6 +13,15 @@
 // glyphs"). Esto reintroduce la carga asíncrona de fuente que
 // tema-visual.js evitaba a propósito en el visor viejo (ver su
 // comentario grande) -- pero ahora la maneja la librería, no a mano.
+//
+// Post-migración (pedido del dueño del proyecto vía /design-consultation,
+// ver DESIGN.md): Inter (una sans neutra, usada por medio internet) se
+// reemplaza por dos fuentes elegidas para reforzar la calidez del
+// visor -- Plus Jakarta Sans (cuerpo/botones/subtítulos, humanista, más
+// cálida que Inter) y Fraunces (sólo títulos en negrita de las pantallas
+// de lectura -- bienvenida/vuelta/aviso/resumen -- una serif editorial
+// pensada para transmitir calidez humana, ver panel-uikit.js/
+// pantalla-*.js para dónde se usa cada una).
 
 import { TTFLoader, setGlobalProperties } from '@pmndrs/uikit';
 
@@ -29,8 +38,9 @@ const CHARSET =
 // Rutas relativas a la página (igual convención que RUTAS_IMAGENES en
 // js/visor/main.js), no al módulo -- TTFLoader las resuelve como XHR
 // contra la URL del documento, no como import de ES modules.
-const URL_INTER_REGULAR = 'vendor/fonts/Inter-Regular.ttf';
-const URL_INTER_BOLD = 'vendor/fonts/Inter-Bold.ttf';
+const URL_JAKARTA_REGULAR = 'vendor/fonts/PlusJakartaSans-Regular.ttf';
+const URL_JAKARTA_BOLD = 'vendor/fonts/PlusJakartaSans-Bold.ttf';
+const URL_FRAUNCES_BOLD = 'vendor/fonts/Fraunces-Bold.ttf';
 
 let promesaCarga = null;
 
@@ -55,8 +65,9 @@ async function cargarConReintentos() {
   for (let intento = 1; intento <= REINTENTOS; intento++) {
     try {
       return await new TTFLoader().loadAsync([
-        { url: URL_INTER_REGULAR, charset: CHARSET },
-        { url: URL_INTER_BOLD, charset: CHARSET },
+        { url: URL_JAKARTA_REGULAR, charset: CHARSET },
+        { url: URL_JAKARTA_BOLD, charset: CHARSET },
+        { url: URL_FRAUNCES_BOLD, charset: CHARSET },
       ]);
     } catch (error) {
       ultimoError = error;
@@ -70,11 +81,14 @@ async function cargarConReintentos() {
 }
 
 /**
- * Carga Inter (regular + bold) con el charset de arriba y la registra
- * como fuente por defecto de TODO el visor (`setGlobalProperties`) --
- * ningún panel necesita pasar `fontFamily`/`fontFamilies` a mano.
- * Memoizado: llamarla más de una vez devuelve la misma promesa, nunca
- * vuelve a pedir los .ttf.
+ * Carga Plus Jakarta Sans (regular + bold) y Fraunces (sólo bold) con el
+ * charset de arriba, y las registra como familias globales del visor
+ * (`setGlobalProperties`): `jakarta` (la que usa casi todo, ver
+ * fontFamily por defecto más abajo) y `fraunces` (sólo para los títulos
+ * en negrita que la pasan explícitamente -- ver pantalla-bienvenida.js/
+ * pantalla-vuelta.js/pantalla-aviso.js/pantalla-resumen.js). Memoizado:
+ * llamarla más de una vez devuelve la misma promesa, nunca vuelve a
+ * pedir los .ttf.
  *
  * Degrada con gracia: si los 3 intentos fallan (ver REINTENTOS), NUNCA
  * rechaza -- loguea el error y resuelve igual, dejando la fuente MSDF
@@ -87,21 +101,23 @@ export function cargarFuenteUikit() {
   if (!promesaCarga) {
     promesaCarga = cargarConReintentos()
       .then((resultado) => {
-        // Hallazgo (confirmado en vivo): cada .ttf registra su PROPIO
-        // nombre de familia ("Inter Regular"/"Inter Bold", el nombre
-        // interno de cada archivo estático de Google Fonts) en vez de
-        // una única familia "Inter" con pesos 400/700 -- TTFLoader no los
-        // combina solo. Hay que fusionarlos a mano en una familia
-        // "inter" con ambos pesos para que `fontWeight: 'bold'/'normal'`
-        // (ver panel-uikit.js) funcione sobre la MISMA familia.
+        // Mismo hallazgo que con Inter (ver commits previos): cada .ttf
+        // registra su PROPIO nombre de familia ("Plus Jakarta Sans
+        // Regular"/"Plus Jakarta Sans Bold") en vez de una única familia
+        // con pesos 400/700 -- TTFLoader no los combina solo. Hay que
+        // fusionarlos a mano para que `fontWeight: 'bold'/'normal'` (ver
+        // panel-uikit.js) funcione sobre la MISMA familia.
         const fontFamilies = {
-          inter: {
-            ...resultado['Inter Regular'],
-            ...resultado['Inter Bold'],
+          jakarta: {
+            ...resultado['Plus Jakarta Sans Regular'],
+            ...resultado['Plus Jakarta Sans Bold'],
+          },
+          fraunces: {
+            ...resultado['Fraunces Bold'],
           },
         };
         setGlobalProperties({
-          fontFamily: 'inter',
+          fontFamily: 'jakarta',
           fontFamilies,
         });
       })

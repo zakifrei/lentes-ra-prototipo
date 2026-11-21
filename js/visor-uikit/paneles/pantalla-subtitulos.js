@@ -17,8 +17,9 @@
 // confirmar la causa exacta sin meterse en el código fuente minificado
 // de uikit). La solución que sí funciona, mismo criterio que
 // `calcularTamanoFuenteAjustado` de la versión vieja: medir el texto con
-// `Canvas2D.measureText`, cargando la MISMA fuente real (Inter,
-// vendorizada en vendor/fonts/) como `FontFace` del navegador -- esto no
+// `Canvas2D.measureText`, cargando la MISMA fuente real (Plus Jakarta
+// Sans, vendorizada en vendor/fonts/ -- la familia por defecto del visor,
+// ver fuente-uikit.js) como `FontFace` del navegador -- esto no
 // depende de nada interno de uikit, mide directo contra el mismo
 // contorno de glifo que después dibuja el MSDF (misma familia e igual
 // forma de los caracteres), y da un ancho confiable para achicar la
@@ -42,12 +43,12 @@ const ANCHO_CANVAS_REFERENCIA = 1024;
 const MARGEN_HORIZONTAL_REFERENCIA = 40;
 const ANCHO_DISPONIBLE = ANCHO_CANVAS_REFERENCIA - MARGEN_HORIZONTAL_REFERENCIA * 2;
 
-const URL_FUENTE_MEDIDA = 'vendor/fonts/Inter-Regular.ttf';
-const NOMBRE_FUENTE_MEDIDA = 'InterMedidaSubtitulos';
+const URL_FUENTE_MEDIDA = 'vendor/fonts/PlusJakartaSans-Regular.ttf';
+const NOMBRE_FUENTE_MEDIDA = 'JakartaMedidaSubtitulos';
 
 let promesaContextoMedida = null;
 
-// Contexto 2D offscreen con Inter real cargada como `FontFace` del
+// Contexto 2D offscreen con Plus Jakarta Sans real cargada como `FontFace` del
 // navegador, sólo para `measureText` (nunca se dibuja nada en este
 // canvas) -- ver el comentario grande de arriba sobre por qué no se
 // mide contra el layout interno de uikit. Memoizado: sólo carga el

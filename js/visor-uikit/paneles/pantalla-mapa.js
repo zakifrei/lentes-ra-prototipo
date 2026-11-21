@@ -66,6 +66,10 @@ export function crearPantallaMapa() {
         color: COLOR_TEXTO,
         fontSize: TAMANO_FUENTE_TITULO,
         fontWeight: 'bold',
+        // Fraunces (serif cálida) sólo para el título -- ver el
+        // comentario grande de fuente-uikit.js (pedido vía
+        // /design-consultation).
+        fontFamily: 'fraunces',
       })
     );
     lineas.forEach((linea) => {

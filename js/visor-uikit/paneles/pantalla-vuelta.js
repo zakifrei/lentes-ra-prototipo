@@ -77,6 +77,9 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     color: COLOR_TEXTO,
     fontSize: TAMANO_FUENTE_SALUDO,
     fontWeight: 'bold',
+    // Fraunces (serif cálida) sólo para el título -- ver el comentario
+    // grande de fuente-uikit.js (pedido vía /design-consultation).
+    fontFamily: 'fraunces',
   });
   const textoMinutos = new Text({
     text: lineaMinutos,
