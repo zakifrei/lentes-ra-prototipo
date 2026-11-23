@@ -162,7 +162,14 @@ function actualizarPantallaVisible() {
   Object.entries(pantallasPorNombre).forEach(([nombre, objeto]) => {
     objeto.visible = nombre === estadoActual.pantalla;
   });
-  botonMenuFlotante.visible = !['aviso', 'pausa', 'finalizada'].includes(estadoActual.pantalla);
+  // 'menu' sumado a la lista (bug encontrado en vivo, reportado por el
+  // dueño del proyecto como texto/íconos superpuestos y "fantasmas" al
+  // abrir el menú flotante): la pantalla dedicada de menú (pantalla-menu.js)
+  // ya muestra las mismas 3 opciones, así que mostrar TAMBIÉN el botón
+  // flotante ahí es redundante -- y como los íconos de toda la app usan
+  // `depthTest:false` (ver icono-uikit.js), cuando los dos quedan visibles
+  // a la vez y se superponen en pantalla, su contenido se mezcla.
+  botonMenuFlotante.visible = !['aviso', 'pausa', 'finalizada', 'menu'].includes(estadoActual.pantalla);
   botonMenuFlotante.cerrarMenu?.();
 }
 
