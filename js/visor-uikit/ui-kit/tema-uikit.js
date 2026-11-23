@@ -174,12 +174,22 @@ export function crearFondoDegradadoCartel() {
     positionLeft: 0,
     // Mismo motivo que ya documentaba icono-uikit.js para sus íconos:
     // sin esto, esta capa queda en el mismo plano Z que el fondo sólido
-    // del panel y pierde el z-test contra él la mitad de las veces. Acá
-    // el renderOrder es bajo a propósito (sólo por encima del fondo
-    // sólido del panel) para quedar DETRÁS del ícono/texto, que usan
-    // 1000 -- confirmado en vivo que con este valor el degradé se ve
-    // detrás del texto, no lo tapa.
+    // del panel y pierde el z-test contra él la mitad de las veces.
+    //
+    // Bug encontrado post-commit (reportado por el dueño del proyecto:
+    // el texto se veía ilegible encima del degradé en pantalla-resumen):
+    // `renderOrder: 1` quedaba POR ENCIMA de un `Text` nativo de uikit, que
+    // no fija su propio renderOrder (default 0 de THREE.Object3D) -- con
+    // `depthTest: false`, Three.js pinta por renderOrder ascendente dentro
+    // del balde de objetos transparentes, así que el degradé (1) se
+    // pintaba DESPUÉS del texto (0) y lo tapaba con su alpha 0.74. La
+    // verificación anterior (ver Decisions Log) fue sobre pantalla-aviso,
+    // cuyo ícono/texto sí fijan 1000 -- no cubría el caso común de un
+    // `Text` sin renderOrder explícito (pantalla-resumen/bienvenida/
+    // vuelta/mapa). Ahora el degradé usa un renderOrder negativo: siempre
+    // por debajo de cualquier contenido que no fije el suyo (el caso
+    // normal), confirmado en vivo con pantalla-resumen.
     depthTest: false,
-    renderOrder: 1,
+    renderOrder: -1,
   });
 }
