@@ -139,6 +139,25 @@ hay que reinventarlo):
   - `Alert`/`AlertIcon`/`AlertTitle`/`AlertDescription`: pantalla-aviso
     -- ícono + título corto + descripción, en vez de una sola oración
     corrida en un `Card` genérico.
+- `Accordion`/`AccordionItem`/`AccordionTrigger`/`AccordionContent`/
+  `AccordionTriggerIcon`: botón de menú flotante (`boton-menu-flotante.js`)
+  -- pedido del dueño del proyecto ("no me gusta la lista extendible del
+  menú, ¿no existe un uikit para eso?"). Reemplaza 4 roots de uikit
+  independientes (el botón + 3 opciones, con `.visible` prendido/apagado
+  a mano) por un único árbol con layout flexbox real, estado de abierto/
+  cerrado real (una señal) y una flecha que rota sola al abrir/cerrar.
+  El clic sigue yendo por el mismo raycasting manual de siempre -- sólo
+  se aprovechan las reacciones automáticas del componente (la flecha, el
+  show/hide del contenido), nunca su `onClick` embebido.
+  - **Bug de la librería encontrado y evitado:** `AccordionContent` trae
+    `overflow: 'hidden'` por defecto, pero sus planos de recorte de
+    WebGL quedan calculados contra la posición que tenía mientras estaba
+    colapsado y nunca se recalculan al abrirse -- el resultado observado
+    fue que los íconos de los botones de opción se recortaban por
+    completo (invisibles) apenas el menú se abría. Se desactiva con
+    `overflow: 'visible'` (acá no hace falta recorte: el colapsar/
+    expandir ya lo resuelve el `display:'none'/'flex'` propio del
+    componente).
 - **Sin usar todavía, candidatos para una próxima vuelta:** `Badge`,
   `Separator`, `Avatar`, `Progress`, `Tooltip` -- el kit ya los trae,
   no hace falta instalar nada nuevo para probarlos.
@@ -165,3 +184,5 @@ hay que reinventarlo):
 | 2026-11-21 | Plus Jakarta Sans + Fraunces sobre Inter | /design-consultation: reforzar calidez vs. el glass frío de la categoría |
 | 2026-11-21 | Pop-in de escala al cambiar de pantalla | /design-consultation: "acompañado", no un corte seco |
 | 2026-11-21 | Degradé sutil en los carteles de lectura | /design-consultation: más cerca de paneles reales de Horizon/visionOS, sin tocar la iluminación de la escena |
+| 2026-11-23 | `Accordion` real para el menú flotante, sobre 4 roots independientes | Pedido del dueño del proyecto: señal visual real de "esto se expande" (flecha que rota) |
+| 2026-11-23 | `renderOrder:-1` en el degradé de los carteles (antes `1`) | Bug: tapaba el texto con su alpha 0.74 cuando el `Text` no fijaba su propio renderOrder |
