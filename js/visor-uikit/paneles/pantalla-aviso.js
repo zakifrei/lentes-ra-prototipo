@@ -53,6 +53,14 @@ const MARGEN_PANEL = 40;
 // AlertDescription originales (paddingLeft fijo), escalado a nuestro
 // ícono real en vez del ícono chico de 16-24px de shadcn/ui.
 const MARGEN_IZQUIERDO_TEXTO = MARGEN_PANEL + DIAMETRO_ICONO_AVISO + 20;
+// Mismo valor también como paddingRight del título/descripción (nada que
+// ver con el ícono, que sólo está a la izquierda): sin esto, centrar el
+// texto (ver `textAlign` más abajo) lo corre visiblemente hacia la
+// derecha -- el paddingLeft reservado para el ícono angosta la caja de
+// adentro de forma asimétrica, así que "el medio de esa caja" ya no
+// coincide con "el medio del cartel". Reportado en vivo por el dueño del
+// proyecto. Reservar el mismo margen "fantasma" a la derecha (sin ícono
+// ahí, sólo espacio) hace que las dos cajas vuelvan a ser simétricas.
 
 const TEXTO_BOTON_ACEPTAR = 'Sí, pausar';
 const TEXTO_BOTON_RECHAZAR = 'Seguir sin pausar';
@@ -94,6 +102,11 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
     borderWidth: 2,
     borderRadius: 0,
     justifyContent: 'center',
+    // Mismo criterio que crearContenedorUikit (panel-uikit.js): 'center'
+    // en vez del 'left' por defecto de uikit -- hereda a título y
+    // descripción. Ver `MARGEN_IZQUIERDO_TEXTO`/el comentario de arriba
+    // sobre el paddingRight espejado: sin eso, centrar acá se ve corrido.
+    textAlign: 'center',
   });
   panelMensaje.name = 'pantalla-aviso-mensaje';
   panelMensaje.position.set(
@@ -111,7 +124,11 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
   filaIcono.add(crearIconoUikit('atencion', DIAMETRO_ICONO_AVISO, COLOR_TEXTO));
   panelMensaje.add(filaIcono);
 
-  const titulo = new AlertTitle({ paddingLeft: MARGEN_IZQUIERDO_TEXTO, marginBottom: 12 });
+  const titulo = new AlertTitle({
+    paddingLeft: MARGEN_IZQUIERDO_TEXTO,
+    paddingRight: MARGEN_IZQUIERDO_TEXTO,
+    marginBottom: 12,
+  });
   titulo.add(
     new Text({
       text: TITULO_AVISO,
@@ -125,7 +142,10 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
   );
   panelMensaje.add(titulo);
 
-  const descripcion = new AlertDescription({ paddingLeft: MARGEN_IZQUIERDO_TEXTO });
+  const descripcion = new AlertDescription({
+    paddingLeft: MARGEN_IZQUIERDO_TEXTO,
+    paddingRight: MARGEN_IZQUIERDO_TEXTO,
+  });
   descripcion.add(
     new Text({
       text: DESCRIPCION_AVISO,

@@ -10,8 +10,8 @@
     {
       "name": "lentes-ra-http-nocache",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8023"],
-      "port": 8023
+      "runtimeArgs": ["-m", "http.server", "8024"],
+      "port": 8024
     }
   ]
 }
