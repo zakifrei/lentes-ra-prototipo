@@ -75,6 +75,13 @@ hay que reinventarlo):
   descartó: con líneas cortas (2-3 renglones) fuerza espaciado disparejo
   entre palabras para estirar cada línea al ancho completo -- se ve peor,
   no mejor, que centrar.
+  - **Excepción: pantalla-aviso.js.** Ahí NO se centra (queda en el
+    `'left'` por defecto) -- el título/descripción tienen `paddingLeft`
+    para no superponerse con el ícono (ver `MARGEN_IZQUIERDO_TEXTO`), sin
+    un `paddingRight` equivalente; centrar texto en esa caja asimétrica lo
+    corre visiblemente hacia la derecha del cartel, no al centro real. Se
+    probó centrado (pedido inicial) y se revirtió al ver el resultado en
+    vivo -- reportado por el dueño del proyecto.
 
 ## Color
 
@@ -219,3 +226,4 @@ hay que reinventarlo):
 | 2026-11-23 | Lista conectada (un panel + separadores) sobre 4 cápsulas sueltas en el menú flotante | Pedido del dueño del proyecto: que no parezcan piezas individuales |
 | 2026-11-23 | Ícono+texto centrados en cada fila del menú flotante | Pedido del dueño del proyecto |
 | 2026-11-23 | `textAlign: 'center'` en los carteles de lectura (antes `'left'`, el default) | Pedido del dueño del proyecto; se descartó `'justify'` por espaciado disparejo en líneas cortas |
+| 2026-11-24 | `textAlign` revertido a `'left'` en pantalla-aviso.js (único cartel con `paddingLeft` asimétrico por el ícono) | Bug reportado: centrado se veía corrido hacia la derecha por el padding sin contraparte |
