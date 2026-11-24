@@ -140,15 +140,31 @@ hay que reinventarlo):
     -- ícono + título corto + descripción, en vez de una sola oración
     corrida en un `Card` genérico.
 - `Accordion`/`AccordionItem`/`AccordionTrigger`/`AccordionContent`/
-  `AccordionTriggerIcon`: botón de menú flotante (`boton-menu-flotante.js`)
-  -- pedido del dueño del proyecto ("no me gusta la lista extendible del
-  menú, ¿no existe un uikit para eso?"). Reemplaza 4 roots de uikit
-  independientes (el botón + 3 opciones, con `.visible` prendido/apagado
-  a mano) por un único árbol con layout flexbox real, estado de abierto/
-  cerrado real (una señal) y una flecha que rota sola al abrir/cerrar.
-  El clic sigue yendo por el mismo raycasting manual de siempre -- sólo
-  se aprovechan las reacciones automáticas del componente (la flecha, el
-  show/hide del contenido), nunca su `onClick` embebido.
+  `AccordionTriggerIcon`/`Separator`: botón de menú flotante
+  (`boton-menu-flotante.js`) -- pedido del dueño del proyecto ("no me
+  gusta la lista extendible del menú, ¿no existe un uikit para eso?").
+  Reemplaza 4 roots de uikit independientes (el botón + 3 opciones, con
+  `.visible` prendido/apagado a mano) por un único árbol con layout
+  flexbox real, estado de abierto/cerrado real (una señal) y una flecha
+  que rota sola al abrir/cerrar. El clic sigue yendo por el mismo
+  raycasting manual de siempre -- sólo se aprovechan las reacciones
+  automáticas del componente (la flecha, el show/hide del contenido),
+  nunca su `onClick` embebido.
+  - **Lista conectada, no píldoras sueltas (pedido del dueño del
+    proyecto, misma vuelta: "repensemos los botones ovalados... que no
+    parezcan todos individuales"):** un único panel con borde/radio
+    propios (`AccordionItem`) en vez de 4 cápsulas con aire entre sí --
+    cada fila (botón principal y cada opción) lleva el MISMO color de
+    fondo que el panel (sin costura visible) y una línea divisoria fina
+    (`Separator`) entre cada una, como un menú contextual nativo. Las
+    esquinas redondeadas de arriba/abajo las resuelve cada fila a mano
+    (`border*Radius` por esquina, reactivo según si el menú está
+    abierto) -- `overflow:'hidden'` en el panel hubiera sido el camino
+    obvio para recortar las filas cuadradas al marco redondeado, pero se
+    probó en vivo y rompía el ícono, la flecha y el borde por completo
+    (mismo tipo de bug que el de `AccordionContent` abajo, pero no
+    limitado a `display:'none'` -- ver el comentario grande de
+    boton-menu-flotante.js).
   - **Bug de la librería encontrado y evitado:** `AccordionContent` trae
     `overflow: 'hidden'` por defecto, pero sus planos de recorte de
     WebGL quedan calculados contra la posición que tenía mientras estaba
@@ -158,9 +174,13 @@ hay que reinventarlo):
     `overflow: 'visible'` (acá no hace falta recorte: el colapsar/
     expandir ya lo resuelve el `display:'none'/'flex'` propio del
     componente).
+  - **Un `Container` sin `backgroundColor` no es clickeable:** no genera
+    geometría real, así que el raycasting manual que usa toda la app le
+    pasa de largo -- por eso cada fila de la lista lleva su propio
+    `backgroundColor` en vez de quedar transparente.
 - **Sin usar todavía, candidatos para una próxima vuelta:** `Badge`,
-  `Separator`, `Avatar`, `Progress`, `Tooltip` -- el kit ya los trae,
-  no hace falta instalar nada nuevo para probarlos.
+  `Avatar`, `Progress`, `Tooltip` -- el kit ya los trae, no hace falta
+  instalar nada nuevo para probarlos.
 
 ## Explícitamente descartado (y por qué)
 
@@ -186,3 +206,5 @@ hay que reinventarlo):
 | 2026-11-21 | Degradé sutil en los carteles de lectura | /design-consultation: más cerca de paneles reales de Horizon/visionOS, sin tocar la iluminación de la escena |
 | 2026-11-23 | `Accordion` real para el menú flotante, sobre 4 roots independientes | Pedido del dueño del proyecto: señal visual real de "esto se expande" (flecha que rota) |
 | 2026-11-23 | `renderOrder:-1` en el degradé de los carteles (antes `1`) | Bug: tapaba el texto con su alpha 0.74 cuando el `Text` no fijaba su propio renderOrder |
+| 2026-11-23 | Menú flotante oculto en la pantalla 'menu' | Redundante con pantalla-menu.js; su superposición producía texto/íconos "fantasma" (depthTest:false) |
+| 2026-11-23 | Lista conectada (un panel + separadores) sobre 4 cápsulas sueltas en el menú flotante | Pedido del dueño del proyecto: que no parezcan piezas individuales |

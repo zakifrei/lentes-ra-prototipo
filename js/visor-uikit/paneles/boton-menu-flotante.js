@@ -60,8 +60,9 @@ import {
   AccordionTrigger,
   AccordionTriggerIcon,
   AccordionContent,
-  Button,
+  Separator,
 } from '@pmndrs/uikit-default';
+import { computed } from '@preact/signals-core';
 import { COLOR_TEXTO, COLOR_FONDO_BOTON, COLOR_AMBAR, calcularRadioEsquinasUikit } from '../ui-kit/tema-uikit.js';
 import { crearIconoUikit } from '../ui-kit/icono-uikit.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
@@ -82,8 +83,6 @@ const FACTOR_ACHICAR_BOTON = 0.8;
 const ANCHO_BOTON = 0.18 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
 const ALTO_BOTON = 0.09 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
 const TAMANO_FUENTE = 84;
-const MARGEN_VERTICAL = 0.02 * FACTOR_ESCALA_PROFUNDIDAD * FACTOR_ACHICAR_BOTON;
-const MARGEN_GRUPO = MARGEN_VERTICAL * 2.5;
 
 // Mismo valor que ANCHO_CANVAS_BASE en panel-uikit.js, y mismo
 // MARGEN_HORIZONTAL/ESPACIO_ICONO_TEXTO -- no se importan de ahí porque
@@ -95,11 +94,20 @@ const ESPACIO_ICONO_TEXTO = 20;
 
 const ALTO_CANVAS_BOTON = Math.round(ANCHO_CANVAS_BASE * (ALTO_BOTON / ANCHO_BOTON));
 const PIXEL_SIZE = ANCHO_BOTON / ANCHO_CANVAS_BASE;
-const MARGEN_VERTICAL_PX = Math.round(MARGEN_VERTICAL / PIXEL_SIZE);
-const MARGEN_GRUPO_PX = Math.round(MARGEN_GRUPO / PIXEL_SIZE);
+// Radio calculado sobre el alto de UNA fila cerrada -- un valor fijo de
+// píxeles de contenido, no proporcional al alto total del panel abierto
+// (que cambia con la cantidad de opciones). Mismo criterio que una tarjeta
+// de menú nativa: el radio de esquina no crece con el contenido, sólo el
+// panel se alarga hacia abajo -- ver el comentario grande de arriba sobre
+// "lista conectada".
 const RADIO_ESQUINAS = calcularRadioEsquinasUikit(ANCHO_CANVAS_BASE, ALTO_CANVAS_BOTON, true);
 const DIAMETRO_ICONO = Math.min(TAMANO_FUENTE * 1.7, ALTO_CANVAS_BOTON * 0.9);
 const DIAMETRO_CHEVRON = TAMANO_FUENTE * 0.6;
+// Grosor de la línea divisoria entre filas (en píxeles de contenido, no
+// 1px real -- a esta escala 1px sería invisible). Mismo tono que el borde
+// del panel (`COLOR_AMBAR`, vía el tema de @pmndrs/uikit-default que ya
+// usa `border` para eso).
+const ALTO_SEPARADOR = 2;
 
 // Mismas 3 opciones/textos que pantalla-menu.js.
 const OPCIONES = [
@@ -120,6 +128,29 @@ function crearFilaIconoTexto(icono, texto, fontWeight) {
   fila.add(crearIconoUikit(icono, DIAMETRO_ICONO, COLOR_TEXTO));
   fila.add(new Text({ text: texto, color: COLOR_TEXTO, fontSize: TAMANO_FUENTE, fontWeight }));
   return fila;
+}
+
+// Propiedades comunes a cada fila (el botón principal y cada opción): cada
+// una lleva su PROPIO `backgroundColor`, igual al del panel que las
+// envuelve (`COLOR_FONDO_BOTON`) -- no transparente -- aunque visualmente
+// no se note (todas son del mismo color, así que no hay costura visible).
+// Es a propósito, no un descuido: confirmado en vivo que un `Container`
+// SIN `backgroundColor` no genera geometría real, y el raycasting manual
+// de `enEventoSeleccion` (que intersecta contra el objeto directamente, no
+// contra los eventos de puntero propios de uikit) le pasa de largo. Con el
+// mismo color que el panel, cada fila sigue siendo clickeable sin que se
+// note que, por debajo, son piezas separadas.
+function propiedadesFila(propiedades) {
+  return {
+    width: ANCHO_CANVAS_BASE,
+    height: ALTO_CANVAS_BOTON,
+    paddingX: MARGEN_HORIZONTAL,
+    backgroundColor: COLOR_FONDO_BOTON,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    ...propiedades,
+  };
 }
 
 /**
@@ -147,25 +178,63 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
     anchorY: 'top',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: MARGEN_GRUPO_PX,
   });
   accordion.name = 'boton-menu-flotante-accordion';
   accordion.position.set(POSICION_LOCAL.x, POSICION_LOCAL.y + ALTO_BOTON / 2, Z_LOCAL);
   grupo.add(accordion);
 
-  const item = new AccordionItem({ value: VALOR_ITEM_MENU, borderBottomWidth: 0 });
-  accordion.add(item);
-
-  const trigger = new AccordionTrigger({
+  // Pedido del dueño del proyecto: "repensemos los botones ovalados...
+  // como sería si hay una lista, para que no parezcan todos individuales".
+  // Antes cada fila (principal + 3 opciones) era su propia cápsula con
+  // fondo/borde/radio propios y aire entre cada una -- ahora es UN solo
+  // panel (el borde/radio/recorte van acá, en `item`, no en cada fila) con
+  // líneas divisoras finas entre filas en vez de huecos, como un menú
+  // contextual nativo.
+  //
+  // Las esquinas redondeadas van acá (en `item`, SIEMPRE las 4, fijas) --
+  // sus esquinas de arriba son siempre las de la fila principal, y las de
+  // abajo son siempre las de la última fila visible (la principal si está
+  // cerrado, la última opción si está abierto), así que un radio constante
+  // en las 4 ya queda bien en los dos estados. `overflow:'hidden'` hubiera
+  // sido el camino obvio para que las filas CUADRADAS de adentro no se
+  // salgan de ese marco redondeado, pero se probó en vivo y rompía todo
+  // (el ícono, la flecha Y el borde desaparecían por completo) -- el
+  // recorte de esta librería no es confiable acá (mismo problema de fondo
+  // que el de `AccordionContent`, ver más abajo, pero no es sólo un tema
+  // de `display:'none'`: ACÁ `item` nunca pasa por eso y aun así rompía).
+  // En vez de recorte: cada fila (ver `propiedadesFila`/más abajo) redondea
+  // SUS PROPIAS esquinas externas a mano (`border*Radius` por esquina,
+  // reactivo según si el menú está abierto), sin depender de que nada
+  // recorte nada.
+  const item = new AccordionItem({
+    value: VALOR_ITEM_MENU,
     width: ANCHO_CANVAS_BASE,
-    height: ALTO_CANVAS_BOTON,
-    paddingX: MARGEN_HORIZONTAL,
-    backgroundColor: COLOR_FONDO_BOTON,
+    borderBottomWidth: 0,
     borderWidth: 2,
     borderColor: COLOR_AMBAR,
     borderRadius: RADIO_ESQUINAS,
-    justifyContent: 'space-between',
   });
+  accordion.add(item);
+
+  // Verdadero sólo mientras el desplegable está abierto -- el botón
+  // principal deja de ser la ÚLTIMA fila visible en ese momento (pasa a
+  // serlo la última opción), así que sus esquinas de abajo tienen que
+  // dejar de estar redondeadas (ver `propiedadesFila` de la fila
+  // principal, más abajo).
+  const menuAbierto = computed(() => accordion.openItemValue.value === VALOR_ITEM_MENU);
+
+  const trigger = new AccordionTrigger(
+    propiedadesFila({
+      justifyContent: 'space-between',
+      // Arriba siempre redondeado (la fila principal siempre es la de
+      // arriba de todo); abajo depende de si sigue siendo la última fila
+      // visible -- ver `menuAbierto` arriba.
+      borderTopLeftRadius: RADIO_ESQUINAS,
+      borderTopRightRadius: RADIO_ESQUINAS,
+      borderBottomLeftRadius: computed(() => (menuAbierto.value ? 0 : RADIO_ESQUINAS)),
+      borderBottomRightRadius: computed(() => (menuAbierto.value ? 0 : RADIO_ESQUINAS)),
+    })
+  );
   trigger.name = 'boton-menu-flotante-principal';
   // Mismo motivo que la versión vieja (ver su comentario junto a
   // `depthWrite`): este HUD puede quedar a una profundidad similar a la
@@ -182,7 +251,6 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
   const content = new AccordionContent({
     flexDirection: 'column',
     alignItems: 'center',
-    gap: MARGEN_VERTICAL_PX,
     paddingTop: 0,
     paddingBottom: 0,
     // Bug encontrado en vivo: `AccordionContent` trae `overflow: 'hidden'`
@@ -192,24 +260,31 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
     // vuelven a calcular al abrirse -- el resultado es que recortan TODO
     // lo de adentro (confirmado: los íconos de los botones de opción
     // desaparecían, con `material.clippingPlanes` apuntando a una caja
-    // centrada en el origen, no a la posición real ya abierta). Acá no
-    // hace falta recorte -- el colapsar/expandir ya lo resuelve el
-    // `display:'none'/'flex'` de arriba -- así que se desactiva.
+    // centrada en el origen, no a la posición real ya abierta). A
+    // diferencia del `overflow:'hidden'` de `item` (arriba), ESTE nodo sí
+    // pasa por `display:'none'` -- por eso acá hace falta desactivarlo.
     overflow: 'visible',
   });
   content.name = 'boton-menu-flotante-opciones';
   item.add(content);
 
-  const botonesOpcion = OPCIONES.map(({ opcion, texto }) => {
-    const boton = new Button({
-      variant: 'default',
-      width: ANCHO_CANVAS_BASE,
-      height: ALTO_CANVAS_BOTON,
-      borderWidth: 2,
-      borderRadius: RADIO_ESQUINAS,
-      paddingX: MARGEN_HORIZONTAL,
-      justifyContent: 'center',
-    });
+  const botonesOpcion = OPCIONES.map(({ opcion, texto }, indice) => {
+    // Separador antes de CADA opción (incluida la primera, para marcar el
+    // límite entre el botón principal y la lista) -- vive adentro de
+    // `content`, así que sólo existe mientras el desplegable está abierto.
+    content.add(new Separator({ height: ALTO_SEPARADOR }));
+
+    // La última opción es siempre la última fila visible mientras el
+    // desplegable está abierto (nunca hay nada después) -- sus esquinas de
+    // abajo van siempre redondeadas, sin necesidad de reactividad (a
+    // diferencia de la fila principal, que a veces sí y a veces no es la
+    // última -- ver `menuAbierto` arriba).
+    const esUltima = indice === OPCIONES.length - 1;
+    const boton = new Container(
+      propiedadesFila(
+        esUltima ? { borderBottomLeftRadius: RADIO_ESQUINAS, borderBottomRightRadius: RADIO_ESQUINAS } : {}
+      )
+    );
     boton.name = `boton-menu-flotante-opcion-${opcion}`;
     boton.setProperties({ depthWrite: true });
     boton.add(crearFilaIconoTexto(opcion, texto, 'normal'));
