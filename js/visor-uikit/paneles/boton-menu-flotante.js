@@ -148,7 +148,12 @@ function propiedadesFila(propiedades) {
     backgroundColor: COLOR_FONDO_BOTON,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    // Pedido del dueño del proyecto: ícono+texto centrados en cada fila
+    // (no pegados a la izquierda). La fila principal pisa esto con
+    // 'space-between' (ver más abajo) para mantener la flecha pegada a la
+    // derecha -- el grupo ícono+texto de esa fila sigue yendo a la
+    // izquierda, nada más que al lado opuesto de la flecha, no centrado.
+    justifyContent: 'center',
     ...propiedades,
   };
 }

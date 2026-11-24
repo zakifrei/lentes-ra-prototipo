@@ -94,6 +94,11 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
     borderWidth: 2,
     borderRadius: 0,
     justifyContent: 'center',
+    // Mismo criterio que crearContenedorUikit (panel-uikit.js, ver su
+    // comentario grande): 'center' en vez del 'left' por defecto de
+    // uikit, heredado solo a título/descripción (acá esta pantalla no
+    // pasa por ese helper, así que hay que repetirlo).
+    textAlign: 'center',
   });
   panelMensaje.name = 'pantalla-aviso-mensaje';
   panelMensaje.position.set(

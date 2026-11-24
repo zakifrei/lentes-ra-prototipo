@@ -112,6 +112,18 @@ export function crearContenedorUikit(opciones = {}) {
     flexDirection,
     justifyContent,
     alignItems: 'center',
+    // `textAlign` es una propiedad heredable de uikit (se propaga sola a
+    // cualquier `Text` hijo, sin importar cuántos Container haya en el
+    // medio) -- el default de la librería es 'left', que quedaba raro acá
+    // porque el PANEL ya centra el bloque de texto como conjunto
+    // (`alignItems`/`justifyContent` arriba): con texto de varias líneas,
+    // el bloque se veía centrado pero cada línea arrancaba pegada a la
+    // izquierda. Pedido del dueño del proyecto (viendo pantalla-
+    // reconocimiento) -- 'center' en vez de 'justify': con líneas cortas
+    // (2-3 renglones) un justify fuerza espaciado disparejo entre
+    // palabras para estirar cada línea al ancho completo, que se ve peor,
+    // no mejor, que centrar.
+    textAlign: 'center',
     gap,
     borderRadius: calcularRadioEsquinasUikit(anchoCanvas, altoCanvas, interactivo),
   };

@@ -66,6 +66,15 @@ hay que reinventarlo):
 - **Escala:** heredada de la migración original, no tocada por esta
   consulta -- ver `TAMANO_FUENTE_*` en cada `pantalla-*.js` (todas a la
   escala de referencia de 1024px, no CSS px -- ver panel-uikit.js).
+- **Alineación del texto de los carteles:** centrada (`textAlign:
+  'center'` en `crearContenedorUikit`, panel-uikit.js) -- el default de
+  uikit es `'left'`, que quedaba raro en un panel ya centrado como
+  bloque (`alignItems`/`justifyContent`): con texto de varias líneas, el
+  bloque se veía centrado pero cada línea arrancaba pegada a la
+  izquierda. Pedido del dueño del proyecto. Se evaluó `'justify'` y se
+  descartó: con líneas cortas (2-3 renglones) fuerza espaciado disparejo
+  entre palabras para estirar cada línea al ancho completo -- se ve peor,
+  no mejor, que centrar.
 
 ## Color
 
@@ -208,3 +217,5 @@ hay que reinventarlo):
 | 2026-11-23 | `renderOrder:-1` en el degradé de los carteles (antes `1`) | Bug: tapaba el texto con su alpha 0.74 cuando el `Text` no fijaba su propio renderOrder |
 | 2026-11-23 | Menú flotante oculto en la pantalla 'menu' | Redundante con pantalla-menu.js; su superposición producía texto/íconos "fantasma" (depthTest:false) |
 | 2026-11-23 | Lista conectada (un panel + separadores) sobre 4 cápsulas sueltas en el menú flotante | Pedido del dueño del proyecto: que no parezcan piezas individuales |
+| 2026-11-23 | Ícono+texto centrados en cada fila del menú flotante | Pedido del dueño del proyecto |
+| 2026-11-23 | `textAlign: 'center'` en los carteles de lectura (antes `'left'`, el default) | Pedido del dueño del proyecto; se descartó `'justify'` por espaciado disparejo en líneas cortas |
