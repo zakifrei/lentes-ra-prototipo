@@ -230,7 +230,13 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
 
   const trigger = new AccordionTrigger(
     propiedadesFila({
-      justifyContent: 'space-between',
+      // SIN 'space-between': eso ponía el grupo ícono+texto pegado a la
+      // izquierda (para dejarle lugar a la flecha a la derecha), pero
+      // entonces esta fila quedaba corrida respecto a las demás, ya
+      // centradas (pedido del dueño del proyecto, viendo las dos
+      // inconsistentes). Se hereda el 'center' de `propiedadesFila` --
+      // la flecha sale de este flujo con posición absoluta (ver más abajo)
+      // así que no le resta espacio al centrado de ícono+texto.
       // Arriba siempre redondeado (la fila principal siempre es la de
       // arriba de todo); abajo depende de si sigue siendo la última fila
       // visible -- ver `menuAbierto` arriba.
@@ -250,8 +256,21 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
   trigger.add(crearFilaIconoTexto('menu', TEXTO_BOTON, 'bold'));
   // Hijo DIRECTO de `trigger` (no de la fila de arriba) -- ver el
   // comentario grande sobre la profundidad de búsqueda de
-  // AccordionTriggerIcon.
-  trigger.add(new AccordionTriggerIcon({ color: COLOR_TEXTO, width: DIAMETRO_CHEVRON, height: DIAMETRO_CHEVRON }));
+  // AccordionTriggerIcon. `positionType:'absolute'` la saca del flujo
+  // flexbox normal (ver el comentario de arriba sobre por qué la fila
+  // principal puede centrarse como las demás): queda clavada contra el
+  // borde derecho, centrada verticalmente a mano (altura de fila conocida,
+  // no hace falta ningún truco de transform).
+  trigger.add(
+    new AccordionTriggerIcon({
+      color: COLOR_TEXTO,
+      width: DIAMETRO_CHEVRON,
+      height: DIAMETRO_CHEVRON,
+      positionType: 'absolute',
+      positionRight: MARGEN_HORIZONTAL,
+      positionTop: (ALTO_CANVAS_BOTON - DIAMETRO_CHEVRON) / 2,
+    })
+  );
 
   const content = new AccordionContent({
     flexDirection: 'column',
