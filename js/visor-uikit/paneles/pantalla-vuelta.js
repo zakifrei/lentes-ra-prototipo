@@ -18,6 +18,7 @@ import { crearContenedorUikit, crearPanelUikit } from '../ui-kit/panel-uikit.js'
 import { COLOR_TEXTO, COLOR_AMBAR_TEXTO } from '../ui-kit/tema-uikit.js';
 import { armarLineasVuelta } from '../../common/temporizador-pausa.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
+import { propiedadesFraunces } from '../ui-kit/fuente-uikit.js';
 
 // Mismos 3 tamaños que pantalla-bienvenida.js, para que ambas pantallas
 // de "bloques apilados" se vean consistentes entre sí.
@@ -79,7 +80,7 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     fontWeight: 'bold',
     // Fraunces (serif cálida) sólo para el título -- ver el comentario
     // grande de fuente-uikit.js (pedido vía /design-consultation).
-    fontFamily: 'fraunces',
+    ...propiedadesFraunces(),
   });
   const textoMinutos = new Text({
     text: lineaMinutos,

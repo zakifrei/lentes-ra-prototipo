@@ -14,6 +14,7 @@
 import { Text } from '@pmndrs/uikit';
 import { crearContenedorUikit } from '../ui-kit/panel-uikit.js';
 import { COLOR_TEXTO, COLOR_AMBAR_TEXTO } from '../ui-kit/tema-uikit.js';
+import { propiedadesFraunces } from '../ui-kit/fuente-uikit.js';
 
 // Mismo tamaño físico que la versión vieja (un poco más alto que el
 // panel por defecto, para que los 3 bloques entren con aire).
@@ -59,7 +60,7 @@ export function crearPantallaBienvenida() {
       fontWeight: 'bold',
       // Fraunces (serif cálida) sólo para el título -- ver el comentario
       // grande de fuente-uikit.js (pedido vía /design-consultation).
-      fontFamily: 'fraunces',
+      ...propiedadesFraunces(),
     })
   );
   contenedor.add(

@@ -322,7 +322,12 @@ renderizador.setAnimationLoop(() => {
   const deltaMs = ahoraMs - ultimoCuadroMs;
   ultimoCuadroMs = ahoraMs;
 
-  controlesVistaPrevia?.update();
+  // Sólo fuera de RA: OrbitControls.update() ignora `enabled = false` y
+  // reescribe posición/rotación de la cámara (la hace mirar a su target).
+  // Dentro de los lentes eso pisaba la pose real de la cabeza que WebXR
+  // copia en `camara`, y el botón de menú flotante -- que sigue a
+  // `camara` -- quedaba orientado fuera de la vista (bug visto en el Quest).
+  if (!renderizador.xr.isPresenting) controlesVistaPrevia?.update();
   actualizarAnimacionesDeEntrada(Date.now());
   actualizarPantallaPausaSiCorresponde();
   pantallasUikit.forEach((pantalla) => pantalla.actualizarUikit(deltaMs));

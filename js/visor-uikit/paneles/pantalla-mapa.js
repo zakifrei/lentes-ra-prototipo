@@ -16,6 +16,7 @@ import { Text } from '@pmndrs/uikit';
 import { crearContenedorUikit } from '../ui-kit/panel-uikit.js';
 import { COLOR_TEXTO } from '../ui-kit/tema-uikit.js';
 import { MAPA_CONCEPTUAL } from '../../../assets/mapa-conceptual/contenido-mapa.js';
+import { propiedadesFraunces } from '../ui-kit/fuente-uikit.js';
 
 // Misma altura y profundidad que el resto de las pantallas estáticas.
 const ALTURA_Y = 1.1;
@@ -69,7 +70,7 @@ export function crearPantallaMapa() {
         // Fraunces (serif cálida) sólo para el título -- ver el
         // comentario grande de fuente-uikit.js (pedido vía
         // /design-consultation).
-        fontFamily: 'fraunces',
+        ...propiedadesFraunces(),
       })
     );
     lineas.forEach((linea) => {

@@ -44,6 +44,10 @@ const URL_FRAUNCES_BOLD = 'vendor/fonts/Fraunces-Bold.ttf';
 
 let promesaCarga = null;
 
+// Las mismas familias que se registran como globales en
+// `cargarFuenteUikit`, guardadas para `propiedadesFraunces()` (ver abajo).
+let familiasFuente = null;
+
 // Reintentos -- hallazgo al cablear la Tarea 2: `TTFLoader.loadAsync`
 // hace un `import()` dinámico de `@zappar/msdf-generator` (la librería
 // real que genera el atlas MSDF) contra esm.sh, y ese import puntual
@@ -116,6 +120,7 @@ export function cargarFuenteUikit() {
             ...resultado['Fraunces Bold'],
           },
         };
+        familiasFuente = fontFamilies;
         setGlobalProperties({
           fontFamily: 'jakarta',
           fontFamilies,
@@ -131,4 +136,20 @@ export function cargarFuenteUikit() {
       });
   }
   return promesaCarga;
+}
+
+/**
+ * Propiedades para un `Text` en Fraunces: `fontFamily` más las
+ * `fontFamilies` registradas, pasadas directo al texto. Sin estas
+ * familias explícitas, uikit evalúa la fuente una vez ANTES de heredar
+ * las globales de `setGlobalProperties` (sólo conoce su "inter" por
+ * defecto) y loguea `unknown font family "fraunces"` en consola -- se
+ * corrige solo un instante después, pero ensucia la consola en cada
+ * panel con título. Usar después de que `cargarFuenteUikit()` resolvió.
+ * @returns {{ fontFamily: string, fontFamilies?: object }}
+ */
+export function propiedadesFraunces() {
+  return familiasFuente
+    ? { fontFamily: 'fraunces', fontFamilies: familiasFuente }
+    : { fontFamily: 'fraunces' };
 }

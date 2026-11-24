@@ -29,6 +29,7 @@ import { crearPanelUikit } from '../ui-kit/panel-uikit.js';
 import { COLOR_TEXTO, crearFondoDegradadoCartel } from '../ui-kit/tema-uikit.js';
 import { crearIconoUikit } from '../ui-kit/icono-uikit.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
+import { propiedadesFraunces } from '../ui-kit/fuente-uikit.js';
 
 const TITULO_AVISO = '¿Necesitás una pausa?';
 const DESCRIPCION_AVISO = 'Notamos que tus niveles de atención disminuyeron.';
@@ -124,7 +125,14 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
   filaIcono.add(crearIconoUikit('atencion', DIAMETRO_ICONO_AVISO, COLOR_TEXTO));
   panelMensaje.add(filaIcono);
 
+  // `justifyContent: 'center'` (fix: el título se veía corrido a la
+  // izquierda): AlertTitle/AlertDescription son contenedores en fila, así
+  // que un `Text` de una sola línea queda pegado al inicio aunque el panel
+  // tenga `textAlign: 'center'` -- ese textAlign sólo centra las líneas
+  // DENTRO de un texto que ya ocupa todo el ancho (por eso la descripción,
+  // que corta en dos líneas, sí se veía centrada).
   const titulo = new AlertTitle({
+    justifyContent: 'center',
     paddingLeft: MARGEN_IZQUIERDO_TEXTO,
     paddingRight: MARGEN_IZQUIERDO_TEXTO,
     marginBottom: 12,
@@ -137,12 +145,13 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
       fontWeight: 'bold',
       // Fraunces (serif cálida) sólo para el título -- ver el comentario
       // grande de fuente-uikit.js (pedido vía /design-consultation).
-      fontFamily: 'fraunces',
+      ...propiedadesFraunces(),
     })
   );
   panelMensaje.add(titulo);
 
   const descripcion = new AlertDescription({
+    justifyContent: 'center',
     paddingLeft: MARGEN_IZQUIERDO_TEXTO,
     paddingRight: MARGEN_IZQUIERDO_TEXTO,
   });
