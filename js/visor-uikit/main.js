@@ -5,12 +5,14 @@
 // copiarlos -- sólo la capa de dibujo de paneles (tema/panel/ícono/
 // pantallas/botón flotante) está reconstruida sobre @pmndrs/uikit.
 //
-// Deliberadamente SIN la animación de entrada por pantalla (pop-in de
-// escala, Tarea 31 del visor viejo) ni sin el indicador visual de
-// apuntado en RA real (`crearIndicadorDeApuntado`): son pulido visual,
-// no parte de lo que pide este plan -- se podrían sumar después si hace
-// falta, pero agregarlos acá sin que nadie los pidiera sería inventar
-// alcance.
+// El pop-in de escala por pantalla ya se sumó (ver DESIGN.md,
+// /design-consultation) y el indicador visual de apuntado en RA real
+// (`crearIndicadorDeApuntado`) se suma acá -- ambos habían quedado afuera
+// a propósito en la Tarea 7 original por no haber sido pedidos entonces,
+// pero el dueño del proyecto los pidió después en vivo en el Quest real.
+// Mismo mecanismo exacto que js/visor/main.js (leído como referencia):
+// `crearIndicadorDeApuntado` ya cubre mano Y control físico por igual
+// (ver su comentario grande en interaccion.js) -- nada que adaptar acá.
 
 import * as THREE from '../../vendor/three/three.module.js';
 import { reversePainterSortStable } from '@pmndrs/uikit';
@@ -31,7 +33,7 @@ import { crearPantallaFinalizada } from './paneles/pantalla-finalizada.js';
 import { crearBotonMenuFlotante } from './paneles/boton-menu-flotante.js';
 import { cargarFuenteUikit } from './ui-kit/fuente-uikit.js';
 import { escucharEstadoFirebase } from '../visor/firebase-cliente.js';
-import { establecerCamaraVistaPrevia } from '../visor/interaccion.js';
+import { establecerCamaraVistaPrevia, crearIndicadorDeApuntado } from '../visor/interaccion.js';
 import { estadoPorDefecto, aplicarComando } from '../common/estado.js';
 import {
   estadoPersistenciaInicial,
@@ -86,6 +88,15 @@ renderizador.setTransparentSort(reversePainterSortStable);
 
 const luzAmbiental = new THREE.AmbientLight(0xffffff, 1);
 escena.add(luzAmbiental);
+
+// Rayo visual que sigue a la mano/control durante una sesión WebXR real
+// (ver js/visor/interaccion.js): arranca oculto porque la vista previa de
+// escritorio usa el mouse, no mano/control -- se muestra sólo entre
+// 'sessionstart'/'sessionend' de `renderizador.xr`, más abajo. Mismo
+// patrón que js/visor/main.js (leído como referencia).
+const indicadorApuntado = crearIndicadorDeApuntado(renderizador);
+indicadorApuntado.visible = false;
+escena.add(indicadorApuntado);
 
 const entornoPreview = crearEntornoPreview();
 escena.add(entornoPreview);
@@ -289,11 +300,13 @@ document.body.appendChild(botonXR);
 renderizador.xr.addEventListener('sessionstart', () => {
   if (controlesVistaPrevia) controlesVistaPrevia.enabled = false;
   if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = true;
+  indicadorApuntado.visible = true;
   entornoPreview.visible = false;
 });
 renderizador.xr.addEventListener('sessionend', () => {
   if (controlesVistaPrevia) controlesVistaPrevia.enabled = true;
   if (indicadorVistaPrevia) indicadorVistaPrevia.hidden = false;
+  indicadorApuntado.visible = false;
   entornoPreview.visible = true;
 });
 
