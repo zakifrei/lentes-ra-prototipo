@@ -62,7 +62,6 @@ import {
   AccordionContent,
   Separator,
 } from '@pmndrs/uikit-default';
-import { computed } from '@preact/signals-core';
 import { COLOR_TEXTO, COLOR_FONDO_BOTON, COLOR_AMBAR, calcularRadioEsquinasUikit } from '../ui-kit/tema-uikit.js';
 import { crearIconoUikit } from '../ui-kit/icono-uikit.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
@@ -221,13 +220,19 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
   });
   accordion.add(item);
 
-  // Verdadero sólo mientras el desplegable está abierto -- el botón
-  // principal deja de ser la ÚLTIMA fila visible en ese momento (pasa a
-  // serlo la última opción), así que sus esquinas de abajo tienen que
-  // dejar de estar redondeadas (ver `propiedadesFila` de la fila
-  // principal, más abajo).
-  const menuAbierto = computed(() => accordion.openItemValue.value === VALOR_ITEM_MENU);
-
+  // La fila principal deja de ser la ÚLTIMA fila visible cuando el
+  // desplegable está abierto (pasa a serlo la última opción), así que sus
+  // esquinas de abajo tienen que dejar de estar redondeadas en ese
+  // momento -- a mano (`trigger.setProperties(...)`, ver el toggle más
+  // abajo) en vez de con una propiedad reactiva (`computed()`): esto era
+  // lo único de todo el componente que dependía de ese mecanismo (todo lo
+  // demás usa setProperties/estado común, como el resto del proyecto), y
+  // dado lo frágil que resultó ser `@pmndrs/uikit-default` con varias
+  // cosas "automáticas" hoy (ver los dos bugs de recorte más abajo), bajar
+  // la superficie de cosas reactivas-automáticas de la que depende este
+  // HUD es una simplificación razonable aunque no haya una confirmación
+  // en RA real de que esto fuera la causa de algo -- ver el comentario de
+  // `cerrarMenu`/el toggle de abajo para dónde se actualiza.
   const trigger = new AccordionTrigger(
     propiedadesFila({
       // SIN 'space-between': eso ponía el grupo ícono+texto pegado a la
@@ -238,12 +243,12 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
       // la flecha sale de este flujo con posición absoluta (ver más abajo)
       // así que no le resta espacio al centrado de ícono+texto.
       // Arriba siempre redondeado (la fila principal siempre es la de
-      // arriba de todo); abajo depende de si sigue siendo la última fila
-      // visible -- ver `menuAbierto` arriba.
+      // arriba de todo); abajo arranca redondeado (estado cerrado) y se
+      // actualiza a mano al abrir/cerrar -- ver más abajo.
       borderTopLeftRadius: RADIO_ESQUINAS,
       borderTopRightRadius: RADIO_ESQUINAS,
-      borderBottomLeftRadius: computed(() => (menuAbierto.value ? 0 : RADIO_ESQUINAS)),
-      borderBottomRightRadius: computed(() => (menuAbierto.value ? 0 : RADIO_ESQUINAS)),
+      borderBottomLeftRadius: RADIO_ESQUINAS,
+      borderBottomRightRadius: RADIO_ESQUINAS,
     })
   );
   trigger.name = 'boton-menu-flotante-principal';
@@ -317,8 +322,20 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
     return boton;
   });
 
+  // Único punto que cambia las esquinas de abajo de la fila principal (ver
+  // el comentario grande junto a `trigger` sobre por qué a mano y no con
+  // `computed()`): redondeadas cuando queda cerrado (es la última fila
+  // visible), cuadradas cuando se abre (deja de serlo).
+  function fijarEsquinasDeTrigger(abierto) {
+    trigger.setProperties({
+      borderBottomLeftRadius: abierto ? 0 : RADIO_ESQUINAS,
+      borderBottomRightRadius: abierto ? 0 : RADIO_ESQUINAS,
+    });
+  }
+
   function cerrarMenu() {
     accordion.openItemValue.value = undefined;
+    fijarEsquinasDeTrigger(false);
   }
 
   enEventoSeleccion(renderer, (origen, direccion) => {
@@ -330,8 +347,9 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
 
     const impactoPrincipal = raycaster.intersectObject(trigger, false);
     if (impactoPrincipal.length > 0) {
-      accordion.openItemValue.value =
-        accordion.openItemValue.peek() === VALOR_ITEM_MENU ? undefined : VALOR_ITEM_MENU;
+      const abierto = accordion.openItemValue.peek() !== VALOR_ITEM_MENU;
+      accordion.openItemValue.value = abierto ? VALOR_ITEM_MENU : undefined;
+      fijarEsquinasDeTrigger(abierto);
       return;
     }
 
