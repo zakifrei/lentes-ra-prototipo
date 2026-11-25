@@ -50,7 +50,7 @@ const TAMANO_FUENTE_CONTADOR = 54;
 // Texto literal exacto pedido por la tarea -- no parafrasear ni cambiar
 // comillas/apóstrofes.
 const TEXTO_PAUSA =
-  "Pausa iniciada. Podés sacarte los lentes. Lo que explique la profesora se guarda en 'Temas pendientes'";
+  "Pausa iniciada. Lo que explique la profesora se guarda en 'Temas pendientes'";
 
 // Parte un texto largo en líneas que entren en el ancho disponible del
 // canvas (corta por palabra). panel-texto.js no se reutiliza acá (ver

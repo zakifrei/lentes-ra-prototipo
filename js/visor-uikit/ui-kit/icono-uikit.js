@@ -57,6 +57,7 @@ import {
   Menu,
   ArrowRight,
   CircleAlert,
+  Clock,
 } from '@pmndrs/uikit-lucide';
 
 const ICONOS_POR_NOMBRE = {
@@ -71,6 +72,8 @@ const ICONOS_POR_NOMBRE = {
   flecha: ArrowRight,
   // Usado por pantalla-aviso.js (Alert de @pmndrs/uikit-default).
   atencion: CircleAlert,
+  // Usado por pantalla-pausa.js y pantalla-vuelta.js, junto a los minutos.
+  reloj: Clock,
 };
 
 /**

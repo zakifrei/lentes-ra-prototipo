@@ -11,8 +11,9 @@
 // sobre el `Text` del contador -- el párrafo fijo ni se toca.
 
 import * as THREE from '../../../vendor/three/three.module.js';
-import { Text } from '@pmndrs/uikit';
+import { Container, Text } from '@pmndrs/uikit';
 import { crearContenedorUikit } from '../ui-kit/panel-uikit.js';
+import { crearIconoUikit } from '../ui-kit/icono-uikit.js';
 import { COLOR_TEXTO, TIPO_DP, fuenteDesdeDp } from '../ui-kit/tema-uikit.js';
 import { minutosTranscurridos } from '../../common/temporizador-pausa.js';
 
@@ -26,9 +27,11 @@ const TAMANO_FUENTE_TEXTO = fuenteDesdeDp(TIPO_DP.cuerpo1, ANCHO_PANEL);
 const TAMANO_FUENTE_CONTADOR = fuenteDesdeDp(TIPO_DP.titulo2, ANCHO_PANEL);
 
 // Texto literal exacto pedido por la tarea original -- no parafrasear ni
-// cambiar comillas/apóstrofes (misma nota que la versión vieja).
+// cambiar comillas/apóstrofes (misma nota que la versión vieja). Sin
+// "Podés sacarte los lentes." desde el 2026-11-25 (pedido del dueño del
+// proyecto).
 const TEXTO_PAUSA =
-  "Pausa iniciada. Podés sacarte los lentes. Lo que explique la profesora se guarda en 'Temas pendientes'";
+  "Pausa iniciada. Lo que explique la profesora se guarda en 'Temas pendientes'";
 
 /**
  * Crea la pantalla de pausa activa.
@@ -68,7 +71,12 @@ export function crearPantallaPausa() {
     fontSize: TAMANO_FUENTE_CONTADOR,
     fontWeight: 'bold',
   });
-  contenedor.add(textoContador);
+  // Ícono de reloj junto al contador (pedido del dueño del proyecto), mismo
+  // patrón de fila ícono+texto que panel-uikit.js.
+  const filaContador = new Container({ flexDirection: 'row', alignItems: 'center', gap: TAMANO_FUENTE_CONTADOR * 0.3 });
+  filaContador.add(crearIconoUikit('reloj', TAMANO_FUENTE_CONTADOR * 1.1, COLOR_TEXTO));
+  filaContador.add(textoContador);
+  contenedor.add(filaContador);
 
   function redibujarSiCambio(ahoraMs) {
     const minutos = minutosTranscurridos(inicioMs, ahoraMs);

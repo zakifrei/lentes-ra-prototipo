@@ -13,8 +13,9 @@
 // pmndrs-uikit/SKILL.md del paquete): no hace falta volver a armar nada.
 
 import * as THREE from '../../../vendor/three/three.module.js';
-import { Text } from '@pmndrs/uikit';
+import { Container, Text } from '@pmndrs/uikit';
 import { crearContenedorUikit, crearPanelUikit } from '../ui-kit/panel-uikit.js';
+import { crearIconoUikit } from '../ui-kit/icono-uikit.js';
 import { COLOR_TEXTO, COLOR_AMBAR_TEXTO, TIPO_DP, fuenteDesdeDp } from '../ui-kit/tema-uikit.js';
 import { armarLineasVuelta } from '../../common/temporizador-pausa.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
@@ -91,7 +92,12 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     fontWeight: 'normal',
   });
   panelMensaje.add(textoSaludo);
-  panelMensaje.add(textoMinutos);
+  // Ícono de reloj junto a los minutos en pausa (pedido del dueño del
+  // proyecto), igual que el contador de pantalla-pausa.js.
+  const filaMinutos = new Container({ flexDirection: 'row', alignItems: 'center', gap: TAMANO_FUENTE_MINUTOS * 0.3 });
+  filaMinutos.add(crearIconoUikit('reloj', TAMANO_FUENTE_MINUTOS * 1.1, COLOR_TEXTO));
+  filaMinutos.add(textoMinutos);
+  panelMensaje.add(filaMinutos);
   panelMensaje.add(textoTemas);
   grupo.add(panelMensaje);
 

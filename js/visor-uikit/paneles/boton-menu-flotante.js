@@ -131,7 +131,23 @@ const vectorDireccion = new THREE.Vector3();
 function crearFilaIconoTexto(icono, texto, fontWeight) {
   const fila = new Container({ flexDirection: 'row', alignItems: 'center', gap: ESPACIO_ICONO_TEXTO });
   fila.add(crearIconoUikit(icono, DIAMETRO_ICONO, COLOR_TEXTO));
-  fila.add(new Text({ text: texto, color: COLOR_TEXTO, fontSize: TAMANO_FUENTE, fontWeight }));
+  fila.add(
+    new Text({
+      text: texto,
+      color: COLOR_TEXTO,
+      fontSize: TAMANO_FUENTE,
+      fontWeight,
+      // Bug de letras "trabadas" (2026-11-25, visto en el Quest al abrir/
+      // cerrar el menú): las filas escriben profundidad (`depthWrite:true`,
+      // ver más abajo) y el texto queda prácticamente en el MISMO plano que
+      // ese fondo, así que el test de profundidad del texto empataba con el
+      // del fondo y partes de cada letra desaparecían (z-fighting: se veía
+      // "Sur ulos", "Ma… …tua"). Sin test de profundidad el texto se dibuja
+      // siempre -- uikit ya lo dibuja después de su fondo -- y el fondo
+      // sigue tapando el contenido del mundo de atrás como antes.
+      depthTest: false,
+    })
+  );
   return fila;
 }
 
@@ -147,7 +163,12 @@ function crearFilaIconoTexto(icono, texto, fontWeight) {
 // note que, por debajo, son piezas separadas.
 function propiedadesFila(propiedades) {
   return {
-    width: ANCHO_CANVAS_BASE,
+    // '100%' y no ANCHO_CANVAS_BASE: el panel que envuelve las filas
+    // (`item`) tiene borde a los costados, así que su espacio interno es
+    // más angosto que ANCHO_CANVAS_BASE -- una fila de ancho fijo se salía
+    // unos píxeles hacia un costado y el desplegable se veía corrido
+    // (más notorio desde que el borde pasó de 2 a GROSOR_BORDE).
+    width: '100%',
     height: ALTO_CANVAS_BOTON,
     paddingX: MARGEN_HORIZONTAL,
     backgroundColor: COLOR_FONDO_BOTON,

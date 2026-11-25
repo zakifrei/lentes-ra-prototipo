@@ -287,3 +287,6 @@ Lo que se mantiene a propósito, aunque Meta sugiera otra cosa:
 | 2026-11-25 | Resumen arrastrable (panel + botón juntos, como subtítulos) | Pedido del dueño del proyecto |
 | 2026-11-25 | Arrastre conserva el punto de agarre y no agarra paneles de pantallas ocultas | El panel saltaba con el centro hasta el rayo (notable en el resumen, 1.3 m) |
 | 2026-11-25 | Zoom de subtítulos escala el panel entero (1x / 1.25x / 1.5x), botón en su límite atenuado | Bug: el "+" agrandaba la letra y el ajuste a ancho fijo la volvía a achicar; el "-" arrancaba en el mínimo |
+| 2026-11-25 | `depthTest:false` en el texto del menú flotante | Bug: letras "trabadas" (z-fighting entre el texto y el fondo con `depthWrite:true` de cada fila) |
+| 2026-11-25 | Filas del menú flotante con `width:'100%'` en vez de 1024 fijo | El borde lateral del panel achica el espacio interno: las filas se salían y el desplegable se veía corrido |
+| 2026-11-25 | Pausa sin "Podés sacarte los lentes."; ícono de reloj junto a los minutos en pausa y vuelta | Pedido del dueño del proyecto |
