@@ -17,8 +17,8 @@
 // confirmar la causa exacta sin meterse en el código fuente minificado
 // de uikit). La solución que sí funciona, mismo criterio que
 // `calcularTamanoFuenteAjustado` de la versión vieja: medir el texto con
-// `Canvas2D.measureText`, cargando la MISMA fuente real (Plus Jakarta
-// Sans, vendorizada en vendor/fonts/ -- la familia por defecto del visor,
+// `Canvas2D.measureText`, cargando la MISMA fuente real (Inter
+// vendorizada en vendor/fonts/ -- la familia por defecto del visor,
 // ver fuente-uikit.js) como `FontFace` del navegador -- esto no
 // depende de nada interno de uikit, mide directo contra el mismo
 // contorno de glifo que después dibuja el MSDF (misma familia e igual
@@ -31,7 +31,7 @@ import { crearContenedorUikit, crearPanelUikit } from '../ui-kit/panel-uikit.js'
 import { COLOR_TEXTO } from '../ui-kit/tema-uikit.js';
 import { enEventoSeleccion, habilitarArrastre } from '../../visor/interaccion.js';
 import { lineaActual } from '../../common/subtitulos-guion.js';
-import { ajustarTamanoSubtitulo, TAMANO_MIN } from '../../common/persistencia.js';
+import { ajustarTamanoSubtitulo, TAMANO_MIN, TAMANO_MAX } from '../../common/persistencia.js';
 
 // Mismo presupuesto de ancho (en "píxeles" de contenido) que usa
 // internamente crearContenedorUikit/crearPanelUikit para TODOS los
@@ -43,12 +43,12 @@ const ANCHO_CANVAS_REFERENCIA = 1024;
 const MARGEN_HORIZONTAL_REFERENCIA = 40;
 const ANCHO_DISPONIBLE = ANCHO_CANVAS_REFERENCIA - MARGEN_HORIZONTAL_REFERENCIA * 2;
 
-const URL_FUENTE_MEDIDA = 'vendor/fonts/PlusJakartaSans-Regular.ttf';
-const NOMBRE_FUENTE_MEDIDA = 'JakartaMedidaSubtitulos';
+const URL_FUENTE_MEDIDA = 'vendor/fonts/Inter-Regular.ttf';
+const NOMBRE_FUENTE_MEDIDA = 'InterMedidaSubtitulos';
 
 let promesaContextoMedida = null;
 
-// Contexto 2D offscreen con Plus Jakarta Sans real cargada como `FontFace` del
+// Contexto 2D offscreen con Inter real cargada como `FontFace` del
 // navegador, sólo para `measureText` (nunca se dibuja nada en este
 // canvas) -- ver el comentario grande de arriba sobre por qué no se
 // mide contra el layout interno de uikit. Memoizado: sólo carga el
@@ -85,7 +85,19 @@ const SEPARACION_BOTONES = 0.4;
 const TAMANO_FUENTE_BOTON = 350;
 // Debajo del panel de subtítulos: offset LOCAL al contenedor (no una
 // coordenada de mundo) -- igual que la versión vieja.
-const Y_LOCAL_BOTONES = -ALTO_PANEL / 2 - 0.15;
+const MARGEN_BOTONES = 0.15;
+
+// Zoom de subtítulos (arreglado 2026-11-25). Antes "+" multiplicaba el
+// `fontSize` (x1/x2/x3) dentro de un panel de ANCHO FIJO, y el ajuste
+// automático de abajo (`ajustarYFijarTexto`) lo volvía a achicar hasta que
+// la línea entrara en ese mismo ancho: en la práctica el texto casi no
+// cambiaba. Y como el tamaño arranca en el mínimo (TAMANO_MIN), "-" no
+// hacía nada. Ahora cada nivel escala el PANEL ENTERO (texto incluido), así
+// que el cambio siempre se ve; y el botón que no puede seguir (- en el
+// mínimo, + en el máximo) se atenúa para que se entienda por qué no
+// responde.
+const ESCALA_POR_NIVEL = { 1: 1, 2: 1.25, 3: 1.5 };
+const OPACIDAD_BOTON_INACTIVO = 0.35;
 
 // Mismos límites de arrastre que la versión vieja.
 const LIMITES_ARRASTRE = {
@@ -132,6 +144,12 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   contenedor.position.set(POSICION_SUBTITULO.x, POSICION_SUBTITULO.y, POSICION_SUBTITULO.z);
   grupo.add(contenedor);
 
+  // Grupo intermedio que se escala con el zoom (el panel en sí es un root
+  // de uikit: mejor no pisarle la escala directo).
+  const escalaPanel = new THREE.Group();
+  escalaPanel.name = 'pantalla-subtitulos-escala';
+  contenedor.add(escalaPanel);
+
   const { contenedor: panelSubtitulo } = crearContenedorUikit({
     posicion: { x: 0, y: 0, z: 0 },
     ancho: ANCHO_PANEL,
@@ -145,7 +163,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
     fontWeight: 'normal',
   });
   panelSubtitulo.add(textoSubtitulo);
-  contenedor.add(panelSubtitulo);
+  escalaPanel.add(panelSubtitulo);
 
   // La posición, a diferencia de las imágenes, no es persistente --
   // mismo criterio que la versión vieja.
@@ -169,7 +187,9 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   function redibujar() {
     const segundosTranscurridos = (performance.now() - inicio) / 1000;
     const texto = lineaActual(segundosTranscurridos);
-    const tamanoFuente = TAMANO_FUENTE_BASE * estadoLocal.tamanoSubtitulo;
+    // Tamaño de letra fijo: el zoom lo da la escala del panel (ver
+    // ESCALA_POR_NIVEL arriba), no el fontSize.
+    const tamanoFuente = TAMANO_FUENTE_BASE;
 
     if (texto === ultimoTextoDibujado && tamanoFuente === ultimoTamanoDibujado) return;
     ultimoTextoDibujado = texto;
@@ -184,7 +204,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   // Posición LOCAL al contenedor -- al ser hijos del mismo `contenedor`
   // que se arrastra, siguen al panel automáticamente.
   const botonMas = crearPanelUikit(['+'], {
-    posicion: { x: SEPARACION_BOTONES / 2, y: Y_LOCAL_BOTONES, z: 0 },
+    posicion: { x: SEPARACION_BOTONES / 2, y: 0, z: 0 },
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
     tamanoFuente: TAMANO_FUENTE_BOTON,
@@ -194,7 +214,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   botonMas.userData.delta = 1;
 
   const botonMenos = crearPanelUikit(['-'], {
-    posicion: { x: -SEPARACION_BOTONES / 2, y: Y_LOCAL_BOTONES, z: 0 },
+    posicion: { x: -SEPARACION_BOTONES / 2, y: 0, z: 0 },
     ancho: ANCHO_BOTON,
     alto: ALTO_BOTON,
     tamanoFuente: TAMANO_FUENTE_BOTON,
@@ -206,6 +226,21 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
   contenedor.add(botonMas, botonMenos);
   const botones = [botonMas, botonMenos];
   const paneles = [panelSubtitulo, botonMas, botonMenos];
+
+  // Aplica el nivel de zoom actual: escala el panel, baja los botones para
+  // que queden justo debajo del panel ya escalado, y atenúa el que está en
+  // su límite.
+  function aplicarZoom() {
+    const nivel = estadoLocal.tamanoSubtitulo;
+    const escala = ESCALA_POR_NIVEL[nivel] ?? 1;
+    escalaPanel.scale.setScalar(escala);
+    const yBotones = -(ALTO_PANEL * escala) / 2 - MARGEN_BOTONES;
+    botonMas.position.y = yBotones;
+    botonMenos.position.y = yBotones;
+    botonMas.setProperties({ opacity: nivel >= TAMANO_MAX ? OPACIDAD_BOTON_INACTIVO : 1 });
+    botonMenos.setProperties({ opacity: nivel <= TAMANO_MIN ? OPACIDAD_BOTON_INACTIVO : 1 });
+  }
+  aplicarZoom();
 
   enEventoSeleccion(renderer, (origen, direccion) => {
     if (!grupo.visible) return;
@@ -219,7 +254,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
 
     const delta = impactos[0].object.userData.delta;
     estadoLocal = ajustarTamanoSubtitulo(estadoLocal, delta);
-    redibujar();
+    aplicarZoom();
     onCambiarTamano(delta);
   });
 
@@ -232,8 +267,7 @@ export function crearPantallaSubtitulos(renderer, persistencia, onCambiarTamano)
 
   grupo.alReiniciarTodo = function alReiniciarTodoPantallaSubtitulos() {
     estadoLocal = { ...estadoLocal, tamanoSubtitulo: TAMANO_MIN };
-    ultimoTamanoDibujado = null;
-    redibujar();
+    aplicarZoom();
   };
 
   grupo.actualizarUikit = (deltaMs) => {

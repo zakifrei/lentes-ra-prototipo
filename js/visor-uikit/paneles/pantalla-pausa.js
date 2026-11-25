@@ -13,7 +13,7 @@
 import * as THREE from '../../../vendor/three/three.module.js';
 import { Text } from '@pmndrs/uikit';
 import { crearContenedorUikit } from '../ui-kit/panel-uikit.js';
-import { COLOR_TEXTO } from '../ui-kit/tema-uikit.js';
+import { COLOR_TEXTO, TIPO_DP, fuenteDesdeDp } from '../ui-kit/tema-uikit.js';
 import { minutosTranscurridos } from '../../common/temporizador-pausa.js';
 
 // Mismos valores físicos que la versión vieja.
@@ -22,8 +22,8 @@ const ALTO_PANEL = 0.4;
 const POSICION_PANEL = { x: 0, y: 1.1, z: -1.8 };
 
 // Mismos tamaños que la versión vieja.
-const TAMANO_FUENTE_TEXTO = 40;
-const TAMANO_FUENTE_CONTADOR = 54;
+const TAMANO_FUENTE_TEXTO = fuenteDesdeDp(TIPO_DP.cuerpo1, ANCHO_PANEL);
+const TAMANO_FUENTE_CONTADOR = fuenteDesdeDp(TIPO_DP.titulo2, ANCHO_PANEL);
 
 // Texto literal exacto pedido por la tarea original -- no parafrasear ni
 // cambiar comillas/apóstrofes (misma nota que la versión vieja).

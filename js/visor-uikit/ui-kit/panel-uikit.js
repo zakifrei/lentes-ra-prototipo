@@ -45,6 +45,9 @@ import {
   calcularRadioEsquinasUikit,
   aplicarTemaDiseno,
   crearFondoDegradadoCartel,
+  GROSOR_BORDE,
+  TIPO_DP,
+  fuenteDesdeDp,
 } from './tema-uikit.js';
 import { crearIconoUikit } from './icono-uikit.js';
 
@@ -62,7 +65,6 @@ const MARGEN_HORIZONTAL = 40;
 const ANCHO_PANEL_POR_DEFECTO = 0.8;
 const ALTO_PANEL_POR_DEFECTO = 0.4;
 const POSICION_POR_DEFECTO = { x: 0, y: 1.1, z: -1.8 };
-const TAMANO_FUENTE_POR_DEFECTO = 48;
 
 // Mismo valor que ESPACIO_ICONO_TEXTO en panel-texto.js.
 const ESPACIO_ICONO_TEXTO = 20;
@@ -136,8 +138,8 @@ export function crearContenedorUikit(opciones = {}) {
   // `TEMA_DISENO_AMBAR` -- para el cartel de sólo lectura, en vez del
   // `Container` pintado a mano de antes.
   const contenedor = interactivo
-    ? new Button({ ...propiedadesComunes, variant: 'default', borderWidth: 2 })
-    : new Card({ ...propiedadesComunes, borderWidth: 2 });
+    ? new Button({ ...propiedadesComunes, variant: 'default', borderWidth: GROSOR_BORDE })
+    : new Card({ ...propiedadesComunes, borderWidth: GROSOR_BORDE });
   contenedor.name = nombre;
   contenedor.position.set(posicion.x, posicion.y, posicion.z);
 
@@ -174,7 +176,14 @@ export function crearContenedorUikit(opciones = {}) {
  * @returns {Container}
  */
 export function crearPanelUikit(lineas, opciones = {}) {
-  const { tamanoFuente = TAMANO_FUENTE_POR_DEFECTO, icono, negrita = false } = opciones;
+  // Sin `tamanoFuente` explícito: el estilo "cuerpo 1" de la escala en
+  // dp de Meta (ver TIPO_DP en tema-uikit.js), convertido al ancho de
+  // ESTE panel -- así el alto físico de la letra no depende del ancho.
+  const {
+    tamanoFuente = fuenteDesdeDp(TIPO_DP.cuerpo1, opciones.ancho ?? ANCHO_PANEL_POR_DEFECTO),
+    icono,
+    negrita = false,
+  } = opciones;
 
   const { contenedor: panel, altoCanvas } = crearContenedorUikit({
     ...opciones,

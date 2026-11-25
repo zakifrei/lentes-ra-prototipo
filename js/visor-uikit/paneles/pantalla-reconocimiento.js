@@ -4,11 +4,13 @@
 // js/visor/paneles/pantalla-reconocimiento.js (leído como referencia).
 
 import { crearPanelUikit } from '../ui-kit/panel-uikit.js';
+import { TIPO_DP, fuenteDesdeDp } from '../ui-kit/tema-uikit.js';
 
 const TEXTO_RECONOCIMIENTO = 'Mirá al frente: te estamos reconociendo';
 
 // Mismo valor que la versión vieja (un poco más grande que el default).
-const TAMANO_FUENTE = 54;
+// Mensaje único en el panel por defecto (0.8 m de ancho, ver panel-uikit.js).
+const TAMANO_FUENTE = fuenteDesdeDp(TIPO_DP.titulo2, 0.8);
 
 /**
  * Crea la pantalla de reconocimiento. El objeto devuelto expone

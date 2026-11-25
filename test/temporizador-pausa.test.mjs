@@ -9,7 +9,7 @@ test('minutosTranscurridos redondea y nunca es negativo', () => {
 
 test('armarLineasVuelta arma las 3 lineas literales', () => {
   assert.deepEqual(armarLineasVuelta(6, 2), [
-    '¡Bienvenida de vuelta!',
+    '¡Hola de nuevo, Zaki!',
     'Estuviste 6 min en pausa',
     'Se guardaron 2 temas en tu notebook',
   ]);
@@ -17,12 +17,12 @@ test('armarLineasVuelta arma las 3 lineas literales', () => {
 
 test('armarLineasVuelta sanea valores invalidos a 0 (Review Focus)', () => {
   assert.deepEqual(armarLineasVuelta(-5, NaN), [
-    '¡Bienvenida de vuelta!',
+    '¡Hola de nuevo, Zaki!',
     'Estuviste 0 min en pausa',
     'Se guardaron 0 temas en tu notebook',
   ]);
   assert.deepEqual(armarLineasVuelta('texto', undefined), [
-    '¡Bienvenida de vuelta!',
+    '¡Hola de nuevo, Zaki!',
     'Estuviste 0 min en pausa',
     'Se guardaron 0 temas en tu notebook',
   ]);

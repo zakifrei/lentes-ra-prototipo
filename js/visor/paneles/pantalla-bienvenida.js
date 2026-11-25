@@ -48,7 +48,7 @@ const ALTO_PANEL = 0.5;
 // empujó todas de z=-1.2 a z=-1.8/-1.9) -- NO el valor viejo.
 const POSICION = { x: 0, y: 1.1, z: -1.8 };
 
-const TEXTO_SALUDO = '¡Hola, Sofía!';
+const TEXTO_SALUDO = '¡Hola, Zaki!';
 const TEXTO_CLASE = 'Ahora arranca tu clase de Historia';
 const TEXTO_TIP = 'Tip: Te recomiendo usar imágenes';
 

@@ -26,10 +26,15 @@ import * as THREE from '../../../vendor/three/three.module.js';
 import { Text } from '@pmndrs/uikit';
 import { Alert, AlertIcon, AlertTitle, AlertDescription } from '@pmndrs/uikit-default';
 import { crearPanelUikit } from '../ui-kit/panel-uikit.js';
-import { COLOR_TEXTO, crearFondoDegradadoCartel } from '../ui-kit/tema-uikit.js';
+import {
+  COLOR_TEXTO,
+  crearFondoDegradadoCartel,
+  GROSOR_BORDE,
+  TIPO_DP,
+  fuenteDesdeDp,
+} from '../ui-kit/tema-uikit.js';
 import { crearIconoUikit } from '../ui-kit/icono-uikit.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
-import { propiedadesFraunces } from '../ui-kit/fuente-uikit.js';
 
 const TITULO_AVISO = '¿Necesitás una pausa?';
 const DESCRIPCION_AVISO = 'Notamos que tus niveles de atención disminuyeron.';
@@ -41,12 +46,13 @@ const DESCRIPCION_AVISO = 'Notamos que tus niveles de atención disminuyeron.';
 // porque panel-uikit.js no expone un "alerta: true" -- es un layout de
 // un solo uso, no un primitivo genérico como Button/Card).
 const ANCHO_CANVAS_REFERENCIA = 1024;
-const ANCHO_PANEL_MENSAJE = 0.8;
+// 0.8 -> 0.9: con el título a 24 dp, "¿Necesitás una pausa?" se partía en 2 renglones.
+const ANCHO_PANEL_MENSAJE = 0.9;
 const ALTO_PANEL_MENSAJE = 0.4;
 const POSICION_PANEL_MENSAJE = { x: 0, y: 1.1, z: -1.8 };
 
-const TAMANO_FUENTE_TITULO = 48;
-const TAMANO_FUENTE_DESCRIPCION = 38;
+const TAMANO_FUENTE_TITULO = fuenteDesdeDp(TIPO_DP.titulo2, ANCHO_PANEL_MENSAJE);
+const TAMANO_FUENTE_DESCRIPCION = fuenteDesdeDp(TIPO_DP.cuerpo1, ANCHO_PANEL_MENSAJE);
 const DIAMETRO_ICONO_AVISO = 64;
 const MARGEN_PANEL = 40;
 // Dejar lugar al ícono (arriba a la izquierda) para que el título y la
@@ -68,12 +74,12 @@ const TEXTO_BOTON_RECHAZAR = 'Seguir sin pausar';
 
 // Mismos valores físicos que la versión vieja: los botones van debajo
 // del panel de mensaje, centrados en y=0.65.
-const ANCHO_BOTON = 0.5;
+const ANCHO_BOTON = 0.6;
 const ALTO_BOTON = 0.25;
 const ALTURA_Y_BOTONES = 0.65;
 const PROFUNDIDAD_Z_BOTONES = -1.8;
-const TAMANO_FUENTE_BOTON = 76;
-const SEPARACION_X = 0.35;
+const TAMANO_FUENTE_BOTON = fuenteDesdeDp(TIPO_DP.cuerpo1, ANCHO_BOTON);
+const SEPARACION_X = 0.4;
 
 const raycaster = new THREE.Raycaster();
 const vectorOrigen = new THREE.Vector3();
@@ -100,7 +106,7 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
     width: ANCHO_CANVAS_REFERENCIA,
     height: Math.round(ANCHO_CANVAS_REFERENCIA * (ALTO_PANEL_MENSAJE / ANCHO_PANEL_MENSAJE)),
     padding: MARGEN_PANEL,
-    borderWidth: 2,
+    borderWidth: GROSOR_BORDE,
     borderRadius: 0,
     justifyContent: 'center',
     // Mismo criterio que crearContenedorUikit (panel-uikit.js): 'center'
@@ -143,9 +149,6 @@ export function crearPantallaAviso(renderer, onAceptar, onRechazar) {
       color: COLOR_TEXTO,
       fontSize: TAMANO_FUENTE_TITULO,
       fontWeight: 'bold',
-      // Fraunces (serif cálida) sólo para el título -- ver el comentario
-      // grande de fuente-uikit.js (pedido vía /design-consultation).
-      ...propiedadesFraunces(),
     })
   );
   panelMensaje.add(titulo);

@@ -40,7 +40,7 @@ export function armarLineasVuelta(minutos, temas) {
   const minutosSaneados = saneaNumeroNoNegativo(minutos);
   const temasSaneados = saneaNumeroNoNegativo(temas);
   return [
-    '¡Bienvenida de vuelta!',
+    '¡Hola de nuevo, Zaki!',
     `Estuviste ${minutosSaneados} min en pausa`,
     `Se guardaron ${temasSaneados} temas en tu notebook`,
   ];

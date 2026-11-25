@@ -304,10 +304,26 @@ const vectorOrigenArrastre = new THREE.Vector3();
 const vectorDireccionArrastre = new THREE.Vector3();
 
 /**
+ * true si `objeto` y todos sus ancestros están visibles. El raycasting de
+ * Three.js no filtra por `.visible`, así que sin esto se podía agarrar el
+ * panel de una pantalla oculta que estuviera en el mismo lugar que la
+ * pantalla activa.
+ * @param {THREE.Object3D} objeto
+ * @returns {boolean}
+ */
+function estaVisibleEnMundo(objeto) {
+  for (let actual = objeto; actual; actual = actual.parent) {
+    if (!actual.visible) return false;
+  }
+  return true;
+}
+
+/**
  * Habilita el arrastre de `objetoAMover`: mientras está agarrado
  * (seleccionado y mantenido, con la mano, el control o el mouse, vía
  * `enArrastreDeSeleccion`), lo mueve siguiendo el rayo de selección -- a la
- * misma distancia del origen a la que estaba cuando se lo agarró -- y
+ * misma distancia del origen a la que estaba cuando se lo agarró, y
+ * manteniendo el punto de agarre bajo el rayo (no salta al centro) -- y
  * aplica `limitarPosicion` cada vez que el rayo se actualiza (en RA, en
  * cada cuadro de la sesión; en escritorio, en cada movimiento del mouse).
  *
@@ -340,13 +356,18 @@ export function habilitarArrastre(renderer, objetoParaTocar, objetoAMover, limit
   // qué distancia del origen del rayo estaba el objeto en ese momento.
   let agarre = null;
 
-  function moverObjetoSiguiendoRayo(origen, direccion, distancia) {
+  // `desfase`: distancia entre el punto donde el rayo tocó el objeto y su
+  // `.position`, fijada al agarrarlo. Sin esto el centro del objeto saltaba
+  // hasta el rayo -- casi imperceptible en un panel chico, pero un salto
+  // de más de medio metro al agarrar de una punta un panel grande como el
+  // del resumen (pantalla-resumen.js).
+  function moverObjetoSiguiendoRayo(origen, direccion, distancia, desfase) {
     vectorDireccionArrastre.set(direccion.x, direccion.y, direccion.z).normalize();
 
     const posicionSeguida = {
-      x: origen.x + vectorDireccionArrastre.x * distancia,
-      y: origen.y + vectorDireccionArrastre.y * distancia,
-      z: origen.z + vectorDireccionArrastre.z * distancia,
+      x: origen.x + vectorDireccionArrastre.x * distancia + desfase.x,
+      y: origen.y + vectorDireccionArrastre.y * distancia + desfase.y,
+      z: origen.z + vectorDireccionArrastre.z * distancia + desfase.z,
     };
 
     const posicionLimitada = limitarPosicion(posicionSeguida, limites);
@@ -356,6 +377,7 @@ export function habilitarArrastre(renderer, objetoParaTocar, objetoAMover, limit
   return enArrastreDeSeleccion(renderer, {
     alIniciar(origen, direccion, contexto) {
       if (agarre) return false; // ya está agarrado por otra fuente: ignorar
+      if (!estaVisibleEnMundo(objetoParaTocar)) return false; // pantalla oculta
 
       vectorOrigenArrastre.set(origen.x, origen.y, origen.z);
       vectorDireccionArrastre.set(direccion.x, direccion.y, direccion.z).normalize();
@@ -364,14 +386,23 @@ export function habilitarArrastre(renderer, objetoParaTocar, objetoAMover, limit
       const impactos = raycasterArrastre.intersectObject(objetoParaTocar, true);
       if (impactos.length === 0) return false; // el rayo no tocó el panel
 
-      agarre = { contexto, distancia: impactos[0].distance };
-      moverObjetoSiguiendoRayo(origen, direccion, agarre.distancia);
+      const { point: puntoTocado } = impactos[0];
+      agarre = {
+        contexto,
+        distancia: impactos[0].distance,
+        desfase: {
+          x: objetoAMover.position.x - puntoTocado.x,
+          y: objetoAMover.position.y - puntoTocado.y,
+          z: objetoAMover.position.z - puntoTocado.z,
+        },
+      };
+      moverObjetoSiguiendoRayo(origen, direccion, agarre.distancia, agarre.desfase);
       return true; // reclama el gesto (ver escucharFuentesDeSeleccion)
     },
 
     alMover(origen, direccion, contexto) {
       if (!agarre || agarre.contexto !== contexto) return;
-      moverObjetoSiguiendoRayo(origen, direccion, agarre.distancia);
+      moverObjetoSiguiendoRayo(origen, direccion, agarre.distancia, agarre.desfase);
     },
 
     alTerminar(origen, direccion, contexto) {

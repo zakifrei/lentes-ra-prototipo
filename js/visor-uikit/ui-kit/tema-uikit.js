@@ -30,22 +30,108 @@
 import * as THREE from '../../../vendor/three/three.module.js';
 import { setTheme } from '@pmndrs/uikit-default';
 
-export const COLOR_TEXTO = '#fff3e0';
+// --- Normas de Meta Horizon OS (2026-11-25, ver DESIGN.md) -------------
+// Fuente: developers.meta.com/vr/design/styles_color y accessibility-
+// checklist. Reglas que fijan los valores de abajo:
+// - Nada de blanco/negro puros: claros no más brillantes que #DADADA,
+//   oscuros no más oscuros que #1A1A1A (en luminancia relativa) -- vale
+//   también para el texto.
+// - Contraste WCAG 2.1 AA: 4.5:1 texto normal, 3:1 texto grande y
+//   elementos no-texto (fondos de botón, bordes).
+// - En passthrough el fondo real cambia (ventana, pizarrón, aula oscura):
+//   ante la duda, más contraste.
+// Contraste medido (texto sobre cartel/botón con OPACIDAD_FONDO, contra un
+// aula negra, gris y una pared blanca): cartel >= 6.5:1 (contando la
+// parte clara del degradé), botón >= 5.3:1, rojo destructivo 5.3:1.
+//
+// Texto: el mismo tono cálido de antes (#fff3e0) bajado a la luminancia
+// de #DADADA (0.70 vs 0.91) -- sigue siendo crema, ya no casi blanco.
+export const COLOR_TEXTO = '#e4d7c4';
+// Ámbar de acento/borde: no es fondo ni texto largo, se mantiene. Sobre un
+// aula oscura da 8.4:1 -- es lo que separa el panel del fondo real.
 export const COLOR_AMBAR = '#ffb454';
-export const COLOR_AMBAR_TEXTO = '#ffe6c2';
+// Ámbar texto (detalles chicos, p. ej. "temas pendientes"): era #ffe6c2
+// (luminancia 0.82, por encima del tope de #DADADA) -- bajado a 0.67.
+export const COLOR_AMBAR_TEXTO = '#ead3b0';
+
+// Opacidad de todo fondo de panel. Era 0.74 (cartel) / 0.66 (botón): el
+// 26-34% de transparencia dejaba que el detalle del aula (gente,
+// pizarrón) se viera a través del panel y ensuciara el texto, y el botón
+// sobre una ventana quedaba en 4.1:1 (< 4.5:1).
+export const OPACIDAD_FONDO = 0.88;
+
+// Grosor del borde ámbar de cada panel, en "píxeles" de la referencia de
+// 1024 (ver panel-uikit.js). Era 2 (~1.5 mm a 1.8 m: ~1 píxel del Quest,
+// se perdía) -- con 6 (~4.7 mm) el borde se ve y separa el panel del
+// aula oscura, donde el fondo del panel solo da ~1.2:1 contra el entorno.
+export const GROSOR_BORDE = 6;
+
+/**
+ * Color con transparencia como hex de 8 dígitos (#rrggbbaa).
+ *
+ * Bug de color encontrado el 2026-11-25 (al medir el contraste en la
+ * vista previa): @pmndrs/uikit 1.0.78 carga un string `rgba(r, g, b, a)`
+ * tal cual en su buffer de color (r/255, sin convertir de sRGB a lineal),
+ * mientras que un hex pasa por `THREE.Color.set()`, que sí convierte. El
+ * renderer después codifica a sRGB, así que todo fondo escrito como
+ * `rgba(...)` salía mucho más CLARO que lo diseñado (cartel rgb(36,26,18)
+ * -> se veía ~rgb(107,96,80); botón rgb(99,49,13) -> ~rgb(168,122,64)).
+ * Esa es buena parte de por qué el texto "se perdía" en los paneles. Con
+ * hex de 8 dígitos el color pasa por la conversión correcta y el alfa se
+ * respeta igual.
+ * @param {number} r 0-255 (sRGB)
+ * @param {number} g 0-255 (sRGB)
+ * @param {number} b 0-255 (sRGB)
+ * @param {number} alfa 0-1
+ * @returns {string}
+ */
+function colorConAlfa(r, g, b, alfa) {
+  const hex = (n) => Math.round(n).toString(16).padStart(2, '0');
+  return `#${hex(r)}${hex(g)}${hex(b)}${hex(alfa * 255)}`;
+}
+
+// --- Escala tipográfica en dp (Meta Horizon OS) -------------------------
+// Meta da los tamaños en dp: 14 dp mínimo legible, 18 dp lectura cómoda
+// (design/styles_typography), y usa 500 dp por metro por defecto para
+// paneles (spatial-sdk-2dpanel-resolution, DpPerMeterDisplayOptions) --
+// o sea 1 dp = 2 mm de alto de letra, para paneles a ~1.8-2 m como los
+// de este visor. Un set corto de estilos, como pide Meta ("use a limited
+// set of type styles"):
+export const TIPO_DP = Object.freeze({
+  titulo1: 32, // saludo grande (bienvenida/vuelta)
+  titulo2: 24, // título de cartel, encabezado de columna, contador
+  cuerpo1: 20, // texto principal y botones
+  cuerpo2: 18, // texto secundario -- el mínimo "cómodo" de Meta, nunca menos
+});
+const DP_POR_METRO = 500;
+const ANCHO_CANVAS_REFERENCIA = 1024;
+
+/**
+ * Convierte un tamaño en dp de Meta a `fontSize` de uikit para un panel de
+ * `anchoPanel` metros (uikit mide en "píxeles" de la referencia de 1024,
+ * ver panel-uikit.js: pixelSize = anchoPanel / 1024).
+ * @param {number} dp
+ * @param {number} anchoPanel ancho físico del panel, en metros
+ * @returns {number}
+ */
+export function fuenteDesdeDp(dp, anchoPanel) {
+  return (dp / DP_POR_METRO) * (ANCHO_CANVAS_REFERENCIA / anchoPanel);
+}
 
 // Fondo "cartel" (sólo lectura): mismo valor que el COLOR_FONDO_PANEL
 // exportado de tema-visual.js (el que dibujarFondoPanel usaba antes del
 // degradé de 2 tonos de la Tarea 27 -- sigue siendo un punto medio
 // razonable del degradé actual).
-export const COLOR_FONDO_CARTEL = 'rgba(28, 16, 8, 0.74)';
+// Base subida de rgb(28,16,8) (más oscura que #1A1A1A, fuera de norma) a
+// rgb(36,26,18) -- mismo tono umbra, luminancia apenas sobre #1A1A1A.
+export const COLOR_FONDO_CARTEL = colorConAlfa(36, 26, 18, OPACIDAD_FONDO);
 
 // Fondo "botón" (interactivo): tema-visual.js no exporta un único color acá
 // -- usa 2 tonos privados (COLOR_FONDO_BOTON_CLARO/_OSCURO) como extremos
 // de un degradé. Este valor es el punto medio de esos dos, leído de
 // tema-visual.js como referencia (ruling: no hay un "mismo valor" exacto
 // que reexportar porque el original nunca fue un color sólido).
-export const COLOR_FONDO_BOTON = 'rgba(99, 49, 13, 0.66)';
+export const COLOR_FONDO_BOTON = colorConAlfa(99, 49, 13, OPACIDAD_FONDO);
 
 // Radio de esquina proporcional (mismo criterio que tema-visual.js, ver su
 // FRACCION_RADIO_ESQUINAS/calcularRadioEsquinas): sólo la variante "botón"
@@ -84,7 +170,7 @@ export const TEMA_DISENO_AMBAR = {
   primaryForeground: COLOR_TEXTO,
   secondary: COLOR_FONDO_CARTEL,
   secondaryForeground: COLOR_TEXTO,
-  muted: 'rgba(28, 16, 8, 0.5)',
+  muted: COLOR_FONDO_CARTEL,
   mutedForeground: COLOR_AMBAR_TEXTO,
   accent: COLOR_FONDO_BOTON,
   accentForeground: COLOR_TEXTO,
@@ -134,7 +220,7 @@ const ANCHO_CANVAS_DEGRADADO = 1;
 // Mismo tono que COLOR_FONDO_CARTEL abajo (el ancla, sin cambiar nada de
 // lo ya verificado) -- arriba, un tono más cálido/claro de la misma
 // familia ámbar-umbra, no un color nuevo.
-const COLOR_DEGRADADO_ARRIBA = 'rgba(64, 40, 20, 0.74)';
+const COLOR_DEGRADADO_ARRIBA = colorConAlfa(64, 42, 22, OPACIDAD_FONDO);
 
 let texturaDegradadoCartel = null;
 
@@ -152,6 +238,10 @@ function obtenerTexturaDegradadoCartel() {
   contexto.fillRect(0, 0, ANCHO_CANVAS_DEGRADADO, ALTO_CANVAS_DEGRADADO);
 
   texturaDegradadoCartel = new THREE.CanvasTexture(canvas);
+  // Mismo bug de color que `colorConAlfa` (ver arriba): sin esto, three
+  // trata los píxeles del canvas (sRGB) como lineales y el degradé sale
+  // mucho más claro que lo diseñado.
+  texturaDegradadoCartel.colorSpace = THREE.SRGBColorSpace;
   texturaDegradadoCartel.needsUpdate = true;
   return texturaDegradadoCartel;
 }

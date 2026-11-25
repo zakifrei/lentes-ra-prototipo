@@ -46,26 +46,64 @@ hay que reinventarlo):
 - **Mood:** como si alguien real te estuviera dando la clase, no un
   dashboard.
 
+## Normas de Meta Horizon OS (2026-11-25)
+
+Pedido externo: alinear el visor con reglas reales de diseño para Quest.
+Fuente principal: las guías oficiales de Meta (developers.meta.com/vr/
+design: `styles_typography`, `styles_color`, `styles_inputs_hit_targets`,
+`accessibility-checklist`, `mr-design-passthrough`, y
+`spatial-sdk-2dpanel-resolution` para la conversión dp -> metros). La guía
+de Mixed Reality de Microsoft (`color-light-and-materials`) se leyó como
+complemento, pero es para HoloLens (pantalla aditiva, el negro se ve
+transparente) y no aplica tal cual al passthrough del Quest.
+
+Reglas que este sistema cumple, y cómo:
+
+| Regla de Meta | Valor | Dónde |
+|---|---|---|
+| Sans-serif de x-height alta; Inter es la tipografía del sistema | Inter regular/bold, una sola familia | `fuente-uikit.js` |
+| Sin itálicas; pocos estilos de texto | 4 estilos (`TIPO_DP`), sin itálicas | `tema-uikit.js` |
+| Texto >= 14 dp legible, >= 18 dp cómodo | Mínimo 18 dp en todo el visor | `TIPO_DP` + `fuenteDesdeDp()` |
+| 500 dp por metro (paneles a ~2 m) | 1 dp = 2 mm de letra | `fuenteDesdeDp()` |
+| Nada de blanco/negro puros: claros <= #DADADA, oscuros >= #1A1A1A | Texto `#e4d7c4`, fondo `rgb(36,26,18)` | `tema-uikit.js` |
+| Contraste 4.5:1 texto, 3:1 no-texto (WCAG 2.1 AA) | >= 5.2:1 en todo, incluso sobre ventana/pared blanca | medido, ver `tema-uikit.js` |
+| Zona clickeable >= 48 dp (96 mm), 60 dp (120 mm) para controles principales con manos | Todos los botones miden >= 180 mm de alto | `pantalla-*.js` |
+| No comunicar sólo con color | Cada botón lleva ícono + texto | ya era así |
+
+Lo que se mantiene a propósito, aunque Meta sugiera otra cosa:
+- **Paleta cálida ámbar en vez del gris de Horizon OS:** Meta pide
+  coherencia, contraste y colores semánticos, no un color en particular.
+- **Sólo modo oscuro:** Meta recomienda soportar claro y oscuro, pero eso
+  está pensado para apps 2D del sistema. En un overlay sobre el aula, un
+  panel claro taparía la clase y encandilaría.
+
+**Pendiente:** Meta insiste en probar tipografía y color en el visor real
+(los valores de arriba están medidos en la vista previa de escritorio).
+
 ## Tipografía
 
-- **Cuerpo / botones / subtítulos / UI en general:** Plus Jakarta Sans
-  (regular 400 + bold 700) -- humanista, más cálida que una sans
-  neutra genérica. Vendorizada en `vendor/fonts/PlusJakartaSans-*.ttf`.
-- **Títulos de las pantallas de lectura (bienvenida/vuelta/aviso/mapa):**
-  Fraunces (sólo bold, óptico 72pt, softness 40) -- serif editorial,
-  deliberadamente DISTINTA del cuerpo, para que el título se sienta
-  escrito a mano, no impreso en un formulario. Vendorizada en
-  `vendor/fonts/Fraunces-Bold.ttf`.
-- **Regla de uso de Fraunces:** sólo títulos cortos en negrita dentro de
-  un cartel de lectura. NUNCA en botones (son UI, no lectura) ni en
-  contadores/números que cambian en vivo (pantalla-pausa.js -- una
-  serif de display no conviene para un número que se actualiza solo).
-- **Carga:** ambas fuentes se generan como MSDF en tiempo de carga con
-  el charset de español (ver `js/visor-uikit/ui-kit/fuente-uikit.js`) --
-  @pmndrs/uikit no trae acentos/ñ/¿¡ por defecto.
-- **Escala:** heredada de la migración original, no tocada por esta
-  consulta -- ver `TAMANO_FUENTE_*` en cada `pantalla-*.js` (todas a la
-  escala de referencia de 1024px, no CSS px -- ver panel-uikit.js).
+- **Familia única: Inter** (regular 400 + bold 700), vendorizada en
+  `vendor/fonts/Inter-*.ttf`. Reemplaza a Plus Jakarta Sans + Fraunces
+  (2026-11-21): Meta pide sans-serif y la serif de Fraunces en títulos
+  iba en contra de esa regla.
+- **Pesos:** bold sólo para títulos y el contador de pausa; regular para
+  todo lo demás (regla de Meta: "rely on the regular weight").
+- **Carga:** MSDF en tiempo de carga con el charset de español (ver
+  `js/visor-uikit/ui-kit/fuente-uikit.js`) -- @pmndrs/uikit no trae
+  acentos/ñ/¿¡ por defecto.
+- **Escala (en dp de Meta, `TIPO_DP` en tema-uikit.js):**
+
+  | Estilo | dp | Alto de letra | Uso |
+  |---|---|---|---|
+  | `titulo1` | 32 | 64 mm | saludo (bienvenida/vuelta) |
+  | `titulo2` | 24 | 48 mm | título de cartel, encabezado de columna, contador, mensajes únicos |
+  | `cuerpo1` | 20 | 40 mm | texto principal y botones |
+  | `cuerpo2` | 18 | 36 mm | texto secundario (tip, temas, resumen, datos del mapa) -- nunca menos |
+
+  Cada pantalla convierte con `fuenteDesdeDp(dp, anchoPanel)`, así el alto
+  físico de la letra no depende del ancho del panel. Excepciones medidas:
+  subtítulos (~22 dp, escalables por el usuario) y el botón flotante
+  (~20 dp), que ya cumplían.
 - **Alineación del texto de los carteles:** centrada (`textAlign:
   'center'` en `crearContenedorUikit`, panel-uikit.js) -- el default de
   uikit es `'left'`, que quedaba raro en un panel ya centrado como
@@ -90,21 +128,30 @@ hay que reinventarlo):
 
 - **Enfoque:** Balanceado -- un sistema semántico real
   (`js/visor-uikit/ui-kit/tema-uikit.js`), no colores sueltos.
-- **Texto:** `#fff3e0`
-- **Ámbar (acento/borde):** `#ffb454`
-- **Ámbar texto (detalle chico):** `#ffe6c2`
-- **Fondo cartel (base del degradé, el tono más oscuro):**
-  `rgba(28, 16, 8, 0.74)`
-- **Fondo botón:** `rgba(99, 49, 13, 0.66)`
-- **Degradé del cartel (riesgo de esta consulta):** `rgba(64, 40, 20,
-  0.74)` arriba → `rgba(28, 16, 8, 0.74)` (el fondo cartel de siempre)
-  abajo -- generado a mano en un canvas (`crearFondoDegradadoCartel()`
-  en tema-uikit.js), porque uikit no acepta un degradé directo en
-  `backgroundColor`.
-- **Destructivo (el único no-ámbar a propósito):** `#aa0a1e` -- mismo
-  rojo de alerta que ya usa el resto del proyecto.
-- **Dark mode:** no aplica -- el visor no tiene modo claro, es siempre
-  sobre el mundo real/una escena 3D oscura.
+- **Texto:** `#e4d7c4` (antes `#fff3e0`: casi blanco puro, fuera de la
+  norma de Meta; mismo tono crema bajado a la luminancia de `#DADADA`).
+- **Ámbar (acento/borde):** `#ffb454` -- 8.4:1 contra un aula oscura, es
+  lo que separa el panel del entorno.
+- **Ámbar texto (detalle chico):** `#ead3b0` (antes `#ffe6c2`).
+- **Fondo cartel:** `rgb(36, 26, 18)` al 88% (antes `rgb(28,16,8)` al 74%,
+  más oscuro que `#1A1A1A`). Degradé de `rgb(64, 42, 22)` arriba a ese
+  tono abajo (`crearFondoDegradadoCartel()`).
+- **Fondo botón:** `rgb(99, 49, 13)` al 88% (antes 66%: sobre una ventana
+  el texto del botón quedaba en 4.1:1).
+- **Opacidad de fondos (`OPACIDAD_FONDO`): 0.88** -- con 0.74 el detalle
+  del aula (gente, pizarrón) se veía a través del panel y ensuciaba el
+  texto en passthrough.
+- **Borde (`GROSOR_BORDE`): 6** a la escala de 1024 (~4.7 mm). Con 2
+  (~1.5 mm, ~1 píxel del Quest) se perdía.
+- **Destructivo:** `#aa0a1e` -- 5.3:1 con el texto.
+- **Bug de color corregido (2026-11-25):** uikit 1.0.78 carga los colores
+  `rgba(...)` sin convertir de sRGB a lineal (los hex sí se convierten),
+  así que TODOS los fondos se veían mucho más claros que lo diseñado (el
+  cartel salía ~`rgb(107,96,80)`, el botón ~`rgb(168,122,64)`). Ahora los
+  colores con alfa se escriben como hex de 8 dígitos (`colorConAlfa()`), y
+  la textura del degradé declara `SRGBColorSpace`. **Regla: nunca usar
+  `rgba(...)` en un color de uikit.**
+- **Dark mode:** no aplica -- ver "Normas de Meta" arriba.
 
 ## Spacing
 
@@ -231,3 +278,12 @@ hay que reinventarlo):
 | 2026-11-23 | `textAlign: 'center'` en los carteles de lectura (antes `'left'`, el default) | Pedido del dueño del proyecto; se descartó `'justify'` por espaciado disparejo en líneas cortas |
 | 2026-11-24 | `textAlign` revertido a `'left'` en pantalla-aviso.js (único cartel con `paddingLeft` asimétrico por el ícono) | Mal diagnosticado: el dueño del proyecto quería centrado, no izquierda -- revertido (ver fila siguiente) |
 | 2026-11-24 | `paddingRight` espejado al `paddingLeft` del ícono en pantalla-aviso.js, `textAlign:'center'` restaurado | Mantiene el centrado simétrico de verdad en vez de correrlo hacia la derecha |
+| 2026-11-25 | Inter (única familia) sobre Plus Jakarta Sans + Fraunces | Normas de Meta: sans-serif de x-height alta; Inter es la del sistema |
+| 2026-11-25 | Escala tipográfica en dp (`TIPO_DP`, mínimo 18 dp) | Normas de Meta: 18 dp lectura cómoda; mapa/resumen/aviso/pausa estaban en 12-15 dp |
+| 2026-11-25 | Texto `#e4d7c4`, fondos >= `#1A1A1A`, opacidad 0.88, borde 6 | Normas de Meta: sin blanco/negro puros, contraste AA también sobre ventanas en passthrough |
+| 2026-11-25 | Colores con alfa como hex de 8 dígitos, no `rgba()` | Bug de uikit: `rgba()` se salteaba la conversión sRGB y aclaraba todos los fondos |
+| 2026-11-25 | Resumen 1.3x0.7 m, columnas del mapa 0.48 m de alto, aviso 0.9 m, botones dobles 0.6 m | Para que el texto a 18-24 dp entre sin desbordar |
+| 2026-11-25 | Saludos con "Zaki"; "¡Bienvenida de vuelta!" -> "¡Hola de nuevo, Zaki!" | Pedido del dueño del proyecto; saludo neutro en género, mismo patrón que la bienvenida |
+| 2026-11-25 | Resumen arrastrable (panel + botón juntos, como subtítulos) | Pedido del dueño del proyecto |
+| 2026-11-25 | Arrastre conserva el punto de agarre y no agarra paneles de pantallas ocultas | El panel saltaba con el centro hasta el rayo (notable en el resumen, 1.3 m) |
+| 2026-11-25 | Zoom de subtítulos escala el panel entero (1x / 1.25x / 1.5x), botón en su límite atenuado | Bug: el "+" agrandaba la letra y el ajuste a ancho fijo la volvía a achicar; el "-" arrancaba en el mínimo |

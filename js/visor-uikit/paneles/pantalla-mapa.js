@@ -14,22 +14,23 @@
 import * as THREE from '../../../vendor/three/three.module.js';
 import { Text } from '@pmndrs/uikit';
 import { crearContenedorUikit } from '../ui-kit/panel-uikit.js';
-import { COLOR_TEXTO } from '../ui-kit/tema-uikit.js';
+import { COLOR_TEXTO, TIPO_DP, fuenteDesdeDp } from '../ui-kit/tema-uikit.js';
 import { MAPA_CONCEPTUAL } from '../../../assets/mapa-conceptual/contenido-mapa.js';
-import { propiedadesFraunces } from '../ui-kit/fuente-uikit.js';
 
 // Misma altura y profundidad que el resto de las pantallas estáticas.
 const ALTURA_Y = 1.1;
 const PROFUNDIDAD_Z = -1.8;
 
 const ANCHO_COLUMNA = 0.6;
-const ALTO_COLUMNA = 0.38;
+// Subido de 0.38 a 0.48: con el texto a 18 dp (mínimo cómodo de Meta) los
+// datos largos ocupan 2 renglones.
+const ALTO_COLUMNA = 0.48;
 
 // Mismo tamaño que la versión vieja para las 3 líneas de datos; el
 // título va un 15% más grande (ver más abajo) para notarse como
 // encabezado, ahora que puede llevar su propio peso/tamaño.
-const TAMANO_FUENTE_DATO = 40;
-const TAMANO_FUENTE_TITULO = Math.round(TAMANO_FUENTE_DATO * 1.15);
+const TAMANO_FUENTE_DATO = fuenteDesdeDp(TIPO_DP.cuerpo2, ANCHO_COLUMNA);
+const TAMANO_FUENTE_TITULO = fuenteDesdeDp(TIPO_DP.titulo2, ANCHO_COLUMNA);
 
 // Mismo criterio que pantalla-menu.js: separación entre centros de
 // columna que deja aire entre bordes.
@@ -67,10 +68,6 @@ export function crearPantallaMapa() {
         color: COLOR_TEXTO,
         fontSize: TAMANO_FUENTE_TITULO,
         fontWeight: 'bold',
-        // Fraunces (serif cálida) sólo para el título -- ver el
-        // comentario grande de fuente-uikit.js (pedido vía
-        // /design-consultation).
-        ...propiedadesFraunces(),
       })
     );
     lineas.forEach((linea) => {

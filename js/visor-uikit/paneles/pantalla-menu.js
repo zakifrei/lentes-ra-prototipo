@@ -14,6 +14,7 @@
 
 import * as THREE from '../../../vendor/three/three.module.js';
 import { crearPanelUikit } from '../ui-kit/panel-uikit.js';
+import { TIPO_DP, fuenteDesdeDp } from '../ui-kit/tema-uikit.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
 
 const ALTURA_Y = 1.1;
@@ -21,7 +22,7 @@ const PROFUNDIDAD_Z = -1.8;
 
 const ANCHO_BOTON = 0.5;
 const ALTO_BOTON = 0.35;
-const TAMANO_FUENTE_BOTON = 76;
+const TAMANO_FUENTE_BOTON = fuenteDesdeDp(TIPO_DP.cuerpo1, ANCHO_BOTON);
 const SEPARACION_X = 0.6;
 
 const OPCIONES = [

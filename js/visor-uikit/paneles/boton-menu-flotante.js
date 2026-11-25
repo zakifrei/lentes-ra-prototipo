@@ -62,7 +62,13 @@ import {
   AccordionContent,
   Separator,
 } from '@pmndrs/uikit-default';
-import { COLOR_TEXTO, COLOR_FONDO_BOTON, COLOR_AMBAR, calcularRadioEsquinasUikit } from '../ui-kit/tema-uikit.js';
+import {
+  COLOR_TEXTO,
+  COLOR_FONDO_BOTON,
+  COLOR_AMBAR,
+  GROSOR_BORDE,
+  calcularRadioEsquinasUikit,
+} from '../ui-kit/tema-uikit.js';
 import { crearIconoUikit } from '../ui-kit/icono-uikit.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
 
@@ -214,7 +220,7 @@ export function crearBotonMenuFlotante(renderer, onSeleccionarOpcion) {
     value: VALOR_ITEM_MENU,
     width: ANCHO_CANVAS_BASE,
     borderBottomWidth: 0,
-    borderWidth: 2,
+    borderWidth: GROSOR_BORDE,
     borderColor: COLOR_AMBAR,
     borderRadius: RADIO_ESQUINAS,
   });

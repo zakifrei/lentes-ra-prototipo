@@ -14,14 +14,14 @@
 // tema-visual.js evitaba a propósito en el visor viejo (ver su
 // comentario grande) -- pero ahora la maneja la librería, no a mano.
 //
-// Post-migración (pedido del dueño del proyecto vía /design-consultation,
-// ver DESIGN.md): Inter (una sans neutra, usada por medio internet) se
-// reemplaza por dos fuentes elegidas para reforzar la calidez del
-// visor -- Plus Jakarta Sans (cuerpo/botones/subtítulos, humanista, más
-// cálida que Inter) y Fraunces (sólo títulos en negrita de las pantallas
-// de lectura -- bienvenida/vuelta/aviso/resumen -- una serif editorial
-// pensada para transmitir calidez humana, ver panel-uikit.js/
-// pantalla-*.js para dónde se usa cada una).
+// Post-migración: vía /design-consultation, Inter se había reemplazado
+// por Plus Jakarta Sans + Fraunces (serif en
+// títulos) para "calidez". Revertido el 2026-11-25 al alinear el visor
+// con las guías oficiales de Meta Horizon OS (ver DESIGN.md, "Normas de
+// Meta"): Meta pide una sans-serif de x-height alta y counters amplios, y
+// Inter es la tipografía oficial del sistema (design/styles_typography).
+// La serif de Fraunces iba en contra de esa regla. Una sola familia,
+// dos pesos (regular para cuerpo, bold para títulos/etiquetas).
 
 import { TTFLoader, setGlobalProperties } from '@pmndrs/uikit';
 
@@ -38,15 +38,10 @@ const CHARSET =
 // Rutas relativas a la página (igual convención que RUTAS_IMAGENES en
 // js/visor/main.js), no al módulo -- TTFLoader las resuelve como XHR
 // contra la URL del documento, no como import de ES modules.
-const URL_JAKARTA_REGULAR = 'vendor/fonts/PlusJakartaSans-Regular.ttf';
-const URL_JAKARTA_BOLD = 'vendor/fonts/PlusJakartaSans-Bold.ttf';
-const URL_FRAUNCES_BOLD = 'vendor/fonts/Fraunces-Bold.ttf';
+const URL_INTER_REGULAR = 'vendor/fonts/Inter-Regular.ttf';
+const URL_INTER_BOLD = 'vendor/fonts/Inter-Bold.ttf';
 
 let promesaCarga = null;
-
-// Las mismas familias que se registran como globales en
-// `cargarFuenteUikit`, guardadas para `propiedadesFraunces()` (ver abajo).
-let familiasFuente = null;
 
 // Reintentos -- hallazgo al cablear la Tarea 2: `TTFLoader.loadAsync`
 // hace un `import()` dinámico de `@zappar/msdf-generator` (la librería
@@ -69,9 +64,8 @@ async function cargarConReintentos() {
   for (let intento = 1; intento <= REINTENTOS; intento++) {
     try {
       return await new TTFLoader().loadAsync([
-        { url: URL_JAKARTA_REGULAR, charset: CHARSET },
-        { url: URL_JAKARTA_BOLD, charset: CHARSET },
-        { url: URL_FRAUNCES_BOLD, charset: CHARSET },
+        { url: URL_INTER_REGULAR, charset: CHARSET },
+        { url: URL_INTER_BOLD, charset: CHARSET },
       ]);
     } catch (error) {
       ultimoError = error;
@@ -85,14 +79,11 @@ async function cargarConReintentos() {
 }
 
 /**
- * Carga Plus Jakarta Sans (regular + bold) y Fraunces (sólo bold) con el
- * charset de arriba, y las registra como familias globales del visor
- * (`setGlobalProperties`): `jakarta` (la que usa casi todo, ver
- * fontFamily por defecto más abajo) y `fraunces` (sólo para los títulos
- * en negrita que la pasan explícitamente -- ver pantalla-bienvenida.js/
- * pantalla-vuelta.js/pantalla-aviso.js/pantalla-resumen.js). Memoizado:
- * llamarla más de una vez devuelve la misma promesa, nunca vuelve a
- * pedir los .ttf.
+ * Carga Inter (regular + bold) con el charset de arriba y la registra
+ * como familia global `inter` del visor (`setGlobalProperties`) -- el
+ * mismo nombre que la familia por defecto de uikit, así que cualquier
+ * `Text` la usa sin pasar `fontFamily`. Memoizado: llamarla más de una
+ * vez devuelve la misma promesa, nunca vuelve a pedir los .ttf.
  *
  * Degrada con gracia: si los 3 intentos fallan (ver REINTENTOS), NUNCA
  * rechaza -- loguea el error y resuelve igual, dejando la fuente MSDF
@@ -105,25 +96,19 @@ export function cargarFuenteUikit() {
   if (!promesaCarga) {
     promesaCarga = cargarConReintentos()
       .then((resultado) => {
-        // Mismo hallazgo que con Inter (ver commits previos): cada .ttf
-        // registra su PROPIO nombre de familia ("Plus Jakarta Sans
-        // Regular"/"Plus Jakarta Sans Bold") en vez de una única familia
-        // con pesos 400/700 -- TTFLoader no los combina solo. Hay que
-        // fusionarlos a mano para que `fontWeight: 'bold'/'normal'` (ver
-        // panel-uikit.js) funcione sobre la MISMA familia.
-        const fontFamilies = {
-          jakarta: {
-            ...resultado['Plus Jakarta Sans Regular'],
-            ...resultado['Plus Jakarta Sans Bold'],
-          },
-          fraunces: {
-            ...resultado['Fraunces Bold'],
-          },
-        };
-        familiasFuente = fontFamilies;
+        // Hallazgo (confirmado en vivo): cada .ttf registra su PROPIO
+        // nombre de familia ("Inter Regular"/"Inter Bold") en vez de una
+        // única familia con pesos 400/700 -- TTFLoader no los combina
+        // solo. Se fusionan a mano para que `fontWeight: 'bold'/'normal'`
+        // funcione sobre la MISMA familia.
         setGlobalProperties({
-          fontFamily: 'jakarta',
-          fontFamilies,
+          fontFamily: 'inter',
+          fontFamilies: {
+            inter: {
+              ...resultado['Inter Regular'],
+              ...resultado['Inter Bold'],
+            },
+          },
         });
       })
       .catch((error) => {
@@ -138,18 +123,3 @@ export function cargarFuenteUikit() {
   return promesaCarga;
 }
 
-/**
- * Propiedades para un `Text` en Fraunces: `fontFamily` más las
- * `fontFamilies` registradas, pasadas directo al texto. Sin estas
- * familias explícitas, uikit evalúa la fuente una vez ANTES de heredar
- * las globales de `setGlobalProperties` (sólo conoce su "inter" por
- * defecto) y loguea `unknown font family "fraunces"` en consola -- se
- * corrige solo un instante después, pero ensucia la consola en cada
- * panel con título. Usar después de que `cargarFuenteUikit()` resolvió.
- * @returns {{ fontFamily: string, fontFamilies?: object }}
- */
-export function propiedadesFraunces() {
-  return familiasFuente
-    ? { fontFamily: 'fraunces', fontFamilies: familiasFuente }
-    : { fontFamily: 'fraunces' };
-}

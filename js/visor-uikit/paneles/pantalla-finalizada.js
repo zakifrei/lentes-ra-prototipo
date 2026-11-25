@@ -6,11 +6,13 @@
 // versión vieja (la dispara el observador desde el panel externo).
 
 import { crearPanelUikit } from '../ui-kit/panel-uikit.js';
+import { TIPO_DP, fuenteDesdeDp } from '../ui-kit/tema-uikit.js';
 
 const TEXTO_FINALIZADA = 'Clase finalizada: ya te podés sacar los lentes';
 
 // Mismo valor que la versión vieja (un poco más grande que el default).
-const TAMANO_FUENTE = 54;
+// Mensaje único en el panel por defecto (0.8 m de ancho, ver panel-uikit.js).
+const TAMANO_FUENTE = fuenteDesdeDp(TIPO_DP.titulo2, 0.8);
 
 /**
  * Crea la pantalla de clase finalizada. El objeto devuelto expone

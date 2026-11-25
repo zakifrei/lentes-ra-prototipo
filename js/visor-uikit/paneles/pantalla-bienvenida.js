@@ -13,8 +13,7 @@
 
 import { Text } from '@pmndrs/uikit';
 import { crearContenedorUikit } from '../ui-kit/panel-uikit.js';
-import { COLOR_TEXTO, COLOR_AMBAR_TEXTO } from '../ui-kit/tema-uikit.js';
-import { propiedadesFraunces } from '../ui-kit/fuente-uikit.js';
+import { COLOR_TEXTO, COLOR_AMBAR_TEXTO, TIPO_DP, fuenteDesdeDp } from '../ui-kit/tema-uikit.js';
 
 // Mismo tamaño físico que la versión vieja (un poco más alto que el
 // panel por defecto, para que los 3 bloques entren con aire).
@@ -22,14 +21,14 @@ const ANCHO_PANEL = 0.85;
 const ALTO_PANEL = 0.5;
 const POSICION = { x: 0, y: 1.1, z: -1.8 };
 
-const TEXTO_SALUDO = '¡Hola, Sofía!';
+const TEXTO_SALUDO = '¡Hola, Zaki!';
 const TEXTO_CLASE = 'Ahora arranca tu clase de Historia';
 const TEXTO_TIP = 'Tip: Te recomiendo usar imágenes';
 
 // Mismos 3 tamaños que la versión vieja, de mayor a menor.
-const TAMANO_FUENTE_SALUDO = 80;
-const TAMANO_FUENTE_CLASE = 46;
-const TAMANO_FUENTE_TIP = 38;
+const TAMANO_FUENTE_SALUDO = fuenteDesdeDp(TIPO_DP.titulo1, ANCHO_PANEL);
+const TAMANO_FUENTE_CLASE = fuenteDesdeDp(TIPO_DP.cuerpo1, ANCHO_PANEL);
+const TAMANO_FUENTE_TIP = fuenteDesdeDp(TIPO_DP.cuerpo2, ANCHO_PANEL);
 
 /**
  * Crea la pantalla de bienvenida: 3 bloques de texto (saludo grande en
@@ -58,9 +57,6 @@ export function crearPantallaBienvenida() {
       color: COLOR_TEXTO,
       fontSize: TAMANO_FUENTE_SALUDO,
       fontWeight: 'bold',
-      // Fraunces (serif cálida) sólo para el título -- ver el comentario
-      // grande de fuente-uikit.js (pedido vía /design-consultation).
-      ...propiedadesFraunces(),
     })
   );
   contenedor.add(

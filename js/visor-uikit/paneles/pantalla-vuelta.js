@@ -15,28 +15,27 @@
 import * as THREE from '../../../vendor/three/three.module.js';
 import { Text } from '@pmndrs/uikit';
 import { crearContenedorUikit, crearPanelUikit } from '../ui-kit/panel-uikit.js';
-import { COLOR_TEXTO, COLOR_AMBAR_TEXTO } from '../ui-kit/tema-uikit.js';
+import { COLOR_TEXTO, COLOR_AMBAR_TEXTO, TIPO_DP, fuenteDesdeDp } from '../ui-kit/tema-uikit.js';
 import { armarLineasVuelta } from '../../common/temporizador-pausa.js';
 import { enEventoSeleccion } from '../../visor/interaccion.js';
-import { propiedadesFraunces } from '../ui-kit/fuente-uikit.js';
-
-// Mismos 3 tamaños que pantalla-bienvenida.js, para que ambas pantallas
-// de "bloques apilados" se vean consistentes entre sí.
-const TAMANO_FUENTE_SALUDO = 80;
-const TAMANO_FUENTE_MINUTOS = 46;
-const TAMANO_FUENTE_TEMAS = 38;
 
 // Mismos valores físicos que la versión vieja.
 const ANCHO_PANEL_MENSAJE = 0.9;
 const ALTO_PANEL_MENSAJE = 0.45;
 const POSICION_MENSAJE = { x: 0, y: 1.3, z: -1.8 };
 
-const ANCHO_BOTON = 0.5;
+// Mismos 3 tamaños que pantalla-bienvenida.js, para que ambas pantallas
+// de "bloques apilados" se vean consistentes entre sí.
+const TAMANO_FUENTE_SALUDO = fuenteDesdeDp(TIPO_DP.titulo1, ANCHO_PANEL_MENSAJE);
+const TAMANO_FUENTE_MINUTOS = fuenteDesdeDp(TIPO_DP.cuerpo1, ANCHO_PANEL_MENSAJE);
+const TAMANO_FUENTE_TEMAS = fuenteDesdeDp(TIPO_DP.cuerpo2, ANCHO_PANEL_MENSAJE);
+
+const ANCHO_BOTON = 0.6;
 const ALTO_BOTON = 0.25;
 const ALTURA_Y_BOTONES = 0.88;
 const PROFUNDIDAD_Z_BOTONES = -1.8;
-const SEPARACION_X = 0.35;
-const TAMANO_FUENTE_BOTON = 76;
+const SEPARACION_X = 0.4;
+const TAMANO_FUENTE_BOTON = fuenteDesdeDp(TIPO_DP.cuerpo1, ANCHO_BOTON);
 
 const TEXTO_BOTON_SEGUIR = 'Seguir con la clase';
 const TEXTO_BOTON_RESUMEN = 'Ver un resumen rápido';
@@ -78,9 +77,6 @@ export function crearPantallaVuelta(renderer, onSeguirClase, onVerResumen) {
     color: COLOR_TEXTO,
     fontSize: TAMANO_FUENTE_SALUDO,
     fontWeight: 'bold',
-    // Fraunces (serif cálida) sólo para el título -- ver el comentario
-    // grande de fuente-uikit.js (pedido vía /design-consultation).
-    ...propiedadesFraunces(),
   });
   const textoMinutos = new Text({
     text: lineaMinutos,
